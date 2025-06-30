@@ -40,6 +40,263 @@
   padding: 2em;
 }
 
+.description {
+  font-size: 0.9em;
+  font-weight: normal;
+  color: #666;
+  margin: 1em 0;
+  line-height: 1.4;
+}
+
+.title {
+  font-size: 1.1em;
+  font-weight: normal;
+  color: #666;
+  margin: 1em 0;
+  line-height: 1.4;
+}
+
 .read-the-docs {
   color: #888;
+}
+
+/* How it works page styles */
+.step {
+  margin: 1.5em 0;
+  padding: 1em;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.step h3 {
+  color: #646cff;
+  margin: 0 0 0.5em 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.step p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  font-size: 0.9em;
+}
+
+.back-button {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+.back-button:hover {
+  background-color: #444;
+  border-color: #646cff;
+}
+
+@media (prefers-color-scheme: light) {
+  .step {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .step p {
+    color: #666;
+  }
+  
+  .back-button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+  }
+  
+  .back-button:hover {
+    background-color: #e0e0e0;
+    border-color: #646cff;
+  }
+}
+
+/* Website blocking page styles */
+.website-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.website-option {
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.website-option:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.website-option.selected {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.checkbox {
+  margin-right: 4px;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 12px;
+  height: 12px;
+  cursor: pointer;
+}
+
+.website-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.name {
+  font-weight: 500;
+  color: #333;
+  font-size: 11px;
+}
+
+.url-input-container {
+  margin-top: 16px;
+}
+
+.url-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.url-input {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.add-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.add-url-btn:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.add-url-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.custom-urls-list {
+  margin-top: 16px;
+}
+
+.custom-url-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.url-text {
+  font-family: monospace;
+  font-size: 14px;
+  color: #333;
+  word-break: break-all;
+}
+
+.remove-url-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 12px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.remove-url-btn:hover {
+  background: #c82333;
+}
+
+/* Dark mode support for website blocking */
+@media (prefers-color-scheme: dark) {
+  .website-option {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #fff;
+  }
+  
+  .website-option:hover {
+    background: #3a3a3a;
+    border-color: #646cff;
+  }
+  
+  .website-option.selected {
+    background: #1a3a5f;
+    border-color: #646cff;
+  }
+  
+  .name {
+    color: #fff;
+  }
+  
+  .url-input {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #fff;
+  }
+  
+  .url-input:focus {
+    border-color: #646cff;
+  }
+  
+  .custom-url-item {
+    background: #3a3a3a;
+    border-color: #444;
+  }
+  
+  .url-text {
+    color: #fff;
+  }
 }
