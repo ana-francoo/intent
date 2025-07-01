@@ -300,3 +300,18 @@
     color: #fff;
   }
 }
+
+/* Hide scrollbar */
+::-webkit-scrollbar {
+    display: none;
+}
+
+.overlay-film {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(128, 128, 128, 0.5); /* grey, semi-transparent */
+  z-index: 9999;
+}

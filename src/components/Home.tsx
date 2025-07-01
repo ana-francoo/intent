@@ -3,14 +3,34 @@ import crxLogo from '@/assets/crx.svg'
 import HowItWorks from './HowItWorks'
 import WebsiteBlocking from './WebsiteBlocking'
 import Main from './Main'
+import Auth from './Auth'
+import { supabase } from '../supabaseClient'
+
+// Helper to send message to content script
+function showTabOverlay() {
+  if (window.chrome && chrome.tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'SHOW_OVERLAY' });
+      }
+    });
+  }
+}
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'how-it-works' | 'website-blocking' | 'main'>('home')
+  const [currentPage, setCurrentPage] = useState<'home' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home')
+  const [showOverlay, setShowOverlay] = useState(false)
 
   // Scroll to top whenever page changes
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [currentPage])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setCurrentPage('website-blocking');
+    });
+  }, []);
 
   const handleGetStarted = () => {
     setCurrentPage('how-it-works')
@@ -33,11 +53,17 @@ export default function Home() {
   }
 
   const handleBackToWebsiteBlocking = () => {
-    setCurrentPage('website-blocking')
+    showTabOverlay();
   }
 
+  const handleToAuth = () => setCurrentPage('auth')
+
   if (currentPage === 'how-it-works') {
-    return <HowItWorks onBack={handleBackToHome} onNext={handleToWebsiteBlocking} />
+    return <HowItWorks onBack={handleBackToHome} onNext={handleToAuth} />
+  }
+
+  if (currentPage === 'auth') {
+    return <Auth onAuthSuccess={handleToWebsiteBlocking} />
   }
 
   if (currentPage === 'website-blocking') {
@@ -45,7 +71,10 @@ export default function Home() {
   }
 
   if (currentPage === 'main') {
-    return <Main onBack={handleBackToWebsiteBlocking} />
+    return <>
+      {showOverlay && <div className="overlay-film" /*onClick={() => setShowOverlay(false)}*/></div>}
+      <Main onBack={handleBackToWebsiteBlocking} />
+    </>
   }
 
   return (
