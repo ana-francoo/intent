@@ -5,17 +5,7 @@ import WebsiteBlocking from './WebsiteBlocking'
 import Main from './Main'
 import Auth from './Auth'
 import { supabase } from '../supabaseClient'
-
-// Helper to send message to content script
-function showTabOverlay() {
-  if (window.chrome && chrome.tabs) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'SHOW_OVERLAY' });
-      }
-    });
-  }
-}
+import { triggerOverlay } from '../utils/overlay'
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<'home' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home')
@@ -53,7 +43,7 @@ export default function Home() {
   }
 
   const handleBackToWebsiteBlocking = () => {
-    showTabOverlay();
+    triggerOverlay();
   }
 
   const handleToAuth = () => setCurrentPage('auth')
@@ -69,6 +59,8 @@ export default function Home() {
   if (currentPage === 'website-blocking') {
     return <WebsiteBlocking onBack={handleBackToHowItWorks} onNext={handleToMain} />
   }
+
+  //TRIGGERING THE TRIGGER FOR THE INJECT OVERLAY
 
   if (currentPage === 'main') {
     return <>

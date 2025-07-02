@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { saveBlockedSites } from '../utils/storage'
 
 interface WebsiteBlockingProps {
   onBack: () => void
@@ -52,8 +53,48 @@ export default function WebsiteBlocking({ onBack, onNext }: WebsiteBlockingProps
     }
   }
 
-  const handleDone = () => {
-    onNext()
+  const handleDone = async () => {
+    try {
+      // Collect all blocked URLs
+      const blockedUrls: string[] = [];
+      
+      // Add selected popular websites
+      selectedWebsites.forEach(website => {
+        if (website.selected) {
+          // Convert website names to URLs
+          const urlMap: { [key: string]: string } = {
+            'instagram': 'https://instagram.com',
+            'youtube': 'https://youtube.com',
+            'linkedin': 'https://linkedin.com',
+            'pinterest': 'https://pinterest.com',
+            'tiktok': 'https://tiktok.com',
+            'facebook': 'https://facebook.com',
+            'twitter': 'https://twitter.com',
+            'reddit': 'https://reddit.com'
+          };
+          
+          if (urlMap[website.id]) {
+            blockedUrls.push(urlMap[website.id]);
+          }
+        }
+      });
+      
+      // Add custom URLs
+      blockedUrls.push(...customUrls);
+      
+      // Save to Supabase if there are any blocked URLs
+      if (blockedUrls.length > 0) {
+        await saveBlockedSites(blockedUrls);
+      }
+      
+      // Proceed to next step
+      onNext();
+    } catch (error) {
+      console.error('Failed to save blocked sites:', error);
+      // You might want to show an error message to the user here
+      // For now, we'll still proceed to the next step
+      onNext();
+    }
   }
 
   return (
