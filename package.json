@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.2",
+    "dotenv": "^17.0.1",
     "react": "^19.0.0",
     "react-canvas-confetti": "^2.0.7",
     "react-dom": "^19.0.0"
