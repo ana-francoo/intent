@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import crxLogo from '@/assets/crx.svg'
+import candle from '@/assets/logo.png' // Make sure you have a candle icon in your assets
+
+import NewPage from './NewPage'
 import HowItWorks from './HowItWorks'
 import WebsiteBlocking from './WebsiteBlocking'
 import Main from './Main'
@@ -8,10 +10,9 @@ import { supabase } from '../supabaseClient'
 import { triggerOverlay } from '../utils/overlay'
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState<'home' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home')
+  const [currentPage, setCurrentPage] = useState<'home' | 'new-page' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home')
   const [showOverlay, setShowOverlay] = useState(false)
 
-  // Scroll to top whenever page changes
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [currentPage])
@@ -23,11 +24,19 @@ export default function Home() {
   }, []);
 
   const handleGetStarted = () => {
+    setCurrentPage('new-page')
+  }
+
+  const handleBackFromNewPage = () => {
+    setCurrentPage('home')
+  }
+
+  const handleFromNewPageToHowItWorks = () => {
     setCurrentPage('how-it-works')
   }
 
-  const handleBackToHome = () => {
-    setCurrentPage('home')
+  const handleToNewPage = () => {
+    setCurrentPage('new-page')
   }
 
   const handleToWebsiteBlocking = () => {
@@ -48,8 +57,12 @@ export default function Home() {
 
   const handleToAuth = () => setCurrentPage('auth')
 
+  if (currentPage === 'new-page') {
+    return <NewPage onBack={handleBackFromNewPage} onNext={handleFromNewPageToHowItWorks} />
+  }
+
   if (currentPage === 'how-it-works') {
-    return <HowItWorks onBack={handleBackToHome} onNext={handleToAuth} />
+    return <HowItWorks onBack={handleToNewPage} onNext={handleToAuth} />
   }
 
   if (currentPage === 'auth') {
@@ -60,34 +73,29 @@ export default function Home() {
     return <WebsiteBlocking onBack={handleBackToHowItWorks} onNext={handleToMain} />
   }
 
-  //TRIGGERING THE TRIGGER FOR THE INJECT OVERLAY
-
   if (currentPage === 'main') {
     return <>
-      {showOverlay && <div className="overlay-film" /*onClick={() => setShowOverlay(false)}*/></div>}
+      {showOverlay && <div className="overlay-film"></div>}
       <Main onBack={handleBackToWebsiteBlocking} />
     </>
   }
 
   return (
-    <>
-    <div>
-      <a href="https://crxjs.dev/vite-plugin" target="_blank" rel="noreferrer">
-        <img src={crxLogo} className="logo crx" alt="crx logo" />
-      </a>
-    </div>
-
-      <h1>Ensure distraction-free execution of your intention</h1>
-
-      <p className="description">
-      Intent empowers you to follow through on your intention without distraction. Originally opened youtube as an educational resources, and ended up in reels? Changed tabs to search something up and ended up in instagram, or reading the news? Intent blocks distracting sites by default, which can be unlocked by prompting you to declare a clear intention of use. If your activity misaligns from your intention, Intent gently steps in and reblocks the site, helping you stay aligned with what you set out to do.
-      </p>
-
-      <div className="card">
-        <button type="button" onClick={handleGetStarted}>
-          Get Started
+    <div className="home-container">
+      <div className="candle-icon-wrapper">
+        <img src={candle} alt="Candle" className="candle-icon" />
+      </div>
+      <h1 className="main-title">Ready to reclaim your focus?</h1>
+      <p className="subtitle">Stay true to your intention, distraction-free.</p>
+      <div className="card home-card">
+        <button className="get-started-btn" type="button" onClick={handleGetStarted}>
+          Get Started <span className="arrow">→</span>
         </button>
       </div>
-    </>
+      <div className="login-link">
+        <span>Have an account? </span>
+        <a href="#" onClick={handleToAuth}>Log in</a>
+      </div>
+    </div>
   )
 }
