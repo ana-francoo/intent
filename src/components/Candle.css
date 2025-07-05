@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css?family=Ubuntu:400,400i,700,700i');
 
+/* Home root container */
+.home-root {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
 /* Candle-specific styles only */
 .holder {
   margin: 12rem auto 0;
@@ -28,7 +35,7 @@
   position: absolute;
   left: 15%;
   transform: translateX(0%) scaleY(0.6) scaleX(0.7);
-  bottom: 71%;
+  bottom: 78%;
 }
 
 .candle-body {
@@ -69,7 +76,7 @@
   background: linear-gradient(white 80%, transparent);
   opacity: 0;
   animation:
-    sparkFlame 0.5s ease-in forwards 0.5s,
+    sparkFlame 0.3s ease-in forwards 0s,
     moveFlame 3s linear infinite 1s,
     enlargeFlame 5s ease-out infinite 1s;
 }
@@ -101,19 +108,19 @@
     transform: translateX(-50%) scale(0.1);
     filter: brightness(2);
   }
-  5% {
-    height: 5px;
+  10% {
+    height: 16px;
     opacity: 1;
     transform: translateX(-50%) scale(1.6) rotate(10deg);
     filter: brightness(4) saturate(2);
   }
-  10% {
-    height: 10px;
+  30% {
+    height: 35px;
     transform: translateX(-50%) scale(0.9) rotate(-5deg);
     filter: brightness(1.5);
   }
-  15% {
-    height: 20px;
+  70% {
+    height: 70px;
     transform: translateX(-50%) scale(1) rotate(0deg);
     filter: brightness(1);
   }
@@ -225,12 +232,17 @@
 
 /* Candle container - always visible */
 .candle-container {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+}
+
+/* Intro phase - position flame slightly lower to compensate for shift */
+.candle-container.intro-phase {
+  top: 55%;
 }
 
 /* Black background overlay */
