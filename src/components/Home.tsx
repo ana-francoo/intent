@@ -13,8 +13,9 @@ import './Candle.css';
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed to false so Candle appears immediately
   const [fadeOutLoading, setFadeOutLoading] = useState(false);
+  const [showBlackBackground, setShowBlackBackground] = useState(true); // New state for black background
   const [currentPage, setCurrentPage] = useState<'home' | 'new-page' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home');
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -29,15 +30,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Show loading for 1.8s, then fade out and show intro content
-    const loadingTimer = setTimeout(() => {
-      setFadeOutLoading(true);
-      setTimeout(() => setIsLoading(false), 500); // Wait for fade-out animation
-    }, 1800);
-    const introTimer = setTimeout(() => setShowIntro(false), 1800); // 1.8s for flame animation
+    // Only handle the home content delay, flame appears immediately
+    const introTimer = setTimeout(() => {
+      setShowIntro(false);
+      setShowBlackBackground(false); // Fade out black background when home content appears
+    }, 1200); // 1.8s for home content
     
     return () => {
-      clearTimeout(loadingTimer);
       clearTimeout(introTimer);
     };
   }, []);
@@ -101,6 +100,11 @@ export default function Home() {
 
   return (
     <div className="home-root">
+      {/* Black background overlay */}
+      {showBlackBackground && (
+        <div className="black-background-overlay"></div>
+      )}
+      
       {/* Candle component - always visible */}
       <div className="candle-container">
         <Candle />
@@ -120,7 +124,7 @@ export default function Home() {
         <p className="subtitle">Follow-through with your intention, distraction-free.</p>
         <div className="card home-card">
           <button className="get-started-btn" type="button" onClick={handleGetStarted}>
-            Get Started <span className="arrow">→</span>
+            I'm Ready <span className="arrow">→</span>
           </button>
         </div>
         <div className="login-link">
