@@ -28,14 +28,14 @@
 .holder *:before,
 .holder *:after {
   position: absolute;
-  content: "";
+  content: '';
 }
 
 .flame-wrapper {
   position: absolute;
   left: 15%;
   transform: translateX(0%) scaleY(0.6) scaleX(0.7);
-  bottom: 78%;
+  bottom: 78%; /* I think this is can vary on device sizes */
 }
 
 .candle-body {
@@ -75,10 +75,8 @@
   border-radius: 50% 50% 20% 20%;
   background: linear-gradient(white 80%, transparent);
   opacity: 0;
-  animation:
-    sparkFlame 0.3s ease-in forwards 0s,
-    moveFlame 3s linear infinite 1s,
-    enlargeFlame 5s ease-out infinite 1s;
+  animation: sparkFlame 0.3s ease-in forwards 0s,
+    moveFlame 3s linear infinite 1s, enlargeFlame 5s ease-out infinite 1s;
 }
 
 .flame.ignite {
@@ -89,8 +87,7 @@
 .flame {
   /* Regular flame styles */
   animation: sparkFlame 0.5s ease-in forwards 0.2s,
-             moveFlame 3s linear infinite 1s,
-             enlargeFlame 5s ease-out infinite 1s;
+    moveFlame 3s linear infinite 1s, enlargeFlame 5s ease-out infinite 1s;
 }
 
 .flame:before {
@@ -162,9 +159,7 @@
   background: #ff6000;
   filter: blur(60px);
   opacity: 0;
-  animation:
-    glowFadeIn 0.2s ease-in forwards 0.7s,
-    blinkIt 0.1s infinite 0.9s;
+  animation: glowFadeIn 0.2s ease-in forwards 0.7s, blinkIt 0.1s infinite 0.9s;
 }
 
 @keyframes glowFadeIn {

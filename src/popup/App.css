@@ -1,14 +1,27 @@
+:root {
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+
+  --background: #171717;
+  --foreground: #e5e5e5;
+  --muted-foreground: #a1a1a1;
+  --primary: #f26419;
+  --primary-foreground: #e5e5e5;
+}
+
 body,
 #root,
 .home-container {
   min-height: 100vh;
   height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
   letter-spacing: -0.05em;
 }
 
 #root {
-  background: radial-gradient(ellipse at 50% 30%, #2b2525 60%, #000000 100%);
+  background: var(--background);
   background-size: cover;
   min-height: 100vh;
   display: flex;
@@ -24,6 +37,11 @@ body,
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  width: 100%;
+  min-width: 400px;
+  max-width: 450px;
+  padding: 1.5rem;
+  box-sizing: border-box;
   opacity: 1;
   transition: opacity 0.7s ease;
 }
@@ -42,9 +60,10 @@ body,
   justify-content: center;
   margin-bottom: 2rem;
   margin-top: 3.5rem; /* Lower the logo slightly */
-  animation: fadeInUp 0.8s ease-in forwards;
+  animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
   animation-delay: 0.1s;
   opacity: 0;
+  filter: blur(8px);
   /* Will be set to 1 by animation */
 }
 
@@ -62,30 +81,32 @@ body,
 }
 
 .main-title {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #f5e9d7;
+  color: var(--foreground);
   text-align: center;
   margin-bottom: 0rem; /* was 1.2rem */
   line-height: 1;
   margin-left: 1rem; /* Add this */
   margin-right: 1rem; /* Add this */
-  animation: fadeInUp 0.8s ease-in forwards;
+  animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
   animation-delay: 0.3s;
   opacity: 0;
+  filter: blur(8px);
 }
 
 .subtitle {
-  color: #bcbcbc;
-  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
   text-align: center;
   margin-bottom: 1.2rem;
   margin-left: 1rem; /* Add this */
   margin-right: 1rem;
   font-weight: 400;
-  animation: fadeInUp 0.8s ease-in forwards;
+  animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
   animation-delay: 0.5s;
   opacity: 0;
+  filter: blur(8px);
 }
 
 .home-card {
@@ -93,9 +114,10 @@ body,
   box-shadow: none;
   padding: 0;
   margin-bottom: 0rem; /*CHANGE THIS TO CHANGE DISTANCE BETWEEN GET STARTED BTN AND LOGIN LINK IN HOME*/
-  animation: fadeInUp 0.8s ease-in forwards;
+  animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
   animation-delay: 0.7s;
   opacity: 0;
+  filter: blur(8px);
 }
 
 .get-started-btn {
@@ -104,12 +126,12 @@ body,
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  height: 3rem;
+  height: 2.5rem;
   padding: 0 1.5rem;
-  border-radius: 0.5rem;
-  background: #18181b;
-  color: #e5e5e5;
-  font-size: 1.1rem;
+  border-radius: 0.75rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 1rem;
   font-weight: 500;
   border: none;
   transition: background 0.5s, color 0.5s;
@@ -132,8 +154,8 @@ body,
   height: 100%;
 }
 .get-started-btn:hover {
-  background: #27272a;
-  color: #fff;
+  background: #e55a15;
+  color: var(--foreground);
 }
 .get-started-btn:hover .btn-text {
   transform: translateX(-150%);
@@ -153,22 +175,23 @@ body,
 .login-link {
   margin-bottom: 2rem;
   text-align: center;
-  color: #bcbcbc;
+  color: var(--muted-foreground);
   font-size: 1rem;
   margin-top: 0;
-  animation: fadeInUp 0.8s ease-in forwards;
+  animation: fadeInUp 0.8s var(--ease-out-expo) forwards;
   animation-delay: 0.9s;
   opacity: 0;
+  filter: blur(8px);
 }
 .login-link a {
-  color: #5caaff;
+  color: var(--primary);
   text-decoration: none;
   font-weight: 500;
   margin-left: 0.2em;
   transition: color 0.2s;
 }
 .login-link a:hover {
-  color: #fff;
+  color: var(--foreground);
   text-decoration: underline;
 }
 
@@ -495,10 +518,12 @@ body,
   0% {
     opacity: 0;
     transform: translateY(30px);
+    filter: blur(8px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
   }
 }
 
