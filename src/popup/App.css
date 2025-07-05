@@ -1,4 +1,6 @@
-body, #root, .home-container {
+body,
+#root,
+.home-container {
   min-height: 100vh;
   height: 100%;
 }
@@ -48,8 +50,12 @@ body, #root, .home-container {
   width: 150px; /* Make logo bigger */
   height: 150px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,200,100,0.15) 60%, transparent 100%);
-  box-shadow: 0 0 40px 10px #ffa94d, 0 0 0 8px rgba(255,200,100,0.08);
+  background: radial-gradient(
+    circle,
+    rgba(255, 200, 100, 0.15) 60%,
+    transparent 100%
+  );
+  box-shadow: 0 0 40px 10px #ffa94d, 0 0 0 8px rgba(255, 200, 100, 0.08);
   display: block;
 }
 
@@ -60,8 +66,8 @@ body, #root, .home-container {
   text-align: center;
   margin-bottom: 0rem; /* was 1.2rem */
   line-height: 1;
-  margin-left: 1rem;   /* Add this */
-  margin-right: 1rem;  /* Add this */
+  margin-left: 1rem; /* Add this */
+  margin-right: 1rem; /* Add this */
   animation: fadeInUp 0.8s ease-in forwards;
   animation-delay: 0.3s;
   opacity: 0;
@@ -72,8 +78,8 @@ body, #root, .home-container {
   font-size: 0.9rem;
   text-align: center;
   margin-bottom: 1.2rem;
-  margin-left: 1rem;   /* Add this */
-  margin-right: 1rem; 
+  margin-left: 1rem; /* Add this */
+  margin-right: 1rem;
   font-weight: 400;
   animation: fadeInUp 0.8s ease-in forwards;
   animation-delay: 0.5s;
@@ -91,26 +97,51 @@ body, #root, .home-container {
 }
 
 .get-started-btn {
-  background: linear-gradient(90deg, #ff993a 0%, #d25e16 100%);
-  color: #fff;
-  font-size: 1.05rem; /* Slightly smaller */
-  font-weight: 600;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 3rem;
+  padding: 0 1.5rem;
+  border-radius: 0.5rem;
+  background: #18181b;
+  color: #e5e5e5;
+  font-size: 1.1rem;
+  font-weight: 500;
   border: none;
-  border-radius: 14px;
-  padding: 0.7rem 1.7rem; /* Slightly smaller */
-  box-shadow: 0 4px 24px 0 rgba(255, 126, 45, 0.18);
+  transition: background 0.5s, color 0.5s;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+.get-started-btn .btn-text {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.3s, opacity 0.3s;
+}
+.get-started-btn .btn-arrow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) translateX(150%);
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  margin-bottom: 0;
+  height: 100%;
 }
 .get-started-btn:hover {
-  background: linear-gradient(90deg, #ffb84d 0%, #ff9e2d 100%);
-  box-shadow: 0 6px 32px 0 rgba(255, 126, 45, 0.28);
-  transform: translateY(-2px) scale(1.03);
+  background: #27272a;
+  color: #fff;
 }
+.get-started-btn:hover .btn-text {
+  transform: translateX(-150%);
+  opacity: 0;
+}
+.get-started-btn:hover .btn-arrow {
+  transform: translate(-50%, -50%) translateX(0);
+  opacity: 1;
+}
+
 .arrow {
   font-size: 1.3em;
   margin-left: 0.2em;
@@ -241,17 +272,17 @@ body, #root, .home-container {
     background-color: rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.1);
   }
-  
+
   .step p {
     color: #666;
   }
-  
+
   .back-button {
     background-color: #f0f0f0;
     color: #333;
     border: 1px solid #ddd;
   }
-  
+
   .back-button:hover {
     background-color: #e0e0e0;
     border-color: #646cff;
@@ -291,7 +322,7 @@ body, #root, .home-container {
   margin-right: 4px;
 }
 
-.checkbox input[type="checkbox"] {
+.checkbox input[type='checkbox'] {
   width: 12px;
   height: 12px;
   cursor: pointer;
@@ -408,36 +439,36 @@ body, #root, .home-container {
     border-color: #444;
     color: #fff;
   }
-  
+
   .website-option:hover {
     background: #3a3a3a;
     border-color: #646cff;
   }
-  
+
   .website-option.selected {
     background: #1a3a5f;
     border-color: #646cff;
   }
-  
+
   .name {
     color: #fff;
   }
-  
+
   .url-input {
     background: #2a2a2a;
     border-color: #444;
     color: #fff;
   }
-  
+
   .url-input:focus {
     border-color: #646cff;
   }
-  
+
   .custom-url-item {
     background: #3a3a3a;
     border-color: #444;
   }
-  
+
   .url-text {
     color: #fff;
   }
@@ -445,7 +476,7 @@ body, #root, .home-container {
 
 /* Hide scrollbar */
 ::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 .overlay-film {
@@ -499,4 +530,3 @@ body, #root, .home-container {
   position: relative;
   min-height: 100vh;
 }
-
