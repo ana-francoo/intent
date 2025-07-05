@@ -3,6 +3,8 @@ body,
 .home-container {
   min-height: 100vh;
   height: 100%;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.05em;
 }
 
 #root {
