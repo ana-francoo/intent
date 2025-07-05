@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import candle from '@/assets/logo.png';
+import logo from '@/assets/logo2.png'
 import NewPage from './NewPage';
 import HowItWorks from './HowItWorks';
 import WebsiteBlocking from './WebsiteBlocking';
@@ -100,16 +101,20 @@ export default function Home() {
 
   return (
     <div className="home-root">
-      {/* Loading overlay with Candle component */}
+      {/* Candle component - always visible */}
+      <div className="candle-container">
+        <Candle />
+      </div>
+      
+      {/* Loading overlay - only for initial black screen */}
       {isLoading && (
         <div className={`loading-overlay${fadeOutLoading ? ' fade-out' : ''}`}>
-          <Candle />
         </div>
       )}
       
       <div className={`home-container${showIntro ? ' hidden' : ' visible'}`}>
         <div className="candle-icon-wrapper">
-          {!showIntro && <img src={candle} alt="Candle" className="candle-icon" />}
+          {!showIntro && <img src={logo} alt="Candle" className="candle-icon" />}
         </div>
         <h1 className="main-title">Ready to reclaim your focus?</h1>
         <p className="subtitle">Follow-through with your intention, distraction-free.</p>

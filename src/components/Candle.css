@@ -26,9 +26,9 @@
 
 .flame-wrapper {
   position: absolute;
-  left: 14%;
-  transform: translateX(0%) scale(0.7);
-  bottom: 57%;
+  left: 15%;
+  transform: translateX(0%) scaleY(0.6) scaleX(0.7);
+  bottom: 71%;
 }
 
 .candle-body {
@@ -37,8 +37,6 @@
   width: 150px;
   height: 300px;
   border-radius: 50px / 40px;
-  box-shadow: inset 20px -30px 50px 0 rgba(0, 0, 0, 0.4),
-    inset -20px 0 50px 0 rgba(0, 0, 0, 0.4);
 }
 
 .candle-body:before {
@@ -210,5 +208,15 @@
 
 .loading-overlay.fade-out {
   opacity: 0;
+  pointer-events: none;
+}
+
+/* Candle container - always visible */
+.candle-container {
+  position: fixed;
+  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
