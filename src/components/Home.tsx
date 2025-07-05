@@ -34,7 +34,7 @@ export default function Home() {
     const introTimer = setTimeout(() => {
       setShowIntro(false);
       setShowBlackBackground(false); // Fade out black background when home content appears
-    }, 1200); // 1.8s for home content
+    }, 400); // 1.8s for home content
     
     return () => {
       clearTimeout(introTimer);
@@ -106,7 +106,7 @@ export default function Home() {
       )}
       
       {/* Candle component - always visible */}
-      <div className="candle-container">
+      <div className={`candle-container${showIntro ? ' intro-phase' : ''}`}>
         <Candle />
       </div>
       
