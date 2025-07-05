@@ -4,7 +4,7 @@ body, #root, .home-container {
 }
 
 #root {
-  background: radial-gradient(ellipse at 50% 30%, #23242a 60%, #101117 100%);
+  background: radial-gradient(ellipse at 50% 30%, #2b2525 60%, #000000 100%);
   background-size: cover;
   min-height: 100vh;
   display: flex;
@@ -12,12 +12,24 @@ body, #root, .home-container {
   justify-content: center;
 }
 
+/*background: radial-gradient(ellipse at 50% 30%, #292320 60%, #110c0c 100%);*/
+
 .home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  opacity: 1;
+  transition: opacity 0.7s ease;
+}
+.home-container.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.home-container.visible {
+  opacity: 1;
+  pointer-events: all;
 }
 
 .candle-icon-wrapper {
@@ -37,7 +49,7 @@ body, #root, .home-container {
   height: 150px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255,200,100,0.15) 60%, transparent 100%);
-  box-shadow: 0 0 40px 10px #ffb84d, 0 0 0 8px rgba(255,200,100,0.08);
+  box-shadow: 0 0 40px 10px #ffa94d, 0 0 0 8px rgba(255,200,100,0.08);
   display: block;
 }
 
@@ -79,7 +91,7 @@ body, #root, .home-container {
 }
 
 .get-started-btn {
-  background: linear-gradient(90deg, #ffb84d 0%, #ff7e2d 100%);
+  background: linear-gradient(90deg, #ff993a 0%, #d25e16 100%);
   color: #fff;
   font-size: 1.05rem; /* Slightly smaller */
   font-weight: 600;
@@ -442,7 +454,7 @@ body, #root, .home-container {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(128, 128, 128, 0.5); /* grey, semi-transparent */
+  background: rgba(40, 20, 10, 0.5); /* warm-toned, semi-transparent */
   z-index: 9999;
 }
 
@@ -465,3 +477,26 @@ body, #root, .home-container {
 .login-link {
   animation-fill-mode: forwards;
 }
+
+.flame-intro-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  pointer-events: all;
+  transition: opacity 0.7s ease;
+}
+.flame-intro-overlay:not(.visible) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-root {
+  position: relative;
+  min-height: 100vh;
+}
+

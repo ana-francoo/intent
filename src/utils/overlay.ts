@@ -12,7 +12,7 @@ export const injectOverlay = () => {
   overlay.style.left = '0';
   overlay.style.width = '100vw';
   overlay.style.height = '100vh';
-  overlay.style.background = 'rgba(26, 26, 26, 0.88)';
+  overlay.style.background = 'rgba(40, 20, 10, 0.88)';
   overlay.style.backdropFilter = 'blur(8px)';
   (overlay.style as any)['-webkit-backdrop-filter'] = 'blur(8px)'; // For Safari support
   overlay.style.zIndex = '2147483647';
