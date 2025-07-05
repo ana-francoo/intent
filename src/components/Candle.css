@@ -33,14 +33,16 @@
 
 .flame-wrapper {
   position: absolute;
-  left: 15%;
-  transform: translateX(0%) scaleY(0.6) scaleX(0.7);
-  bottom: 78%; /* I think this is can vary on device sizes */
+  left: 50%;
+  transform: translateX(-50%) scaleY(0.6) scaleX(0.7);
+  bottom: 55%;
 }
 
 .candle-body {
   position: absolute;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 150px;
   height: 300px;
   border-radius: 50px / 40px;
