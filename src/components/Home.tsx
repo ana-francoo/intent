@@ -9,6 +9,8 @@ import { supabase } from '../supabaseClient';
 import { triggerOverlay } from '../utils/overlay';
 import Flame from './Flame';
 import './Flame.css';
+import './Home.css';
+import '../popup/App.css';
 
 const PAGES = {
   home: 0,
@@ -21,7 +23,7 @@ const PAGES = {
 
 const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
 
-export default function Home({ onNext }: HomeProps) {
+export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [fadeOutLoading, setFadeOutLoading] = useState(false);
