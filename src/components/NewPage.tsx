@@ -2,11 +2,6 @@ import React, { useState } from 'react'
 import { isIntentionMatchingAvailable } from '../utils/intentionMatcher'
 import { validateConfig, CONFIG } from '../utils/config'
 
-interface NewPageProps {
-  onBack: () => void
-  onNext: () => void
-}
-
 interface TestResult {
   matches: boolean
   confidence: number
@@ -15,7 +10,7 @@ interface TestResult {
   error?: string
 }
 
-export default function NewPage({ onBack, onNext }: NewPageProps) {
+export default function NewPage() {
   const [intention, setIntention] = useState('')
   const [scrapedContent, setScrapedContent] = useState('')
   const [selectedModel, setSelectedModel] = useState('openai/gpt-4o')
@@ -413,15 +408,6 @@ Now evaluate:
           <p><em>Expected Result: FALSE (low confidence) - Content is about celebrity drama, unrelated to electric eels</em></p>
         </div>
       </div>
-      
-      <div className="card" style={{ marginTop: '20px' }}>
-        <button type="button" onClick={onBack}>
-          Back
-        </button>
-        <button type="button" onClick={onNext}>
-          Next
-        </button>
-      </div>
     </div>
-  )
-} 
+  );
+}

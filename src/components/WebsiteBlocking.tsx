@@ -1,19 +1,25 @@
-import { useState } from 'react'
-import { saveBlockedSites } from '../utils/storage'
+import { useState } from 'react';
+import { saveBlockedSites } from '../utils/storage';
+
+interface WebsiteOption {
+  id: string;
+  name: string;
+  logo: string;
+  selected: boolean;
+}
 
 interface WebsiteBlockingProps {
-  _onBack: () => void;
-  onNext: () => void;
+  onSave: () => void;
 }
 
 interface WebsiteOption {
-  id: string
-  name: string
-  logo: string
-  selected: boolean
+  id: string;
+  name: string;
+  logo: string;
+  selected: boolean;
 }
 
-export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProps) {
+export default function WebsiteBlocking({ onSave }: WebsiteBlockingProps) {
   const [selectedWebsites, setSelectedWebsites] = useState<WebsiteOption[]>([
     { id: 'instagram', name: 'Instagram', logo: '📷', selected: false },
     { id: 'youtube', name: 'YouTube', logo: '📺', selected: false },
@@ -23,79 +29,79 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
     { id: 'facebook', name: 'Facebook', logo: '📘', selected: false },
     { id: 'twitter', name: 'Twitter', logo: '🐦', selected: false },
     { id: 'reddit', name: 'Reddit', logo: '🤖', selected: false },
-  ])
-  
-  const [customUrls, setCustomUrls] = useState<string[]>([])
-  const [newUrl, setNewUrl] = useState('')
+  ]);
+
+  const [customUrls, setCustomUrls] = useState<string[]>([]);
+  const [newUrl, setNewUrl] = useState('');
 
   const toggleWebsite = (id: string) => {
-    setSelectedWebsites(prev => 
-      prev.map(site => 
+    setSelectedWebsites((prev) =>
+      prev.map((site) =>
         site.id === id ? { ...site, selected: !site.selected } : site
       )
-    )
-  }
+    );
+  };
 
   const addCustomUrl = () => {
     if (newUrl.trim() && !customUrls.includes(newUrl.trim())) {
-      setCustomUrls(prev => [...prev, newUrl.trim()])
-      setNewUrl('')
+      setCustomUrls((prev) => [...prev, newUrl.trim()]);
+      setNewUrl('');
     }
-  }
+  };
 
   const removeCustomUrl = (index: number) => {
-    setCustomUrls(prev => prev.filter((_, i) => i !== index))
-  }
+    setCustomUrls((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      addCustomUrl()
+      addCustomUrl();
     }
-  }
+  };
 
-  const handleDone = async () => {
+  const handleSave = async () => {
     try {
       // Collect all blocked URLs
       const blockedUrls: string[] = [];
-      
+
       // Add selected popular websites
-      selectedWebsites.forEach(website => {
+      selectedWebsites.forEach((website) => {
         if (website.selected) {
           // Convert website names to URLs
           const urlMap: { [key: string]: string } = {
-            'instagram': 'https://instagram.com',
-            'youtube': 'https://youtube.com',
-            'linkedin': 'https://linkedin.com',
-            'pinterest': 'https://pinterest.com',
-            'tiktok': 'https://tiktok.com',
-            'facebook': 'https://facebook.com',
-            'twitter': 'https://twitter.com',
-            'reddit': 'https://reddit.com'
+            instagram: 'https://instagram.com',
+            youtube: 'https://youtube.com',
+            linkedin: 'https://linkedin.com',
+            pinterest: 'https://pinterest.com',
+            tiktok: 'https://tiktok.com',
+            facebook: 'https://facebook.com',
+            twitter: 'https://twitter.com',
+            reddit: 'https://reddit.com',
           };
-          
+
           if (urlMap[website.id]) {
             blockedUrls.push(urlMap[website.id]);
           }
         }
       });
-      
+
       // Add custom URLs
       blockedUrls.push(...customUrls);
-      
+
       // Save to Supabase if there are any blocked URLs
       if (blockedUrls.length > 0) {
         await saveBlockedSites(blockedUrls);
       }
-      
-      // Proceed to next step
-      onNext();
+
+      // Call the onSave callback
+      onSave();
     } catch (error) {
       console.error('Failed to save blocked sites:', error);
       // You might want to show an error message to the user here
       // For now, we'll still proceed to the next step
-      onNext();
+      onSave();
     }
-  }
+  };
 
   return (
     <>
@@ -103,17 +109,17 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
 
       <div className="card">
         <h3>Popular Websites</h3>
-        
+
         <div className="website-grid">
           {selectedWebsites.map((website) => (
-            <div 
+            <div
               key={website.id}
               className={`website-option ${website.selected ? 'selected' : ''}`}
               onClick={() => toggleWebsite(website.id)}
             >
               <div className="checkbox">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={website.selected}
                   onChange={() => toggleWebsite(website.id)}
                   onClick={(e) => e.stopPropagation()}
@@ -129,7 +135,7 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
 
       <div className="card">
         <h3>Custom URLs</h3>
-        
+
         <div className="url-input-container">
           <div className="url-input-group">
             <input
@@ -140,8 +146,8 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
               onKeyPress={handleKeyPress}
               className="url-input"
             />
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={addCustomUrl}
               className="add-url-btn"
               disabled={!newUrl.trim()}
@@ -156,8 +162,8 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
             {customUrls.map((url, index) => (
               <div key={index} className="custom-url-item">
                 <span className="url-text">{url}</span>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => removeCustomUrl(index)}
                   className="remove-url-btn"
                 >
@@ -170,10 +176,10 @@ export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProp
       </div>
 
       <div className="card">
-        <button type="button" className="back-button" onClick={handleDone}>
-          Done!
+        <button type="button" onClick={handleSave}>
+          Save Settings
         </button>
       </div>
     </>
-  )
-} 
+  );
+}
