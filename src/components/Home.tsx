@@ -102,12 +102,12 @@ export default function Home() {
     return (
       <div className="card">
         {showBack && (
-          <button type="button" onClick={handleBack}>
+          <button type="button" className="nav-button" onClick={handleBack}>
             Back
           </button>
         )}
         {showNext && (
-          <button type="button" onClick={handleNext}>
+          <button type="button" className="nav-button" onClick={handleNext}>
             Next
           </button>
         )}

@@ -557,3 +557,20 @@ body,
   position: relative;
   min-height: 100vh;
 }
+
+.nav-button {
+  background: transparent;
+  border: 1px solid #282828;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  margin-right: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
