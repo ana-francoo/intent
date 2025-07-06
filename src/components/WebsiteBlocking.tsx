@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { saveBlockedSites } from '../utils/storage'
 
 interface WebsiteBlockingProps {
-  onBack: () => void
-  onNext: () => void
+  _onBack: () => void;
+  onNext: () => void;
 }
 
 interface WebsiteOption {
@@ -13,7 +13,7 @@ interface WebsiteOption {
   selected: boolean
 }
 
-export default function WebsiteBlocking({ onBack, onNext }: WebsiteBlockingProps) {
+export default function WebsiteBlocking({ _onBack, onNext }: WebsiteBlockingProps) {
   const [selectedWebsites, setSelectedWebsites] = useState<WebsiteOption[]>([
     { id: 'instagram', name: 'Instagram', logo: '📷', selected: false },
     { id: 'youtube', name: 'YouTube', logo: '📺', selected: false },

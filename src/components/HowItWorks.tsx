@@ -1,11 +1,12 @@
-import crxLogo from '@/assets/crx.svg'
+import { useState } from 'react'
+import './HowItWorks.css'
 
 interface HowItWorksProps {
-  onBack: () => void
-  onNext: () => void
+  _onBack: () => void;
+  onNext: () => void;
 }
 
-export default function HowItWorks({ onBack, onNext }: HowItWorksProps) {
+export default function HowItWorks({ _onBack, onNext }: HowItWorksProps) {
   return (
     <>
      

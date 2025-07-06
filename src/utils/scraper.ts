@@ -1,263 +1,250 @@
-//page to be updated to use scraper library
-
-// Web scraping utilities for extracting page content
+// Web scraping utilities for extracting relevant page content
 
 export interface PageContent {
   title: string;
   description: string;
   url: string;
   domain: string;
-  textContent: string;
-  images: string[];
-  links: string[];
+  relevantText: string;
   timestamp: Date;
 }
 
 /**
+ * Extract the most relevant content from the current page
+ * Uses semantic weighting to prioritize important content blocks
+ * Filters out browser noise and focuses on meaningful content
+ */
+export function extractRelevantContentFromPage(): string {
+  // 1. Collect metadata with noise filtering
+  const metadata = [
+    document.title,
+    (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[property="og:title"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[property="og:description"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[name="twitter:description"]') as HTMLMetaElement)?.content
+  ].filter(Boolean)
+  .filter(text => !isBrowserNoise(text)); // Filter out browser noise
+
+  // 2. Define tag weights (semantic signal)
+  const tagPriority: Record<string, number> = {
+    MAIN: 4,
+    ARTICLE: 4,
+    SECTION: 3,
+    ASIDE: 2,
+    DIV: 1,
+    P: 2,
+    H1: 3,
+    H2: 3,
+    H3: 2,
+    H4: 2,
+    H5: 1,
+    H6: 1,
+    SPAN: 0.5
+  };
+
+  // 3. Get visible, long-enough elements with better filtering
+  const blocks = Array.from(document.querySelectorAll('main, article, section, aside, div, p, h1, h2, h3, h4, h5, h6, span'))
+    .map(el => {
+      const style = window.getComputedStyle(el);
+      const text = (el as HTMLElement).innerText.trim();
+      const isVisible = style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       (el as HTMLElement).offsetHeight > 0 &&
+                       style.opacity !== '0';
+
+      return {
+        tag: el.tagName,
+        text,
+        weight: (tagPriority[el.tagName] || 0),
+        isVisible,
+        length: text.length,
+        isNoise: isBrowserNoise(text)
+      };
+    })
+    .filter(el => el.isVisible && el.length > 30 && !el.isNoise) // Increased min length, filter noise
+    .sort((a, b) => (b.length * b.weight) - (a.length * b.weight))
+    .slice(0, 8) // Top 8 longest + high-weight blocks
+    .map(el => el.text);
+
+  // 4. Merge content and truncate
+  const combined = [...metadata, ...blocks].join('\n\n');
+  return combined.slice(0, 5000); // Limit to ~5k characters for token efficiency
+}
+
+/**
+ * Check if text is browser noise (like "youtube (527)", "Loading...", etc.)
+ */
+function isBrowserNoise(text: string): boolean {
+  if (!text || text.length < 3) return true;
+  
+  const noisePatterns = [
+    /^[a-zA-Z\s]+\(\d+\)$/, // "youtube (527)", "facebook (3)"
+    /^Loading\.{1,3}$/, // "Loading...", "Loading.."
+    /^Please wait\.{1,3}$/, // "Please wait..."
+    /^Connecting\.{1,3}$/, // "Connecting..."
+    /^[A-Za-z\s]+\.{1,3}$/, // Generic loading patterns
+    /^\d+$/, // Just numbers
+    /^[A-Za-z\s]+\s\(\d+\)$/, // "YouTube (527)" with spaces
+    /^[A-Za-z\s]+\s-\s[A-Za-z\s]+$/, // "YouTube - Home" type patterns
+    /^[A-Za-z\s]+\s\|\s[A-Za-z\s]+$/, // "YouTube | Home" type patterns
+  ];
+  
+  return noisePatterns.some(pattern => pattern.test(text.trim()));
+}
+
+/**
  * Extract comprehensive content from the current page
+ * Returns structured data with relevant text content
  */
 export const scrapeCurrentPage = (): PageContent => {
   const url = window.location.href;
   const domain = window.location.hostname;
   
-  // Get page title
-  const title = document.title || '';
+  // Get page title with noise filtering
+  const rawTitle = document.title || '';
+  const title = isBrowserNoise(rawTitle) ? '' : rawTitle;
   
   // Get meta description
   const metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
   const description = metaDescription?.content || '';
   
-  // Get main text content (excluding scripts, styles, etc.)
-  const textContent = extractMainTextContent();
-  
-  // Get all images
-  const images = extractImages();
-  
-  // Get all links
-  const links = document.querySelectorAll('a[href]');
-  const linkUrls: string[] = [];
-  
-  links.forEach(link => {
-    const href = (link as HTMLAnchorElement).href;
-    if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
-      linkUrls.push(href);
-    }
-  });
+  // Get relevant text content using the improved extraction method
+  const relevantText = extractRelevantContentFromPage();
   
   return {
     title,
     description,
     url,
     domain,
-    textContent,
-    images,
-    links: linkUrls,
+    relevantText,
     timestamp: new Date()
   };
 };
 
 /**
- * Extract main text content from the page
+ * Extract content from a specific URL (for testing purposes)
+ * Note: This requires the page to be loaded in the current context
  */
-export const extractMainTextContent = (): string => {
-  // Remove script and style elements
-  const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer, header');
-  scripts.forEach(el => el.remove());
-  
-  // Get text from common content containers
-  const contentSelectors = [
-    'main',
-    'article',
-    '.content',
-    '.post-content',
-    '.entry-content',
-    '#content',
-    '.main-content',
-    'body'
-  ];
-  
-  let content = '';
-  
-  for (const selector of contentSelectors) {
-    const element = document.querySelector(selector);
-    if (element) {
-      content = element.textContent || (element as HTMLElement).innerText || '';
-      if (content.trim().length > 100) {
-        break; // Found substantial content
-      }
-    }
+export const scrapePageFromUrl = (url: string): PageContent | null => {
+  // Check if we're on the requested URL
+  if (window.location.href !== url) {
+    console.warn('URL mismatch. Current page URL must match the requested URL for scraping.');
+    return null;
   }
   
-  // Clean up the text
-  return cleanTextContent(content);
+  return scrapeCurrentPage();
 };
 
 /**
- * Extract all images from the page
+ * Get a summary of the page content for quick analysis
  */
-export const extractImages = (): string[] => {
-  const images = document.querySelectorAll('img');
-  const imageUrls: string[] = [];
-  
-  images.forEach(img => {
-    const src = img.src || img.dataset.src;
-    if (src && !src.startsWith('data:')) {
-      imageUrls.push(src);
-    }
-  });
-  
-  return imageUrls;
-};
-
-/**
- * Extract all links from the page
- */
-export const extractLinks = (): string[] => {
-  const links = document.querySelectorAll('a[href]');
-  const linkUrls: string[] = [];
-  
-  links.forEach(link => {
-    const href = (link as HTMLAnchorElement).href;
-    if (href && !href.startsWith('javascript:') && !href.startsWith('#')) {
-      linkUrls.push(href);
-    }
-  });
-  
-  return linkUrls;
-};
-
-/**
- * Clean and format text content
- */
-const cleanTextContent = (text: string): string => {
-  return text
-    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
-    .replace(/\n+/g, '\n') // Replace multiple newlines with single newline
-    .trim()
-    .substring(0, 5000); // Limit to 5000 characters
-};
-
-/**
- * Extract specific content by CSS selector
- */
-export const extractBySelector = (selector: string): string => {
-  const element = document.querySelector(selector);
-  return element?.textContent?.trim() || '';
-};
-
-/**
- * Extract social media specific content
- */
-export const extractSocialMediaContent = () => {
-  const platform = detectSocialPlatform();
-  
-  switch (platform) {
-    case 'youtube':
-      return extractYouTubeContent();
-    case 'instagram':
-      return extractInstagramContent();
-    case 'twitter':
-      return extractTwitterContent();
-    case 'linkedin':
-      return extractLinkedInContent();
-    default:
-      return scrapeCurrentPage();
-  }
-};
-
-/**
- * Detect which social media platform the user is on
- */
-const detectSocialPlatform = (): string => {
-  const hostname = window.location.hostname.toLowerCase();
-  
-  if (hostname.includes('youtube.com')) return 'youtube';
-  if (hostname.includes('instagram.com')) return 'instagram';
-  if (hostname.includes('twitter.com') || hostname.includes('x.com')) return 'twitter';
-  if (hostname.includes('linkedin.com')) return 'linkedin';
-  if (hostname.includes('facebook.com')) return 'facebook';
-  if (hostname.includes('reddit.com')) return 'reddit';
-  
-  return 'unknown';
-};
-
-/**
- * Extract YouTube specific content
- */
-const extractYouTubeContent = () => {
-  const title = extractBySelector('h1.ytd-video-primary-info-renderer') || 
-                extractBySelector('.title.style-scope.ytd-video-primary-info-renderer') ||
-                document.title;
-  
-  const description = extractBySelector('#description-text') || 
-                     extractBySelector('.ytd-video-secondary-info-renderer #description');
-  
-  const channel = extractBySelector('#channel-name') || 
-                 extractBySelector('.ytd-channel-name');
+export const getPageSummary = (): {
+  title: string;
+  description: string;
+  contentLength: number;
+  hasMainContent: boolean;
+} => {
+  const title = document.title || '';
+  const description = (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || '';
+  const relevantText = extractRelevantContentFromPage();
   
   return {
-    platform: 'youtube',
     title,
     description,
-    channel,
-    url: window.location.href,
-    timestamp: new Date()
+    contentLength: relevantText.length,
+    hasMainContent: relevantText.length > 100
   };
 };
 
 /**
- * Extract Instagram specific content
+ * Extract content with custom filters
  */
-const extractInstagramContent = () => {
-  const caption = extractBySelector('article div[data-testid="post-caption"]') ||
-                 extractBySelector('._a9zs');
-  
-  const username = extractBySelector('header a') ||
-                  extractBySelector('._a9zc');
-  
-  return {
-    platform: 'instagram',
-    caption,
-    username,
-    url: window.location.href,
-    timestamp: new Date()
+export const extractContentWithFilters = (options: {
+  minLength?: number;
+  maxBlocks?: number;
+  includeMetadata?: boolean;
+  customSelectors?: string[];
+} = {}): string => {
+  const {
+    minLength = 50,
+    maxBlocks = 5,
+    includeMetadata = true,
+    customSelectors = []
+  } = options;
+
+  // Collect metadata if requested
+  const metadata = includeMetadata ? [
+    document.title,
+    (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[property="og:title"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[property="og:description"]') as HTMLMetaElement)?.content,
+    (document.querySelector('meta[name="twitter:description"]') as HTMLMetaElement)?.content
+  ].filter(Boolean) : [];
+
+  // Define tag weights
+  const tagPriority: Record<string, number> = {
+    MAIN: 3,
+    ARTICLE: 3,
+    SECTION: 2,
+    DIV: 1,
+    P: 1,
+    SPAN: 0.5
   };
+
+  // Build selector list
+  const selectors = [
+    'main, article, section, div, p, span',
+    ...customSelectors
+  ].join(', ');
+
+  // Get visible, long-enough elements
+  const blocks = Array.from(document.querySelectorAll(selectors))
+    .map(el => {
+      const style = window.getComputedStyle(el);
+      const text = (el as HTMLElement).innerText.trim();
+      const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && (el as HTMLElement).offsetHeight > 0;
+
+      return {
+        tag: el.tagName,
+        text,
+        weight: (tagPriority[el.tagName] || 0),
+        isVisible,
+        length: text.length
+      };
+    })
+    .filter(el => el.isVisible && el.length > minLength)
+    .sort((a, b) => (b.length * b.weight) - (a.length * a.weight))
+    .slice(0, maxBlocks)
+    .map(el => el.text);
+
+  // Merge content
+  const combined = [...metadata, ...blocks].join('\n\n');
+  return combined.slice(0, 5000);
 };
 
 /**
- * Extract Twitter specific content
+ * Test function to demonstrate the scraper functionality
+ * Call this from the browser console to test the scraper
  */
-const extractTwitterContent = () => {
-  const tweet = extractBySelector('article[data-testid="tweet"]') ||
-               extractBySelector('.tweet-text');
+export const testScraper = () => {
+  console.log('🧪 Testing New Scraper Functionality...');
   
-  const username = extractBySelector('[data-testid="User-Name"]') ||
-                  extractBySelector('.username');
+  // Test the main extraction function
+  const relevantContent = extractRelevantContentFromPage();
+  console.log('📄 Extracted Content Length:', relevantContent.length);
+  console.log('📄 First 500 characters:', relevantContent.substring(0, 500));
+  
+  // Test the structured data
+  const pageData = scrapeCurrentPage();
+  console.log('📊 Page Data:', pageData);
+  
+  // Test the summary
+  const summary = getPageSummary();
+  console.log('📋 Page Summary:', summary);
   
   return {
-    platform: 'twitter',
-    tweet,
-    username,
-    url: window.location.href,
-    timestamp: new Date()
-  };
-};
-
-/**
- * Extract LinkedIn specific content
- */
-const extractLinkedInContent = () => {
-  const post = extractBySelector('.feed-shared-update-v2__description') ||
-              extractBySelector('.feed-shared-text');
-  
-  const author = extractBySelector('.feed-shared-actor__name') ||
-                extractBySelector('.feed-shared-actor__title');
-  
-  return {
-    platform: 'linkedin',
-    post,
-    author,
-    url: window.location.href,
-    timestamp: new Date()
+    relevantContent,
+    pageData,
+    summary
   };
 }; 

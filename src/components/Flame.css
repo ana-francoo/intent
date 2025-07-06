@@ -1,13 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Ubuntu:400,400i,700,700i');
 
-/* Home root container */
-.home-root {
-  position: relative;
-  min-height: 100vh;
-  width: 100%;
-}
-
-/* Candle-specific styles only */
+/* Flame-specific styles only */
 .holder {
   margin: 12rem auto 0;
   width: 150px;
@@ -38,7 +31,7 @@
   bottom: 78%;
 }
 
-.candle-body {
+.flame-body {
   position: absolute;
   bottom: 0;
   width: 150px;
@@ -46,7 +39,7 @@
   border-radius: 50px / 40px;
 }
 
-.candle-body:before {
+.flame-body:before {
   width: 100%;
   height: 0px;
   border-radius: 50%;
@@ -54,7 +47,7 @@
   background: radial-gradient(#eaa121, #8e4901 45%, #b86409 80%);
 }
 
-.candle-body:after {
+.flame-body:after {
   width: 34px;
   height: 0px;
   left: 50%;
@@ -79,18 +72,6 @@
     sparkFlame 0.3s ease-in forwards 0s,
     moveFlame 3s linear infinite 1s,
     enlargeFlame 5s ease-out infinite 1s;
-}
-
-.flame.ignite {
-  /* Your special spark animation styles */
-  animation: yourSparkAnimation 0.5s ease-in forwards;
-}
-
-.flame {
-  /* Regular flame styles */
-  animation: sparkFlame 0.5s ease-in forwards 0.2s,
-             moveFlame 3s linear infinite 1s,
-             enlargeFlame 5s ease-out infinite 1s;
 }
 
 .flame:before {
@@ -209,52 +190,4 @@
 
 .thread {
   display: none;
-}
-
-/* Loading overlay styles - scoped to avoid conflicts */
-.loading-overlay {
-  position: fixed;
-  z-index: 9999;
-  inset: 0;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 1;
-  pointer-events: all;
-  transition: opacity 0.5s ease;
-}
-
-.loading-overlay.fade-out {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Candle container - always visible */
-.candle-container {
-  position: absolute;
-  z-index: 1000;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-/* Intro phase - position flame slightly lower to compensate for shift */
-.candle-container.intro-phase {
-  top: 55%;
-}
-
-/* Black background overlay */
-.black-background-overlay {
-  position: fixed;
-  z-index: 999;
-  inset: 0;
-  background: #000;
-  opacity: 1;
-  transition: opacity 1.2s ease;
-}
-
-.black-background-overlay.fade-out {
-  opacity: 0;
-}
+} 

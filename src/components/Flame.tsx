@@ -1,11 +1,11 @@
-import React from "react";
-import "./Candle.css";
+import { useEffect, useState } from "react";
+import "./Flame.css";
 
-const Candle = () => {
+const Flame = () => {
   return (
     <div className="holder">
       <div className="flame-wrapper">
-        <div className="candle-body">
+        <div className="flame-body">
           <div className="blinking-glow"></div>
           <div className="glow"></div>
           <div className="flame"></div>
@@ -15,4 +15,4 @@ const Candle = () => {
   );
 };
 
-export default Candle;
+export default Flame; 

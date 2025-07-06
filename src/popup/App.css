@@ -32,7 +32,7 @@ body, #root, .home-container {
   pointer-events: all;
 }
 
-.candle-icon-wrapper {
+.flame-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,7 +44,7 @@ body, #root, .home-container {
   /* Will be set to 1 by animation */
 }
 
-.candle-icon {
+.flame-icon {
   width: 150px; /* Make logo bigger */
   height: 150px;
   border-radius: 50%;
@@ -470,7 +470,7 @@ body, #root, .home-container {
 }
 
 /* Ensure animations play in order */
-.candle-icon-wrapper,
+.flame-icon-wrapper,
 .main-title,
 .subtitle,
 .home-card,

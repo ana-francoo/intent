@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import candle from '@/assets/logo.png';
 import logo from '@/assets/logo2.png'
 import NewPage from './NewPage';
 import HowItWorks from './HowItWorks';
@@ -8,16 +7,21 @@ import Main from './Main';
 import Auth from './Auth';
 import { supabase } from '../supabaseClient';
 import { triggerOverlay } from '../utils/overlay';
-import Candle from './Candle';
-import './Candle.css';
+import Flame from './Flame';
+import './Flame.css';
+import './Home.css';
 
-export default function Home() {
+interface HomeProps {
+  onNext: () => void;
+}
+
+export default function Home({ onNext }: HomeProps) {
   const [showIntro, setShowIntro] = useState(true);
-  const [isLoading, setIsLoading] = useState(false); // Changed to false so Candle appears immediately
-  const [fadeOutLoading, setFadeOutLoading] = useState(false);
+  const [isLoading, _setIsLoading] = useState(false); // Changed to false so Flame appears immediately
+  const [fadeOutLoading, _setFadeOutLoading] = useState(false);
   const [showBlackBackground, setShowBlackBackground] = useState(true); // New state for black background
   const [currentPage, setCurrentPage] = useState<'home' | 'new-page' | 'how-it-works' | 'auth' | 'website-blocking' | 'main'>('home');
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [showOverlay, _setShowOverlay] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -80,7 +84,7 @@ export default function Home() {
   }
 
   if (currentPage === 'how-it-works') {
-    return <HowItWorks onBack={handleToNewPage} onNext={handleToAuth} />;
+    return <HowItWorks _onBack={handleToNewPage} onNext={handleToAuth} />;
   }
 
   if (currentPage === 'auth') {
@@ -88,7 +92,7 @@ export default function Home() {
   }
 
   if (currentPage === 'website-blocking') {
-    return <WebsiteBlocking onBack={handleBackToHowItWorks} onNext={handleToMain} />;
+    return <WebsiteBlocking _onBack={handleBackToHowItWorks} onNext={handleToMain} />;
   }
 
   if (currentPage === 'main') {
@@ -105,9 +109,9 @@ export default function Home() {
         <div className="black-background-overlay"></div>
       )}
       
-      {/* Candle component - always visible */}
-      <div className={`candle-container${showIntro ? ' intro-phase' : ''}`}>
-        <Candle />
+      {/* Flame component - always visible */}
+      <div className={`flame-container${showIntro ? ' intro-phase' : ''}`}>
+        <Flame />
       </div>
       
       {/* Loading overlay - only for initial black screen */}
@@ -117,8 +121,8 @@ export default function Home() {
       )}
       
       <div className={`home-container${showIntro ? ' hidden' : ' visible'}`}>
-        <div className="candle-icon-wrapper">
-          {!showIntro && <img src={logo} alt="Candle" className="candle-icon" />}
+        <div className="flame-icon-wrapper">
+          {!showIntro && <img src={logo} alt="Flame" className="flame-icon" />}
         </div>
         <h1 className="main-title">Ready to reclaim your focus?</h1>
         <p className="subtitle">Follow-through with your intention, distraction-free.</p>
