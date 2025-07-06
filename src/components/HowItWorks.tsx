@@ -1,5 +1,3 @@
-interface HowItWorksProps {}
-
 export default function HowItWorks() {
   return (
     <>

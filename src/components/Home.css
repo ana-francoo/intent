@@ -1,0 +1,56 @@
+/* Home-specific styles only */
+
+/* Home root container */
+.home-root {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Loading overlay styles */
+.loading-overlay {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  pointer-events: all;
+  transition: opacity 0.5s ease;
+}
+
+.loading-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Flame container - always visible */
+.flame-container {
+  position: absolute;
+  z-index: 1000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Intro phase - position flame slightly lower to compensate for shift */
+.flame-container.intro-phase {
+  top: 55%;
+}
+
+/* Black background overlay */
+.black-background-overlay {
+  position: fixed;
+  z-index: 999;
+  inset: 0;
+  background: #000;
+  opacity: 1;
+  transition: opacity 1.2s ease;
+}
+
+.black-background-overlay.fade-out {
+  opacity: 0;
+} 

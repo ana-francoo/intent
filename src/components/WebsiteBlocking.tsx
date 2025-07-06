@@ -12,6 +12,13 @@ interface WebsiteBlockingProps {
   onSave: () => void;
 }
 
+interface WebsiteOption {
+  id: string;
+  name: string;
+  logo: string;
+  selected: boolean;
+}
+
 export default function WebsiteBlocking({ onSave }: WebsiteBlockingProps) {
   const [selectedWebsites, setSelectedWebsites] = useState<WebsiteOption[]>([
     { id: 'instagram', name: 'Instagram', logo: '📷', selected: false },

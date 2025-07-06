@@ -7,8 +7,8 @@ import Main from './Main';
 import Auth from './Auth';
 import { supabase } from '../supabaseClient';
 import { triggerOverlay } from '../utils/overlay';
-import Candle from './Candle';
-import './Candle.css';
+import Flame from './Flame';
+import './Flame.css';
 
 const PAGES = {
   home: 0,
@@ -21,7 +21,7 @@ const PAGES = {
 
 const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
 
-export default function Home() {
+export default function Home({ onNext }: HomeProps) {
   const [showIntro, setShowIntro] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [fadeOutLoading, setFadeOutLoading] = useState(false);
@@ -124,9 +124,9 @@ export default function Home() {
               <div className="black-background-overlay"></div>
             )}
             <div
-              className={`candle-container${showIntro ? ' intro-phase' : ''}`}
+              className={`flame-container${showIntro ? ' intro-phase' : ''}`}
             >
-              <Candle />
+              <Flame />
             </div>
             {isLoading && (
               <div
@@ -138,9 +138,9 @@ export default function Home() {
             <div
               className={`home-container${showIntro ? ' hidden' : ' visible'}`}
             >
-              <div className="candle-icon-wrapper">
+              <div className="flame-icon-wrapper">
                 {!showIntro && (
-                  <img src={logo} alt="Candle" className="candle-icon" />
+                  <img src={logo} alt="flame" className="flame-icon" />
                 )}
               </div>
               <h1 className="main-title">Ready to reclaim your focus?</h1>

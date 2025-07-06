@@ -5,6 +5,7 @@ export default defineManifest({
   manifest_version: 3,
   name: pkg.name,
   version: pkg.version,
+  permissions: ['storage'],
   icons: {
     48: 'public/logo.png',
   },
@@ -14,8 +15,15 @@ export default defineManifest({
     },
     default_popup: 'src/popup/index.html',
   },
+  background: {
+    service_worker: 'src/background.ts',
+  },
   content_scripts: [{
     js: ['src/content/main.tsx'],
     matches: ['https://*/*'],
+  }],
+  web_accessible_resources: [{
+    resources: ['src/assets/logo2.png'],
+    matches: ['https://*/*']
   }],
 })
