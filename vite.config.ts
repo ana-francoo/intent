@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
   
   console.log('Environment mode:', mode);
   console.log('OpenRouter API Key configured:', !!env.OPENROUTER_API_KEY);
+  console.log('Supabase URL configured:', !!env.VITE_SUPABASE_URL);
+  console.log('Supabase Key configured:', !!env.VITE_SUPABASE_ANON_KEY);
   
   return {
     resolve: {
@@ -38,5 +40,7 @@ export default defineConfig(({ mode }) => {
       'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'openai/gpt-4o'),
       'process.env.INTENTION_CONFIDENCE_THRESHOLD': JSON.stringify(env.INTENTION_CONFIDENCE_THRESHOLD || '0.7'),
     },
+    // Vite automatically exposes VITE_ prefixed variables to the client
+    envPrefix: ['VITE_'],
   };
 });

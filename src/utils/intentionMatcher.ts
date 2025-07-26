@@ -294,3 +294,91 @@ export const getIntentionSummary = async (url: string): Promise<string | null> =
 export const isIntentionMatchingAvailable = (): boolean => {
   return !!CONFIG.OPENROUTER.API_KEY;
 }; 
+
+
+
+
+
+/////////////////INTENTION VALIDITY CHECK///////////
+
+//prompt that defined validity of input intention. Can be changed later based on feedbacl
+
+const createValidityPrompt = (intentionText: string): string => {
+  return `You are a focus assistant. Users must declare a valid reason to access a blocked site. A valid input must:
+- Be specific and clear.
+- Express a goal-oriented or intentional use.
+- Avoid vague, low-effort, or unserious responses.
+- Not describe compulsive, passive, or addictive behavior.
+
+Input: "${intentionText}"
+
+Is this a valid intention? Respond in a succinct way. If valid, reply with "Valid". If invalid, reply with "Invalid" and a short reason.`;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Validate an intention statement. Returns [isValid, reason].
+export const validateIntention = async (intentionText: string): Promise<[boolean, string]> => {
+  if (!CONFIG.OPENROUTER.API_KEY) {
+    // Fallback: always valid if no API key
+    return [true, ''];
+  }
+
+  const prompt = createValidityPrompt(intentionText);
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: getOpenRouterHeaders(),
+      body: JSON.stringify({
+        model: CONFIG.OPENROUTER.DEFAULT_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an empowering focus assistant that determines if a user\'s intention for accessing a blocked site is valid. Only respond with "Valid" or "Invalid", and if invalid, give a short reason that encourages the user to try again.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 100,
+        temperature: 0.0,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    const aiResponse = data.choices[0]?.message?.content?.trim() || '';
+
+    // Parse the AI's response
+    if (aiResponse.toLowerCase().startsWith('valid')) {
+      return [true, ''];
+    } else if (aiResponse.toLowerCase().startsWith('invalid')) {
+      // Extract the reason after "Invalid"
+      const reason = aiResponse.replace(/^invalid[:,]?\s*/i, '');
+      return [false, reason || 'Your intention is not valid.'];
+    } else {
+      // Fallback: treat as valid if unclear
+      return [true, ''];
+    }
+  } catch (error) {
+    console.error('Error validating intention:', error);
+    // On error, fallback to valid to avoid blocking user
+    return [true, ''];
+  }
+};

@@ -30,7 +30,7 @@
 .flame-container {
   position: absolute;
   z-index: 1000;
-  top: 50%;
+  top: 39%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -38,7 +38,7 @@
 
 /* Intro phase - position flame slightly lower to compensate for shift */
 .flame-container.intro-phase {
-  top: 55%;
+  top: 45%;
 }
 
 /* Black background overlay */

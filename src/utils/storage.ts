@@ -6,7 +6,20 @@ const INTENTION_EXPIRY_MS = INTENTION_EXPIRY_HOURS * 60 * 60 * 1000; // 8 hours 
 
 // Helper function to check if chrome.storage is available
 const isStorageAvailable = () => {
-  return typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local;
+  try {
+    return typeof chrome !== 'undefined' && 
+           chrome.storage && 
+           chrome.storage.local &&
+           chrome.runtime && 
+           chrome.runtime.id; // Check if extension context is valid
+  } catch (error) {
+    // Don't log warnings for extension context invalidation in development
+    if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+      return false;
+    }
+    console.warn('Extension context error in isStorageAvailable:', error);
+    return false;
+  }
 };
 
 // Helper function to normalize URL to domain for robust matching
@@ -38,22 +51,35 @@ export const saveIntention = async (url: string, intentionText: string) => {
     throw new Error('Chrome storage is not available');
   }
 
-  // Normalize URL to domain for robust storage
-  const normalizedUrl = normalizeUrlToDomain(url);
+  try {
+    // Normalize URL to domain for robust storage
+    const normalizedUrl = normalizeUrlToDomain(url);
 
-  const now = Date.now();
-  const expiresAt = now + INTENTION_EXPIRY_MS;
-  
-  const data = {
-    [normalizedUrl]: {
-      intention: intentionText,
-      timestamp: now,
-      expiresAt: expiresAt
+    const now = Date.now();
+    const expiresAt = now + INTENTION_EXPIRY_MS;
+    
+    const data = {
+      [normalizedUrl]: {
+        intention: intentionText,
+        timestamp: now,
+        expiresAt: expiresAt
+      }
+    };
+    await chrome.storage.local.set(data);
+    
+    console.log(`Intention saved for ${normalizedUrl} (original: ${url}), expires at ${new Date(expiresAt).toLocaleString()}`);
+  } catch (error) {
+    // Handle extension context invalidation specifically
+    if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+      console.warn('Extension context invalidated - intention not saved');
+      throw new Error('Extension context invalidated');
     }
-  };
-  await chrome.storage.local.set(data);
-  
-  console.log(`Intention saved for ${normalizedUrl} (original: ${url}), expires at ${new Date(expiresAt).toLocaleString()}`);
+    if (error instanceof Error && error.message.includes('Cannot read properties of undefined')) {
+      console.warn('Chrome storage not available - intention not saved');
+      throw new Error('Chrome storage not available');
+    }
+    throw error;
+  }
 };
 
 export const getIntention = async (url: string): Promise<IntentionData | null> => {
@@ -62,25 +88,39 @@ export const getIntention = async (url: string): Promise<IntentionData | null> =
     return null;
   }
 
-  // Normalize URL to domain for robust retrieval
-  const normalizedUrl = normalizeUrlToDomain(url);
+  try {
+    // Normalize URL to domain for robust retrieval
+    const normalizedUrl = normalizeUrlToDomain(url);
 
-  const result = await chrome.storage.local.get(normalizedUrl);
-  const intentionData = result[normalizedUrl] as IntentionData | undefined;
-  
-  if (!intentionData) {
+    const result = await chrome.storage.local.get(normalizedUrl);
+    const intentionData = result[normalizedUrl] as IntentionData | undefined;
+    
+    if (!intentionData) {
+      return null;
+    }
+    
+    // Check if intention has expired
+    const now = Date.now();
+    if (intentionData.expiresAt && now > intentionData.expiresAt) {
+      console.log(`Intention for ${normalizedUrl} has expired, removing from storage`);
+      await chrome.storage.local.remove(normalizedUrl);
+      return null;
+    }
+    
+    return intentionData;
+  } catch (error) {
+    // Handle extension context invalidation specifically
+    if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+      console.warn('Extension context invalidated - intention not retrieved');
+      return null;
+    }
+    if (error instanceof Error && error.message.includes('Cannot read properties of undefined')) {
+      console.warn('Chrome storage not available - intention not retrieved');
+      return null;
+    }
+    console.error('Error getting intention:', error);
     return null;
   }
-  
-  // Check if intention has expired
-  const now = Date.now();
-  if (intentionData.expiresAt && now > intentionData.expiresAt) {
-    console.log(`Intention for ${normalizedUrl} has expired, removing from storage`);
-    await chrome.storage.local.remove(normalizedUrl);
-    return null;
-  }
-  
-  return intentionData;
 };
 
 /**
@@ -116,6 +156,15 @@ export const cleanupExpiredIntentions = async () => {
     
     return urlsToRemove.length;
   } catch (error) {
+    // Handle extension context invalidation specifically
+    if (error instanceof Error && error.message.includes('Extension context invalidated')) {
+      console.warn('Extension context invalidated - storage cleanup skipped');
+      return 0;
+    }
+    if (error instanceof Error && error.message.includes('Cannot read properties of undefined')) {
+      console.warn('Chrome storage not available - storage cleanup skipped');
+      return 0;
+    }
     console.error('Error cleaning up expired intentions:', error);
     return 0;
   }
@@ -179,6 +228,11 @@ export const getIntentionWithTimeRemaining = async (url: string): Promise<{
  * Debug utility to get storage information
  */
 export const getStorageDebugInfo = async () => {
+  if (!isStorageAvailable()) {
+    console.error('Chrome storage is not available');
+    return null;
+  }
+
   try {
     const allData = await chrome.storage.local.get(null);
     const now = Date.now();
@@ -240,9 +294,19 @@ export const saveBlockedSites = async (urls: string[]) => {
     // Get the current authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    if (userError || !user) {
-      console.error('❌ User not authenticated:', userError);
-      throw new Error('User must be authenticated to save blocked sites');
+    if (userError) {
+      console.error('❌ Authentication error:', userError);
+      // In development, this is expected - just log and continue
+      if (userError.message.includes('Auth session missing')) {
+        console.log('ℹ️ No active session - this is normal in development');
+        return null;
+      }
+      throw new Error('Authentication error: ' + userError.message);
+    }
+    
+    if (!user) {
+      console.log('ℹ️ No authenticated user - this is normal in development');
+      return null;
     }
     
     console.log('👤 Authenticated user:', user.id);
@@ -288,28 +352,68 @@ export const saveBlockedSites = async (urls: string[]) => {
     return data;
   } catch (error) {
     console.error('❌ Failed to save blocked sites:', error);
+    // In development, don't throw the error - just log it
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      console.log('ℹ️ Development mode - continuing without saving to database');
+      return null;
+    }
     throw error;
   }
 };
 
 
 export const getBlockedSites = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('blocked_sites')
-        .select('url');
-      
-      if (error) {
-        console.error('Error fetching blocked sites:', error);
-        throw error;
+  try {
+    console.log('📋 Fetching blocked sites for authenticated user...');
+    
+    // Get the current authenticated user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('❌ Authentication error:', userError);
+      // In development, this is expected - just log and continue
+      if (userError.message.includes('Auth session missing')) {
+        console.log('ℹ️ No active session - this is normal in development');
+        return [];
       }
-      
-      return data?.map(item => item.url) || [];
-    } catch (error) {
-      console.error('Failed to fetch blocked sites:', error);
+      throw new Error('Authentication error: ' + userError.message);
+    }
+    
+    if (!user) {
+      console.log('ℹ️ No authenticated user - this is normal in development');
       return [];
     }
-  };
+    
+    console.log('👤 Fetching blocked sites for user:', user.id);
+    
+    const { data, error } = await supabase
+      .from('blocked_sites')
+      .select('url')
+      .eq('user_id', user.id);
+    
+    if (error) {
+      console.error('❌ Error fetching blocked sites:', error);
+      // In development, return empty array instead of throwing
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        console.log('ℹ️ Development mode - returning empty blocked sites list');
+        return [];
+      }
+      throw error;
+    }
+    
+    const urls = data?.map(item => item.url) || [];
+    console.log('✅ Successfully fetched blocked sites for user:', urls);
+    return urls;
+  } catch (error) {
+    console.error('❌ Failed to fetch blocked sites:', error);
+    // In development, return empty array instead of throwing
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      console.log('ℹ️ Development mode - returning empty blocked sites list');
+      return [];
+    }
+    return [];
+  }
+};
   
   export const isUrlBlocked = async (currentUrl: string) => {
     try {
@@ -328,3 +432,7 @@ export const getBlockedSites = async () => {
       return false;
     }
   };
+
+  
+
+

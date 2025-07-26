@@ -6,7 +6,7 @@
   z-index: 100;
   display: flex;
   align-items: flex-end;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
   user-select: none;
   line-height: 1em;
 }

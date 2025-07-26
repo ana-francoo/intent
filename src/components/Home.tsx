@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import logo from '@/assets/logo2.png';
-import NewPage from './NewPage';
 import HowItWorks from './HowItWorks';
 import WebsiteBlocking from './WebsiteBlocking';
+import PopoverDashboard from './PopoverDashboard';
 import Main from './Main';
-import Auth from './Auth';
+import AuthComponent from './Auth';
 import { supabase } from '../supabaseClient';
 import { triggerOverlay } from '../utils/overlay';
 import Flame from './Flame';
@@ -14,11 +14,10 @@ import '../popup/App.css';
 
 const PAGES = {
   home: 0,
-  'new-page': 1,
-  'how-it-works': 2,
-  auth: 3,
-  'website-blocking': 4,
-  main: 5,
+  'how-it-works': 1,
+  auth: 2,
+  'website-blocking': 3,
+  main: 4,
 } as const;
 
 const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
@@ -31,6 +30,10 @@ export default function Home() {
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(PAGES.home);
   const [showOverlay, setShowOverlay] = useState(false);
   const [cameFromHowItWorks, setCameFromHowItWorks] = useState(false);
+  const [hasViewedLastSlide, setHasViewedLastSlide] = useState(false);
+  const [cameFromLogin, setCameFromLogin] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const currentPage = PAGE_NAMES[currentPageIndex];
 
@@ -42,10 +45,36 @@ export default function Home() {
     window.scrollTo(0, 0);
   }, [currentPageIndex]);
 
+  // Enhanced auth state management
   useEffect(() => {
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setCurrentPage('website-blocking');
+      setSession(session);
+      setAuthLoading(false);
+      
+      // If user is authenticated, go to dashboard
+      if (session) {
+        setCurrentPage('main');
+      }
     });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+      
+      if (event === 'SIGNED_IN' && session) {
+        // User just signed in, go to dashboard
+        setCurrentPage('main');
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out, go to home
+        setCurrentPage('home');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -77,26 +106,47 @@ export default function Home() {
   };
 
   const handleGetStarted = () => {
-    setCurrentPage('new-page');
+    setCurrentPage('how-it-works');
   };
 
   const handleToAuth = () => {
     setCameFromHowItWorks(false);
+    setCameFromLogin(true);
     setCurrentPage('auth');
-  };
-
-  const handleAuthSuccess = () => {
-    setCurrentPage('website-blocking');
   };
 
   const handleWebsiteBlockingSave = () => {
     setCurrentPage('main');
   };
 
+  const handleLastSlideViewed = () => {
+    setHasViewedLastSlide(true);
+  };
+
+  const handleHowItWorksNext = () => {
+    setCameFromHowItWorks(true);
+    setCameFromLogin(false);
+    setCurrentPage('auth');
+  };
+
+  const handleGoBackToHome = () => {
+    setCurrentPage('home');
+    setCameFromLogin(false);
+  };
+
   const getNavigationButtons = () => {
     if (currentPageIndex === 0) return null;
 
-    if (currentPage === 'auth' && !cameFromHowItWorks) return null;
+    if (currentPage === 'auth') return null;
+
+    // Hide navigation buttons for how-it-works page since it has its own carousel navigation
+    if (currentPage === 'how-it-works') return null;
+
+    // Hide next button on website-blocking page since it has its own "Finish adding" button
+    if (currentPage === 'website-blocking') return null;
+
+    // Hide navigation on main page (dashboard)
+    if (currentPage === 'main') return null;
 
     const showBack = true;
     const showNext = currentPageIndex < PAGE_NAMES.length - 1;
@@ -116,6 +166,22 @@ export default function Home() {
       </div>
     );
   };
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        background: 'var(--background, #1a1a1a)',
+        color: 'white'
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -184,21 +250,14 @@ export default function Home() {
             </div>
           </div>
         );
-      case 'new-page':
-        return <NewPage />;
       case 'how-it-works':
-        return <HowItWorks />;
+        return <HowItWorks onLastSlideViewed={handleLastSlideViewed} onNext={handleHowItWorksNext} />;
       case 'auth':
-        return <Auth onAuthSuccess={handleAuthSuccess} />;
+        return <AuthComponent onAuthSuccess={() => {}} defaultToLogin={cameFromLogin} onGoBack={handleGoBackToHome} />;
       case 'website-blocking':
         return <WebsiteBlocking onSave={handleWebsiteBlockingSave} />;
       case 'main':
-        return (
-          <>
-            {showOverlay && <div className="overlay-film"></div>}
-            <Main />
-          </>
-        );
+        return <PopoverDashboard />;
       default:
         return null;
     }
