@@ -330,7 +330,7 @@
 <body>
     <div class="navbar">
         <div class="navbar-brand">
-            <img src="/public/logo.png" alt="Intent Logo" class="navbar-logo">
+            <img src="../logo.png" alt="Intent Logo" class="navbar-logo">
             <div class="navbar-name">Intent</div>
         </div>
     </div>
@@ -340,7 +340,7 @@
     <div class="hero">
         <h1>Browse with<br><span class="highlight">intention</span></h1>
         <p>Intent helps you stay focused by asking for your purpose before accessing any website.</p>
-        <button class="cta-button" onclick="window.close()">
+        <button class="cta-button" id="heroCtaButton">
             <span class="btn-text">Get Started</span>
             <span class="btn-arrow">
                 <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -367,7 +367,7 @@
                     <p>Enter your purpose for visiting this website:</p>
                     <input type="text" class="intention-input" id="intentionInput"
                         placeholder="e.g., Research for my project">
-                    <button class="demo-button" onclick="submitDemo()">Continue</button>
+                    <button class="demo-button" id="demoButton">Continue</button>
                 </div>
             </div>
         </div>
@@ -377,7 +377,7 @@
         <div class="features-grid">
             <div class="feature">
                 <div class="feature-icon">
-                    <img src="/public/pen-line.svg" alt="Set Your Intention" width="40" height="40">
+                    <img src="../pen-line.svg" alt="Set Your Intention" width="40" height="40">
                 </div>
                 <h3>Set Your Intention</h3>
                 <p>When you want to use a potentially distracting site, Intent will prompt you to declare your clear
@@ -386,7 +386,7 @@
 
             <div class="feature">
                 <div class="feature-icon">
-                    <img src="/public/target.svg" alt="Stay Focused" width="40" height="40">
+                    <img src="../target.svg" alt="Stay Focused" width="40" height="40">
                 </div>
                 <h3>Stay Focused</h3>
                 <p>Intent monitors your activity and ensures you stay aligned with your declared intention.</p>
@@ -394,7 +394,7 @@
 
             <div class="feature">
                 <div class="feature-icon">
-                    <img src="/public/lock.svg" alt="Gentle Reminders" width="40" height="40">
+                    <img src="../lock.svg" alt="Gentle Reminders" width="40" height="40">
                 </div>
                 <h3>Gentle Reminders</h3>
                 <p>If your activity drifts from your intention, Intent gently steps in and reblocks the site to help you
@@ -403,7 +403,7 @@
 
             <div class="feature">
                 <div class="feature-icon">
-                    <img src="/public/sprout.svg" alt="Build Better Habits" width="40" height="40">
+                    <img src="../sprout.svg" alt="Build Better Habits" width="40" height="40">
                 </div>
                 <h3>Build Better Habits</h3>
                 <p>Over time, Intent helps you develop healthier browsing habits and maintain focus on what matters
@@ -413,7 +413,7 @@
     </div>
 
     <div class="cta">
-        <button class="cta-button" onclick="window.close()">
+        <button class="cta-button" id="footerCtaButton">
             <span class="btn-text">Let&apos;s get started</span>
             <span class="btn-arrow">
                 <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -427,23 +427,7 @@
         <div class="copyright">© 2025 Intent. All rights reserved.</div>
     </div>
 
-    <script>
-        function submitDemo() {
-            const input = document.getElementById('intentionInput');
-            if (input.value.trim()) {
-                document.getElementById('intentionOverlay').classList.add('hidden');
-                document.getElementById('demoSite').classList.add('unblurred');
-            }
-        }
-
-        document.getElementById('intentionInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                submitDemo();
-            }
-        });
-
-        document.getElementById('intentionInput').focus();
-    </script>
+    <script src="landing.js"></script>
 </body>
 
 </html>
