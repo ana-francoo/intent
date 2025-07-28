@@ -25,6 +25,12 @@ setInterval(async () => {
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[Background] Extension installed/updated:', details.reason);
   
+  if (details.reason === 'install' || details.reason === 'chrome_update') {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('src/landing.html')
+    });
+  }
+  
   // Clean up on installation/update
   cleanupExpiredIntentions().then(cleanedCount => {
     if (cleanedCount > 0) {
@@ -54,6 +60,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         intentionEntries: intentionCount
       });
     });
+    return true;
+  }
+  
+  // this is used in the landing page to open the extension
+  if (message.type === 'OPEN_POPUP') {
+    try {
+      chrome.action.openPopup().then(() => {
+        sendResponse({ success: true });
+      }).catch((error) => {
+        sendResponse({ success: false, error: String(error) });
+      });
+    } catch (error) {
+      sendResponse({ success: false, error: String(error) });
+    }
     return true;
   }
 }); 
