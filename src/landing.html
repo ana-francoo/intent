@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Intent</title>
     <style>
+        @font-face {
+            font-family: 'Geist';
+            src: url('fonts/geist.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             margin: 0;
@@ -22,9 +29,9 @@
             bottom: 0;
             z-index: -1;
             background-image:
-                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.09) 0%, transparent 60%),
-                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.07) 0%, transparent 70%),
-                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.11) 0%, transparent 80%);
+                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.06) 0%, transparent 60%),
+                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.04) 0%, transparent 70%),
+                radial-gradient(circle at 50% 100%, rgba(242, 100, 25, 0.08) 0%, transparent 80%);
         }
 
         .navbar {
@@ -55,7 +62,7 @@
 
         .navbar-name {
             font-size: 1.2rem;
-            font-weight: 600;
+            font-weight: 500;
             color: #1a1a1a;
         }
 
@@ -67,7 +74,7 @@
 
         .hero h1 {
             font-size: 6rem;
-            font-weight: 700;
+            font-weight: 600;
             color: #1a1a1a;
             margin: 0 0 32px 0;
             line-height: 0.9;
@@ -95,12 +102,98 @@
         }
 
         .demo-preview {
-            background: white;
-            border-radius: 48px;
+            background: radial-gradient(ellipse at 50% 30%, rgba(43, 37, 37, 0.99) 60%, rgba(0, 0, 0, 0.99) 100%);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             position: relative;
-            height: 650px;
+            height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .demo-website {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            filter: blur(8px);
+            transition: filter 1s ease;
+        }
+
+        .demo-website.unblurred {
+            filter: blur(0px);
+        }
+
+        .intention-overlay {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 1s ease;
+        }
+
+        .intention-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .intention-prompt {
+            text-align: center;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+
+        .intention-prompt h3 {
+            color: white;
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        }
+
+        .intention-prompt p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 0 25px 0;
+            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        }
+
+        .intention-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            outline: none;
+            background: transparent;
+            color: white;
+            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        }
+
+        .intention-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .demo-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .demo-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
         }
 
         .demo-website {
@@ -181,7 +274,7 @@
         .features {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 0 20px 80px;
+            padding: 0 0 80px;
         }
 
         .features-grid {
@@ -246,14 +339,14 @@
             cursor: pointer;
             font-weight: 600;
         }
-        
+
         .separator {
             width: 60%;
             height: 1px;
-            background: linear-gradient(to right, transparent, rgba(242, 100, 25, 0.3) 20%, rgba(242, 100, 25, 0.3) 80%, transparent);
+            background: linear-gradient(to right, transparent, rgba(242, 100, 25, 0.15) 20%, rgba(242, 100, 25, 0.15) 80%, transparent);
             margin: 40px auto 20px;
         }
-        
+
         .copyright {
             text-align: center;
             color: #999;
@@ -299,27 +392,30 @@
     <div class="features">
         <div class="features-grid">
             <div class="feature">
-                <div class="feature-icon">I</div>
-                <h3>Mindful browsing</h3>
-                <p>Set clear intentions before accessing websites to stay focused on your goals.</p>
+                <div class="feature-icon">[icon]</div>
+                <h3>Set Your Intention</h3>
+                <p>When you want to use a potentially distracting site, Intent will prompt you to declare your clear
+                    intention.</p>
             </div>
 
             <div class="feature">
-                <div class="feature-icon">A</div>
-                <h3>Instant activation</h3>
-                <p>Works automatically on all websites without any setup or configuration needed.</p>
+                <div class="feature-icon">[icon]</div>
+                <h3>Stay Focused</h3>
+                <p>Intent monitors your activity and ensures you stay aligned with your declared intention.</p>
             </div>
 
             <div class="feature">
-                <div class="feature-icon">P</div>
-                <h3>Privacy focused</h3>
-                <p>Your intentions are stored locally and never shared or tracked by anyone.</p>
+                <div class="feature-icon">[icon]</div>
+                <h3>Gentle Reminders</h3>
+                <p>If your activity drifts from your intention, Intent gently steps in and reblocks the site to help you
+                    refocus.</p>
             </div>
 
             <div class="feature">
-                <div class="feature-icon">T</div>
-                <h3>Time awareness</h3>
-                <p>Helps you become more conscious of how and why you spend time online.</p>
+                <div class="feature-icon">[icon]</div>
+                <h3>Build Better Habits</h3>
+                <p>Over time, Intent helps you develop healthier browsing habits and maintain focus on what matters
+                    most.</p>
             </div>
         </div>
     </div>
