@@ -201,21 +201,26 @@
         }
 
         .features {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 0 0 80px;
+            padding: 0 40px 80px;
         }
 
         .features-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            display: flex;
+            flex-wrap: wrap;
             gap: 40px;
             margin-top: 60px;
+            justify-content: center;
         }
 
         .feature {
+            flex: 1 1 250px;
+            max-width: 300px;
             text-align: center;
         }
+
+
 
         .feature-icon {
             width: 60px;
