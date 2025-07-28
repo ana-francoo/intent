@@ -260,6 +260,11 @@
         }
 
         .cta-button {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
             background: var(--primary);
             color: var(--primary-foreground);
             border: none;
@@ -268,9 +273,48 @@
             font-size: 1.2rem;
             cursor: pointer;
             font-weight: 500;
+            transition: background 0.5s, color 0.5s;
+        }
+
+        .cta-button .btn-text {
+            transform: translateX(0);
+            opacity: 1;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        .cta-button .btn-arrow {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) translateX(150%);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .cta-button:hover {
+            background: #e55a15;
+            color: var(--primary-foreground);
+        }
+
+        .cta-button:hover .btn-text {
+            transform: translateX(-150%);
+            opacity: 0;
+        }
+
+        .cta-button:hover .btn-arrow {
+            transform: translate(-50%, -50%) translateX(0);
+            opacity: 1;
         }
 
         .hero-cta {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
             background: var(--primary);
             color: var(--primary-foreground);
             border: none;
@@ -279,6 +323,40 @@
             font-size: 1.2rem;
             cursor: pointer;
             font-weight: 500;
+            transition: background 0.5s, color 0.5s;
+        }
+
+        .hero-cta .btn-text {
+            transform: translateX(0);
+            opacity: 1;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        .hero-cta .btn-arrow {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) translateX(150%);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .hero-cta:hover {
+            background: #e55a15;
+            color: var(--primary-foreground);
+        }
+
+        .hero-cta:hover .btn-text {
+            transform: translateX(-150%);
+            opacity: 0;
+        }
+
+        .hero-cta:hover .btn-arrow {
+            transform: translate(-50%, -50%) translateX(0);
+            opacity: 1;
         }
 
         .separator {
@@ -310,7 +388,14 @@
     <div class="hero">
         <h1>Browse with<br><span class="highlight">intention</span></h1>
         <p>Intent helps you stay focused by asking for your purpose before accessing any website.</p>
-        <button class="hero-cta" onclick="window.close()">Get Started</button>
+        <button class="hero-cta" onclick="window.close()">
+            <span class="btn-text">Get Started</span>
+            <span class="btn-arrow">
+                <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.14645 3.14645C8.34171 2.95118 8.65829 2.95118 8.85355 3.14645L12.8536 7.14645C13.0488 7.34171 13.0488 7.65829 12.8536 7.85355L8.85355 11.8536C8.65829 12.0488 8.34171 12.0488 8.14645 11.8536C7.95118 11.6583 7.95118 11.3417 8.14645 11.1464L11.2929 8H2.5C2.22386 8 2 7.77614 2 7.5C2 7.22386 2.22386 7 2.5 7H11.2929L8.14645 3.85355C7.95118 3.65829 7.95118 3.34171 8.14645 3.14645Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"/>
+                </svg>
+            </span>
+        </button>
     </div>
 
     <div class="demo-container">
@@ -366,7 +451,14 @@
     </div>
 
     <div class="cta">
-        <button class="cta-button" onclick="window.close()">Start Browsing</button>
+        <button class="cta-button" onclick="window.close()">
+            <span class="btn-text">Start Browsing</span>
+            <span class="btn-arrow">
+                <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.14645 3.14645C8.34171 2.95118 8.65829 2.95118 8.85355 3.14645L12.8536 7.14645C13.0488 7.34171 13.0488 7.65829 12.8536 7.85355L8.85355 11.8536C8.65829 12.0488 8.34171 12.0488 8.14645 11.8536C7.95118 11.6583 7.95118 11.3417 8.14645 11.1464L11.2929 8H2.5C2.22386 8 2 7.77614 2 7.5C2 7.22386 2.22386 7 2.5 7H11.2929L8.14645 3.85355C7.95118 3.65829 7.95118 3.34171 8.14645 3.14645Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"/>
+                </svg>
+            </span>
+        </button>
         <div class="separator"></div>
         <div class="copyright">© 2025 Intent. All rights reserved.</div>
     </div>
