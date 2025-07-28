@@ -272,8 +272,9 @@
             border-radius: 12px;
             font-size: 1.2rem;
             cursor: pointer;
-            font-weight: 500;
-            transition: background 0.5s, color 0.5s;
+            font-weight: 600;
+            transition: background 0.5s, color 0.5s, box-shadow 0.5s;
+            box-shadow: 0 4px 12px rgba(242, 100, 25, 0.3);
         }
 
         .cta-button .btn-text {
@@ -297,6 +298,7 @@
         .cta-button:hover {
             background: #e55a15;
             color: var(--primary-foreground);
+            box-shadow: 0 6px 16px rgba(242, 100, 25, 0.4);
         }
 
         .cta-button:hover .btn-text {
@@ -305,56 +307,6 @@
         }
 
         .cta-button:hover .btn-arrow {
-            transform: translate(-50%, -50%) translateX(0);
-            opacity: 1;
-        }
-
-        .hero-cta {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: var(--primary);
-            color: var(--primary-foreground);
-            border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.5s, color 0.5s;
-        }
-
-        .hero-cta .btn-text {
-            transform: translateX(0);
-            opacity: 1;
-            transition: transform 0.3s, opacity 0.3s;
-        }
-
-        .hero-cta .btn-arrow {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%) translateX(150%);
-            opacity: 0;
-            transition: transform 0.3s, opacity 0.3s;
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
-
-        .hero-cta:hover {
-            background: #e55a15;
-            color: var(--primary-foreground);
-        }
-
-        .hero-cta:hover .btn-text {
-            transform: translateX(-150%);
-            opacity: 0;
-        }
-
-        .hero-cta:hover .btn-arrow {
             transform: translate(-50%, -50%) translateX(0);
             opacity: 1;
         }
@@ -388,7 +340,7 @@
     <div class="hero">
         <h1>Browse with<br><span class="highlight">intention</span></h1>
         <p>Intent helps you stay focused by asking for your purpose before accessing any website.</p>
-        <button class="hero-cta" onclick="window.close()">
+        <button class="cta-button" onclick="window.close()">
             <span class="btn-text">Get Started</span>
             <span class="btn-arrow">
                 <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -462,7 +414,7 @@
 
     <div class="cta">
         <button class="cta-button" onclick="window.close()">
-            <span class="btn-text">Start Browsing</span>
+            <span class="btn-text">Let&apos;s get started</span>
             <span class="btn-arrow">
                 <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
