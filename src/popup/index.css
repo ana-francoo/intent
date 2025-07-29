@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'Geist';
   src: url('../fonts/geist.ttf') format('truetype');
@@ -19,6 +23,39 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Tailwind CSS Variables */
+  --background: 222 15% 8%;
+  --foreground: 35 25% 95%;
+  --card: 222 15% 10%;
+  --card-foreground: 35 25% 95%;
+  --popover: 222 15% 10%;
+  --popover-foreground: 35 25% 95%;
+  --primary: 25 95% 53%;
+  --primary-foreground: 222 15% 8%;
+  --secondary: 35 15% 25%;
+  --secondary-foreground: 35 25% 90%;
+  --muted: 222 10% 15%;
+  --muted-foreground: 35 10% 65%;
+  --accent: 35 80% 60%;
+  --accent-foreground: 222 15% 8%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 222 10% 20%;
+  --input: 222 10% 20%;
+  --ring: 25 95% 53%;
+  --radius: 0.75rem;
+  --flame-glow: 25 100% 45%;
+  --flame-core: 35 95% 65%;
+  --candle-base: 35 60% 40%;
+  --intention-glow: 25 90% 50%;
+  --focus-ring: 25 80% 55%;
+  --gradient-flame: linear-gradient(135deg, hsl(var(--flame-core)), hsl(var(--flame-glow)));
+  --gradient-glow: radial-gradient(circle, hsl(var(--intention-glow) / 0.3), transparent 70%);
+  --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(222 12% 12%));
+  --shadow-glow: 0 0 40px hsl(var(--intention-glow) / 0.4);
+  --shadow-card: 0 10px 30px -10px hsl(222 15% 3% / 0.8);
+  --shadow-intense: 0 0 60px hsl(var(--flame-glow) / 0.6);
 }
 
 a {

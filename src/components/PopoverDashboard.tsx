@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AddWebsiteInput from './AddWebsiteInput';
 import { saveBlockedSites, getBlockedSites, isUrlBlocked, getIntention } from '../utils/storage';
+import { getSubscriptionStatus, SubscriptionStatus, formatTimeRemaining, createCheckoutSession } from '../utils/subscription';
 import { supabase } from '../supabaseClient';
 import './PopoverDashboard.css';
 
@@ -12,6 +13,7 @@ const PopoverDashboard: React.FC = () => {
   const [currentSiteDomain, setCurrentSiteDomain] = useState<string>('');
   const [isCurrentSiteBlocked, setIsCurrentSiteBlocked] = useState<boolean>(false);
   const [currentIntention, setCurrentIntention] = useState<string>('');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   // Get current tab URL and check if it's blocked
   useEffect(() => {
@@ -57,20 +59,24 @@ const PopoverDashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch blocked sites when component mounts
+  // Fetch blocked sites and subscription status when component mounts
   useEffect(() => {
-    const fetchBlockedSites = async () => {
+    const fetchData = async () => {
       try {
-        const sites = await getBlockedSites();
+        const [sites, status] = await Promise.all([
+          getBlockedSites(),
+          getSubscriptionStatus()
+        ]);
         setBlockedSites(sites);
+        setSubscriptionStatus(status);
       } catch (error) {
-        console.error('Failed to fetch blocked sites:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBlockedSites();
+    fetchData();
   }, []);
 
   const handleReenterIntention = () => {
@@ -128,6 +134,15 @@ const PopoverDashboard: React.FC = () => {
 
   const handleSettings = () => {
     console.log('Settings clicked');
+  };
+
+  const handleLevelUp = async () => {
+    try {
+      await createCheckoutSession();
+    } catch (error) {
+      console.error('Failed to start checkout:', error);
+      alert('Failed to start checkout. Please try again.');
+    }
   };
 
   const handleAddWebsite = () => {
@@ -200,6 +215,36 @@ const PopoverDashboard: React.FC = () => {
         )}
       </div>
 
+      {/* Subscription Status */}
+      {subscriptionStatus && (
+        <div className="subscription-status-section">
+          <div className="subscription-info">
+            {subscriptionStatus.planType === 'trial' ? (
+              <>
+                <div className="trial-info">
+                  <span className="trial-badge">Free Trial</span>
+                  <span className="trial-remaining">{formatTimeRemaining(subscriptionStatus.daysRemaining)}</span>
+                </div>
+                {subscriptionStatus.daysRemaining <= 3 && (
+                  <button className="level-up-compact-btn" onClick={handleLevelUp}>
+                    Level Up to Pro
+                  </button>
+                )}
+              </>
+            ) : subscriptionStatus.planType === 'yearly' ? (
+              <div className="pro-badge">
+                <span className="pro-icon">⭐</span>
+                <span>Intent Pro</span>
+              </div>
+            ) : (
+              <button className="level-up-compact-btn" onClick={handleLevelUp}>
+                Reactivate Pro Access
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Action Grid */}
       <div className="action-grid">
         <div className="action-item" onClick={handleMyAccount}>
@@ -210,6 +255,12 @@ const PopoverDashboard: React.FC = () => {
           <div className="action-icon">⚙️</div>
           <div className="action-label">Settings</div>
         </div>
+        {subscriptionStatus?.planType === 'trial' && (
+          <div className="action-item" onClick={handleLevelUp}>
+            <div className="action-icon">⭐</div>
+            <div className="action-label">Level Up</div>
+          </div>
+        )}
       </div>
 
       {/* Blocklist Management Section */}

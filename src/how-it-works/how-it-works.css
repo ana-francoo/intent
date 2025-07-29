@@ -1,0 +1,106 @@
+/* How It Works page specific styles - overrides popup constraints */
+
+/* Override the fixed width constraints for full-page view */
+.home-container {
+  min-width: unset !important;
+  max-width: unset !important;
+  width: 100vw !important;
+  padding: 2rem !important;
+  box-sizing: border-box;
+}
+
+/* Ensure the root container takes full viewport */
+#root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Make sure the home root container is also full width */
+.home-root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Override HowItWorks component width constraints */
+.how-it-works-container {
+  width: 100vw !important;
+  max-width: none !important;
+  min-width: unset !important;
+  padding: 2rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+}
+
+/* IntentOnboarding component styles */
+.onboarding-container {
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 2rem !important;
+}
+
+.onboarding-carousel {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.carousel-container {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: unset !important;
+}
+
+.carousel-wrapper {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.slide-content {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.slide-text {
+  max-width: none !important;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem !important;
+  }
+  
+  .how-it-works-container {
+    padding: 1rem !important;
+  }
+  
+  .main-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-container {
+    padding: 3rem !important;
+  }
+  
+  .how-it-works-container {
+    padding: 3rem !important;
+  }
+  
+  .main-title {
+    font-size: 1.75rem !important;
+  }
+  
+  .subtitle {
+    font-size: 1rem !important;
+  }
+} 

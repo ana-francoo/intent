@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
       'process.env.SITE_NAME': JSON.stringify(env.SITE_NAME || 'Intent Extension'),
       'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'openai/gpt-4o'),
       'process.env.INTENTION_CONFIDENCE_THRESHOLD': JSON.stringify(env.INTENTION_CONFIDENCE_THRESHOLD || '0.7'),
+      'process.env.VITE_STRIPE_YEARLY_PRICE_ID': JSON.stringify(env.VITE_STRIPE_YEARLY_PRICE_ID || ''),
     },
     // Vite automatically exposes VITE_ prefixed variables to the client
     envPrefix: ['VITE_'],

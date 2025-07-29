@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How It Works - Intent Extension</title>
+    <style>
+      :root {
+        --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+        --background: #171717;
+        --foreground: #e5e5e5;
+        --muted-foreground: #a1a1a1;
+        --primary: #f26419;
+        --primary-foreground: #e5e5e5;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        letter-spacing: -0.05em;
+        background: var(--background);
+        color: var(--foreground);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      #root {
+        width: 100%;
+        min-height: 100vh;
+        background: var(--background);
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Hide scrollbar */
+      ::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./src/how-it-works/main.tsx"></script>
+  </body>
+</html> 

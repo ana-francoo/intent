@@ -15,6 +15,10 @@ export default defineManifest({
     },
     default_popup: 'src/popup/index.html',
   },
+          web_accessible_resources: [{
+          resources: ['src/assets/logo2.png', 'welcome.html', 'how-it-works.html', 'auth.html', 'website-blocking.html', 'smoke-test.html'],
+          matches: ['https://*/*']
+        }],
   background: {
     service_worker: 'src/background.ts',
   },

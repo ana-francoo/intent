@@ -4,6 +4,7 @@ import App from './views/App.tsx'
 import { saveIntention, getIntention, isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
 import { injectOverlay, injectIntentionMismatchOverlay } from '../utils/overlay'
 import { shouldCheckIntentionForUrl } from '../utils/urlHandlers'
+import { hasExtensionAccess } from '../utils/subscription'
 
 // Clean up expired intentions on content script load
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
@@ -28,14 +29,26 @@ createRoot(container).render(
 // Single consolidated function for checking intention and triggering appropriate overlay
 const checkIntentionAndTriggerOverlay = async (currentUrl: string) => {
   try {
+    console.log('🎬 Starting intention check for URL:', currentUrl);
+    
     // Check if chrome.storage is available
     if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
       console.error('❌ Chrome storage is not available, skipping intention check');
       return;
     }
     
+    // Check if user has access to extension features
+    const hasAccess = await hasExtensionAccess();
+    console.log('🔐 User has access:', hasAccess);
+    if (!hasAccess) {
+      console.log('❌ User access expired, skipping intention check');
+      // Still allow basic browsing but no intention features
+      return;
+    }
+    
     // Check if the URL is blocked
     const isBlocked = await isUrlBlocked(currentUrl);
+    console.log('🚫 URL blocked status:', isBlocked);
   
     // Only proceed if the URL is blocked
     if (isBlocked) {
@@ -197,6 +210,36 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
 (window as any).triggerOverlay = () => {
   console.log('🎬 Manually triggering overlay...');
   injectOverlay();
+};
+
+// Add global function to test the full flow
+(window as any).testFullFlow = async () => {
+  console.log('🧪 Testing full overlay flow...');
+  const currentUrl = window.location.href;
+  console.log('🔍 Current URL:', currentUrl);
+  
+  try {
+    // Test 1: Check if user has access
+    const hasAccess = await hasExtensionAccess();
+    console.log('🔐 User has access:', hasAccess);
+    
+    // Test 2: Check if URL is blocked
+    const isBlocked = await isUrlBlocked(currentUrl);
+    console.log('🚫 URL is blocked:', isBlocked);
+    
+    // Test 3: If blocked, trigger overlay
+    if (isBlocked) {
+      console.log('🎬 Triggering overlay for blocked URL...');
+      injectOverlay();
+    } else {
+      console.log('✅ URL is not blocked, no overlay needed');
+    }
+    
+    return { hasAccess, isBlocked, currentUrl };
+  } catch (error) {
+    console.error('❌ Error in test flow:', error);
+    return null;
+  }
 };
 
 // Add global function to check if overlay exists

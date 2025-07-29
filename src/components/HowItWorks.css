@@ -34,6 +34,35 @@
   min-height: 0;
 }
 
+/* Full-page view overrides - when not in popup context */
+@media (min-width: 800px) {
+  .how-it-works-container {
+    width: 100vw;
+    max-width: none;
+    padding: 2rem;
+  }
+  
+  .carousel-container {
+    width: 100%;
+    max-width: none;
+    min-width: unset;
+  }
+  
+  .carousel-wrapper {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .slide-content {
+    max-width: none;
+    width: 100%;
+  }
+  
+  .slide-text {
+    max-width: none;
+  }
+}
+
 .carousel-wrapper {
   position: relative;
   width: 100%;

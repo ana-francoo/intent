@@ -3,6 +3,7 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../supabaseClient';
 import { useEffect, useState } from 'react';
 import logo from '@/assets/logo2.png';
+import './Auth.css';
 
 interface AuthProps {
   onAuthSuccess: () => void;
@@ -12,131 +13,73 @@ interface AuthProps {
 
 export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, onGoBack }: AuthProps) {
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isDissolving, setIsDissolving] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    // More aggressive observer that watches for confirmation messages and immediately shows success
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔐 Auth state change:', event, session ? 'Session exists' : 'No session');
+      
+      if (event === 'SIGNED_IN' && session) {
+        console.log('✅ User signed in successfully');
+        // For login, call the success callback
+        onAuthSuccess();
+      } else if (event === 'SIGNED_OUT') {
+        console.log('🚪 User signed out');
+        setShowSuccess(false);
+        setAuthError(null);
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log('🔄 Token refreshed');
+      } else if (event === 'USER_UPDATED') {
+        console.log('👤 User updated');
+      }
+    });
+
+    // Simple observer to detect signup confirmation message and errors
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
+            const content = element.textContent || '';
             
-            // Check for confirmation messages and immediately trigger success state
-            const checkForConfirmation = (el: Element) => {
-              const content = el.textContent || '';
-              if (content.includes('Check your email for the confirmation link') ||
-                  content.includes('confirmation') ||
-                  content.includes('magic link')) {
-                // Start dissolve animation, then show success state
-                setIsDissolving(true);
-                (el as HTMLElement).style.display = 'none';
-                
-                // Show success state after dissolve animation
-                setTimeout(() => {
-                  setShowSuccess(true);
-                }, 300);
-                
-                return true;
-              }
-              return false;
-            };
-
-            // Check the element itself
+            if (content.includes('Check your email for the confirmation link')) {
+              console.log('✅ Signup confirmation detected');
+              setShowSuccess(true);
+            }
+            
+            // Check for error messages
             if (element.getAttribute('data-supabase-auth-ui') === 'message' || 
                 element.getAttribute('role') === 'alert') {
-              if (checkForConfirmation(element)) return;
+              if (content.includes('Invalid login credentials') || 
+                  content.includes('Email not confirmed') ||
+                  content.includes('Invalid email or password')) {
+                console.log('❌ Auth error detected:', content);
+                setAuthError(content);
+              }
             }
-
-            // Check all message elements within this node
-            const messageElements = element.querySelectorAll('[data-supabase-auth-ui="message"], [role="alert"]');
-            messageElements.forEach((msgEl) => {
-              if (checkForConfirmation(msgEl)) return;
-            });
-
-            // Handle other text replacements for actual errors
-            const errorElements = element.querySelectorAll('[data-supabase-auth-ui="message"], [role="alert"]');
-            errorElements.forEach((errorEl) => {
-              const content = errorEl.textContent || '';
-              
-              if (content.includes('missing email or phone')) {
-                errorEl.textContent = 'Missing email';
-              }
-              if (content.includes('email or phone') && !content.includes('confirmation')) {
-                errorEl.textContent = content.replace('email or phone', 'email');
-              }
-            });
           }
         });
       });
     });
 
-    // Start observing immediately
     observer.observe(document.body, {
       childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true
+      subtree: true
     });
-
-    // Additional timer-based check to catch messages we might miss
-    const checkMessages = () => {
-      const allMessages = document.querySelectorAll('[data-supabase-auth-ui="message"], [role="alert"]');
-      allMessages.forEach((msg) => {
-        const content = msg.textContent || '';
-        if (content.includes('Check your email for the confirmation link') ||
-            content.includes('confirmation') ||
-            content.includes('magic link')) {
-          setIsDissolving(true);
-          (msg as HTMLElement).style.display = 'none';
-          
-          setTimeout(() => {
-            setShowSuccess(true);
-          }, 300);
-        }
-      });
-    };
-
-    // Check every 100ms for the first 5 seconds
-    const interval = setInterval(checkMessages, 100);
-    const timeout = setTimeout(() => clearInterval(interval), 5000);
 
     return () => {
+      subscription.unsubscribe();
       observer.disconnect();
-      clearInterval(interval);
-      clearTimeout(timeout);
     };
-  }, []);
-
-  useEffect(() => {
-    // Also listen for auth state changes as backup
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && defaultToLogin) {
-        // For login, call the success callback
-        onAuthSuccess();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [defaultToLogin, onAuthSuccess]);
+  }, [onAuthSuccess]);
 
   // Show success state for signup
   if (showSuccess) {
     return (
-      <div style={{ 
-        maxWidth: 400, 
-        margin: '0 auto', 
-        padding: '2rem',
-        minHeight: '500px',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center'
-      }}>
+      <div className="auth-container">
         {/* Logo */}
         <div style={{
           position: 'relative',
@@ -209,16 +152,7 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
   }
 
   return (
-    <div style={{ 
-      maxWidth: 400, 
-      margin: '0 auto', 
-      padding: '2rem',
-      minHeight: '500px',
-      position: 'relative',
-      opacity: isDissolving ? 0 : 1,
-      transition: 'opacity 0.3s ease-out',
-      pointerEvents: isDissolving ? 'none' : 'auto'
-    }}>
+    <div className="auth-form-container">
       {/* Back arrow for sign in page */}
       {defaultToLogin && onGoBack && (
         <button
@@ -286,6 +220,23 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
         </div>
       )}
 
+      {/* Show auth error if any */}
+      {authError && (
+        <div style={{
+          background: 'rgba(255, 107, 107, 0.1)',
+          border: '1px solid rgba(255, 107, 107, 0.3)',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          color: '#ff6b6b',
+          fontSize: '14px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
+        }}>
+          {authError}
+        </div>
+      )}
+
       <style dangerouslySetInnerHTML={{
         __html: `
           /* Error messages - red styling */
@@ -300,16 +251,6 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
             border-radius: 6px !important;
             margin-top: 16px !important;
           }
-          
-          /* Hide messages that are explicitly hidden by JavaScript */
-          .supabase-auth-ui_ui div[style*="display: none"] {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
 
           /* Hide the "already have an account" link on sign in page */
           ${defaultToLogin ? `
@@ -320,6 +261,7 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
         `
       }} />
       <Auth
+        key={defaultToLogin ? 'signin' : 'signup'}
         supabaseClient={supabase}
         appearance={{
           theme: ThemeSupa,
@@ -445,49 +387,7 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
         redirectTo={window.location.origin}
         onlyThirdPartyProviders={false}
         magicLink={false}
-        showLinks={!defaultToLogin} // Hide links on sign in page, show on sign up page
-        localization={{
-          variables: {
-            sign_up: {
-              email_label: 'Email address',
-              password_label: 'Create a password',
-              email_input_placeholder: 'Your email address',
-              password_input_placeholder: 'Create a secure password',
-              button_label: 'Create account',
-              loading_button_label: 'Creating account...',
-              social_provider_text: 'Sign up with {{provider}}',
-              link_text: 'Already have an account? Log in',
-              confirmation_text: 'Check your email for the confirmation link',
-            },
-            sign_in: {
-              email_label: 'Email address',
-              password_label: 'Your password',
-              email_input_placeholder: 'Your email address',
-              password_input_placeholder: 'Your password',
-              button_label: 'Sign in',
-              loading_button_label: 'Signing in...',
-              social_provider_text: 'Sign in with {{provider}}',
-              link_text: "Don't have an account? Sign up",
-            },
-            magic_link: {
-              email_input_label: 'Email address',
-              email_input_placeholder: 'Your email address',
-              button_label: 'Send magic link',
-              loading_button_label: 'Sending magic link...',
-              link_text: 'Send a magic link email',
-              confirmation_text: 'Check your email for the magic link',
-            },
-            forgotten_password: {
-              email_label: 'Email address',
-              password_label: 'Your password',
-              email_input_placeholder: 'Your email address',
-              button_label: 'Send reset instructions',
-              loading_button_label: 'Sending reset instructions...',
-              link_text: 'Forgot your password?',
-              confirmation_text: 'Check your email for the password reset link',
-            },
-          },
-        }}
+        showLinks={true} // Show links on both pages
       />
     </div>
   );

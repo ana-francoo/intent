@@ -1,0 +1,81 @@
+/* Auth page specific styles - overrides popup constraints */
+
+/* Override the fixed width constraints for full-page view */
+.home-container {
+  min-width: unset !important;
+  max-width: unset !important;
+  width: 100vw !important;
+  padding: 2rem !important;
+  box-sizing: border-box;
+}
+
+/* Ensure the root container takes full viewport */
+#root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Make sure the home root container is also full width */
+.home-root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Override Auth component width constraints */
+/* Target divs with inline maxWidth styles */
+div[style*="maxWidth: 400"] {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Override any Auth component containers */
+div[style*="max-width: 400px"] {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Target the main auth container */
+div[style*="maxWidth: 400"] {
+  max-width: none !important;
+  width: 100vw !important;
+  padding: 2rem !important;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem !important;
+  }
+  
+  div[style*="maxWidth: 400"] {
+    padding: 1rem !important;
+  }
+  
+  .main-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-container {
+    padding: 3rem !important;
+  }
+  
+  div[style*="maxWidth: 400"] {
+    padding: 3rem !important;
+  }
+  
+  .main-title {
+    font-size: 1.75rem !important;
+  }
+  
+  .subtitle {
+    font-size: 1rem !important;
+  }
+} 

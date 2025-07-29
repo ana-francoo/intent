@@ -37,6 +37,13 @@ chrome.runtime.onInstalled.addListener((details) => {
       console.log(`[Background] Post-install cleanup: removed ${cleanedCount} expired intentions`);
     }
   });
+
+  if (details.reason === 'install') {
+    // Open welcome page when extension is first installed
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('welcome.html')
+    });
+  }
 });
 
 // Listen for messages from content scripts or popup

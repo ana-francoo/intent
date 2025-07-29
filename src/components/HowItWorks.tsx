@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './HowItWorks.css';
+import IntentOnboarding from './IntentOnboarding';
 
 interface SlideData {
   id: number;
@@ -94,82 +95,7 @@ export default function HowItWorks({ onLastSlideViewed, onNext }: HowItWorksProp
 
   return (
     <div className="how-it-works-container">
-      <h1 className="how-it-works-title">How it works</h1>
-      
-      <div className="carousel-container">
-        <div className="carousel-wrapper">
-          {/* Left Arrow */}
-          <button 
-            className="carousel-arrow carousel-arrow-left"
-            onClick={prevSlide}
-            aria-label="Previous slide"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-
-          {/* Slide Container */}
-          <div className="carousel-slide-container">
-            <div 
-              className="carousel-slides"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {allSlides.map((slide, index) => (
-                <div key={slide.id} className="carousel-slide">
-                  <div className="slide-content">
-                    {slide.isNextButton ? (
-                      <>
-                        <div className="slide-icon">{slide.icon}</div>
-                        <h3 className="slide-title">{slide.title}</h3>
-                        <p className="slide-text">{slide.text}</p>
-                        <button 
-                          className="next-button"
-                          onClick={handleNextButtonClick}
-                        >
-                          Get Started
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="slide-icon">{slide.icon}</div>
-                        <h3 className="slide-title">{slide.title}</h3>
-                        <p className="slide-text">{slide.text}</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Arrow */}
-          <button 
-            className="carousel-arrow carousel-arrow-right"
-            onClick={nextSlideHandler}
-            aria-label="Next slide"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Navigation Dots */}
-        <div className="carousel-dots">
-          {allSlides.map((_, index) => (
-            <button
-              key={index}
-              className={`carousel-dot ${index === currentSlide ? 'active' : ''} ${
-                index === allSlides.length - 1 && !hasViewedLastSlide ? 'disabled' : ''
-              }`}
-              onClick={() => goToSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
-              disabled={index === allSlides.length - 1 && !hasViewedLastSlide}
-            />
-          ))}
-        </div>
-      </div>
+      <IntentOnboarding onComplete={handleNextButtonClick} />
     </div>
   );
 }

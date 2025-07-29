@@ -374,14 +374,42 @@ export const getBlockedSites = async () => {
       // In development, this is expected - just log and continue
       if (userError.message.includes('Auth session missing')) {
         console.log('ℹ️ No active session - this is normal in development');
-        return [];
+        // DEVELOPMENT: Return test blocked sites for development
+        const testBlockedSites = [
+          'https://instagram.com',
+          'https://www.instagram.com',
+          'https://youtube.com',
+          'https://www.youtube.com',
+          'https://facebook.com',
+          'https://www.facebook.com',
+          'https://twitter.com',
+          'https://www.twitter.com',
+          'https://tiktok.com',
+          'https://www.tiktok.com'
+        ];
+        console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
+        return testBlockedSites;
       }
       throw new Error('Authentication error: ' + userError.message);
     }
     
     if (!user) {
       console.log('ℹ️ No authenticated user - this is normal in development');
-      return [];
+      // DEVELOPMENT: Return test blocked sites for development
+      const testBlockedSites = [
+        'https://instagram.com',
+        'https://www.instagram.com',
+        'https://youtube.com',
+        'https://www.youtube.com',
+        'https://facebook.com',
+        'https://www.facebook.com',
+        'https://twitter.com',
+        'https://www.twitter.com',
+        'https://tiktok.com',
+        'https://www.tiktok.com'
+      ];
+      console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
+      return testBlockedSites;
     }
     
     console.log('👤 Fetching blocked sites for user:', user.id);
@@ -393,10 +421,23 @@ export const getBlockedSites = async () => {
     
     if (error) {
       console.error('❌ Error fetching blocked sites:', error);
-      // In development, return empty array instead of throwing
+      // In development, return test sites instead of empty array
       if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-        console.log('ℹ️ Development mode - returning empty blocked sites list');
-        return [];
+        console.log('ℹ️ Development mode - using test blocked sites');
+        const testBlockedSites = [
+          'https://instagram.com',
+          'https://www.instagram.com',
+          'https://youtube.com',
+          'https://www.youtube.com',
+          'https://facebook.com',
+          'https://www.facebook.com',
+          'https://twitter.com',
+          'https://www.twitter.com',
+          'https://tiktok.com',
+          'https://www.tiktok.com'
+        ];
+        console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
+        return testBlockedSites;
       }
       throw error;
     }
@@ -406,10 +447,23 @@ export const getBlockedSites = async () => {
     return urls;
   } catch (error) {
     console.error('❌ Failed to fetch blocked sites:', error);
-    // In development, return empty array instead of throwing
+    // In development, return test sites instead of empty array
     if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      console.log('ℹ️ Development mode - returning empty blocked sites list');
-      return [];
+      console.log('ℹ️ Development mode - using test blocked sites');
+      const testBlockedSites = [
+        'https://instagram.com',
+        'https://www.instagram.com',
+        'https://youtube.com',
+        'https://www.youtube.com',
+        'https://facebook.com',
+        'https://www.facebook.com',
+        'https://twitter.com',
+        'https://www.twitter.com',
+        'https://tiktok.com',
+        'https://www.tiktok.com'
+      ];
+      console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
+      return testBlockedSites;
     }
     return [];
   }
@@ -417,18 +471,27 @@ export const getBlockedSites = async () => {
   
   export const isUrlBlocked = async (currentUrl: string) => {
     try {
+      console.log('🔍 Checking if URL is blocked:', currentUrl);
       const blockedSites = await getBlockedSites();
+      console.log('📋 Blocked sites list:', blockedSites);
       
       // Check if current URL matches any blocked site
-      return blockedSites.some(blockedUrl => {
+      const isBlocked = blockedSites.some(blockedUrl => {
         // Convert URLs to domain for comparison
         const currentDomain = new URL(currentUrl).hostname;
         const blockedDomain = new URL(blockedUrl).hostname;
         
-        return currentDomain === blockedDomain || currentUrl.includes(blockedDomain);
+        const matches = currentDomain === blockedDomain || currentUrl.includes(blockedDomain);
+        if (matches) {
+          console.log(`🚫 URL ${currentUrl} matches blocked site ${blockedUrl}`);
+        }
+        return matches;
       });
+      
+      console.log(`🔍 URL ${currentUrl} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+      return isBlocked;
     } catch (error) {
-      console.error('Error checking if URL is blocked:', error);
+      console.error('❌ Error checking if URL is blocked:', error);
       return false;
     }
   };

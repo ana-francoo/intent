@@ -1,0 +1,119 @@
+/* Welcome page specific styles - overrides popup constraints */
+
+/* Override the fixed width constraints for welcome page */
+.home-container {
+  min-width: unset !important;
+  max-width: unset !important;
+  width: 100vw !important;
+  padding: 2rem !important;
+  box-sizing: border-box;
+}
+
+/* Ensure the root container takes full viewport */
+#root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Make sure the home root container is also full width */
+.home-root {
+  width: 100vw !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+}
+
+/* Dynamic flame positioning based on logo position */
+
+/* Create a combined logo-flame container that scales together */
+.flame-icon-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  /* Make this the positioning context for the flame */
+  transform: translateZ(0) !important;
+  /* Scale the entire wrapper to maintain consistent positioning */
+  transform-origin: center center !important;
+}
+
+/* Make flame holder responsive to match logo size */
+.holder {
+  margin: 0 auto !important;
+  width: 150px !important;
+  height: 400px !important;
+  position: relative !important;
+  /* Remove individual flame scaling - will be handled by wrapper */
+  transform: none !important;
+  transform-origin: center center !important;
+}
+
+/* Position flame relative to the logo wrapper instead of viewport */
+.flame-container {
+  position: absolute !important;
+  top: 53.5% !important; /* Adjust this value to change vertical distance */
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1000 !important;
+  /* Ensure flame is positioned relative to the logo wrapper */
+  pointer-events: none !important;
+}
+
+/* Responsive adjustments for different screen sizes */
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem !important;
+  }
+  
+  .flame-icon {
+    width: 120px !important;
+    height: 120px !important;
+  }
+  
+  /* Scale the entire logo-flame wrapper down proportionally */
+  .flame-icon-wrapper {
+    transform: scale(0.8) !important;
+  }
+  
+  /* Override flame's internal scaling to match logo scaling exactly */
+  .flame-wrapper {
+    transform: translateX(-50%) scaleY(0.48) scaleX(0.56) !important; /* 0.6 * 0.8 = 0.48, 0.7 * 0.8 = 0.56 */
+  }
+  
+  .main-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .subtitle {
+    font-size: 0.8rem !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home-container {
+    padding: 3rem !important;
+  }
+  
+  .flame-icon {
+    width: 180px !important;
+    height: 180px !important;
+  }
+  
+  /* Scale the entire logo-flame wrapper up proportionally */
+  .flame-icon-wrapper {
+    transform: scale(1.2) !important;
+  }
+  
+  /* Override flame's internal scaling to match logo scaling exactly */
+  .flame-wrapper {
+    transform: translateX(-50%) scaleY(0.72) scaleX(0.84) !important; /* 0.6 * 1.2 = 0.72, 0.7 * 1.2 = 0.84 */
+  }
+  
+  .main-title {
+    font-size: 1.75rem !important;
+  }
+  
+  .subtitle {
+    font-size: 1rem !important;
+  }
+} 

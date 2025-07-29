@@ -3,10 +3,12 @@ import logo from '@/assets/logo2.png';
 import HowItWorks from './HowItWorks';
 import WebsiteBlocking from './WebsiteBlocking';
 import PopoverDashboard from './PopoverDashboard';
-import Main from './Main';
+
 import AuthComponent from './Auth';
+import ExpiredAccess from './ExpiredAccess';
 import { supabase } from '../supabaseClient';
 import { triggerOverlay } from '../utils/overlay';
+import { getSubscriptionStatus, SubscriptionStatus } from '../utils/subscription';
 import Flame from './Flame';
 import './Flame.css';
 import './Home.css';
@@ -24,16 +26,15 @@ const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
 
 export default function Home() {
   const [showIntro, setShowIntro] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [fadeOutLoading, setFadeOutLoading] = useState(false);
   const [showBlackBackground, setShowBlackBackground] = useState(true);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(PAGES.home);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [cameFromLogin, setCameFromLogin] = useState(false);
   const [cameFromHowItWorks, setCameFromHowItWorks] = useState(false);
   const [hasViewedLastSlide, setHasViewedLastSlide] = useState(false);
-  const [cameFromLogin, setCameFromLogin] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
+  const [showExpiredAccess, setShowExpiredAccess] = useState(false);
 
   const currentPage = PAGE_NAMES[currentPageIndex];
 
@@ -47,30 +48,50 @@ export default function Home() {
 
   // Enhanced auth state management
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setAuthLoading(false);
-      
-      // If user is authenticated, go to dashboard
-      if (session) {
+    // DEVELOPMENT: Auto-login for testing
+    const autoLogin = async () => {
+      try {
+        // Try to sign in with a test account
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: 'test@example.com',
+          password: 'testpassword123'
+        });
+        
+        if (error) {
+          console.log('Auto-login failed, continuing as guest:', error.message);
+          setAuthLoading(false);
+          return;
+        }
+        
+        console.log('Auto-login successful');
+        setSession(data.session);
+        setAuthLoading(false);
+        
+        // Go directly to main dashboard
         setCurrentPage('main');
+      } catch (error) {
+        console.log('Auto-login error:', error);
+        setAuthLoading(false);
       }
-    });
+    };
 
-    // Listen for auth changes
+    // Run auto-login
+    autoLogin();
+
+    // Listen for auth changes (simplified for development)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session ? 'Session exists' : 'No session');
       setSession(session);
       setAuthLoading(false);
       
       if (event === 'SIGNED_IN' && session) {
-        // User just signed in, go to dashboard
+        // Go directly to main dashboard
         setCurrentPage('main');
       } else if (event === 'SIGNED_OUT') {
-        // User signed out, go to home
-        setCurrentPage('home');
+        // Try auto-login again
+        autoLogin();
       }
     });
 
@@ -122,6 +143,35 @@ export default function Home() {
   const handleLastSlideViewed = () => {
     setHasViewedLastSlide(true);
   };
+
+  const handleCloseExpiredAccess = () => {
+    setShowExpiredAccess(false);
+    // Allow trial users to continue for now
+    if (subscriptionStatus?.isTrialActive) {
+      setCurrentPage('main');
+    }
+  };
+
+  // Check subscription status periodically for logged-in users
+  useEffect(() => {
+    if (!session) return;
+
+    const checkSubscription = async () => {
+      const status = await getSubscriptionStatus();
+      setSubscriptionStatus(status);
+      
+      // TEMPORARILY DISABLED: Expired trial functionality
+      // Show expired access if trial ended and no active subscription
+      // if (!status.hasAccess && !showExpiredAccess) {
+      //   setShowExpiredAccess(true);
+      // }
+    };
+
+    // Check every 5 minutes
+    const interval = setInterval(checkSubscription, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [session, showExpiredAccess]);
 
   const handleHowItWorksNext = () => {
     setCameFromHowItWorks(true);
@@ -196,13 +246,7 @@ export default function Home() {
             >
               <Flame />
             </div>
-            {isLoading && (
-              <div
-                className={`loading-overlay${
-                  fadeOutLoading ? ' fade-out' : ''
-                }`}
-              ></div>
-            )}
+
             <div
               className={`home-container${showIntro ? ' hidden' : ' visible'}`}
             >
@@ -267,6 +311,15 @@ export default function Home() {
     <div>
       {renderCurrentPage()}
       {getNavigationButtons()}
+      
+      {/* Show expired access overlay when needed */}
+      {showExpiredAccess && subscriptionStatus && (
+        <ExpiredAccess
+          daysRemaining={subscriptionStatus.daysRemaining}
+          planType={subscriptionStatus.planType}
+          onClose={subscriptionStatus.planType !== 'expired' ? handleCloseExpiredAccess : undefined}
+        />
+      )}
     </div>
   );
 }
