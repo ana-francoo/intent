@@ -16,7 +16,7 @@ export default defineManifest({
     default_popup: 'src/popup/index.html',
   },
           web_accessible_resources: [{
-          resources: ['src/assets/logo2.png', 'welcome.html', 'how-it-works.html', 'auth.html', 'website-blocking.html', 'smoke-test.html'],
+          resources: ['src/assets/logo2.png', 'welcome.html', 'how-it-works.html', 'auth.html', 'website-blocking.html', 'smoke-test.html', 'src/landing.html', 'src/landing.js'],
           matches: ['https://*/*']
         }],
   background: {
@@ -25,9 +25,6 @@ export default defineManifest({
   content_scripts: [{
     js: ['src/content/main.tsx'],
     matches: ['https://*/*'],
-  }],
-  web_accessible_resources: [{
-    resources: ['src/assets/logo2.png', 'src/landing.html', 'src/landing.js'],
-    matches: ['https://*/*']
-  }],
+  }]
+ 
 })
