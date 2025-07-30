@@ -3,6 +3,9 @@ import logo from '@/assets/logo2.png';
 import HowItWorks from './HowItWorks';
 import WebsiteBlocking from './WebsiteBlocking';
 import PopoverDashboard from './PopoverDashboard';
+// import IntentOnboarding from './intent-onboarding-component/src/IntentOnboarding';
+
+// console.log('IntentOnboarding import:', IntentOnboarding);
 
 import AuthComponent from './Auth';
 import ExpiredAccess from './ExpiredAccess';
@@ -13,6 +16,7 @@ import Flame from './Flame';
 import './Flame.css';
 import './Home.css';
 import '../popup/App.css';
+import './intent-onboarding-component/src/styles.css';
 
 const PAGES = {
   home: 0,
@@ -25,6 +29,8 @@ const PAGES = {
 const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
 
 export default function Home() {
+  console.log('Home component rendering...');
+  
   const [showIntro, setShowIntro] = useState(true);
   const [showBlackBackground, setShowBlackBackground] = useState(true);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(PAGES.home);
@@ -35,6 +41,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [showExpiredAccess, setShowExpiredAccess] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const currentPage = PAGE_NAMES[currentPageIndex];
 
@@ -127,7 +134,7 @@ export default function Home() {
   };
 
   const handleGetStarted = () => {
-    setCurrentPage('how-it-works');
+    setShowOnboarding(true);
   };
 
   const handleToAuth = () => {
@@ -150,6 +157,11 @@ export default function Home() {
     if (subscriptionStatus?.isTrialActive) {
       setCurrentPage('main');
     }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    setCurrentPage('how-it-works');
   };
 
   // Check subscription status periodically for logged-in users
@@ -219,6 +231,7 @@ export default function Home() {
 
   // Show loading while checking auth state
   if (authLoading) {
+    console.log('Showing loading state...');
     return (
       <div style={{ 
         display: 'flex', 
@@ -233,7 +246,26 @@ export default function Home() {
     );
   }
 
+  // Show onboarding component when requested
+  if (showOnboarding) {
+    console.log('Showing onboarding component...');
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000,
+        background: 'var(--background, #171717)'
+      }}>
+        <div>Onboarding component would go here</div>
+      </div>
+    );
+  }
+
   const renderCurrentPage = () => {
+    console.log('Rendering current page:', currentPage);
     switch (currentPage) {
       case 'home':
         return (
@@ -307,6 +339,8 @@ export default function Home() {
     }
   };
 
+  console.log('Home component final render - currentPage:', currentPage, 'showOnboarding:', showOnboarding);
+  
   return (
     <div>
       {renderCurrentPage()}

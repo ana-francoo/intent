@@ -7,6 +7,11 @@ import '@/components/Home.css'
 import '@/components/Flame.css'
 import './welcome.css'
 
+console.log('Welcome main.tsx loading...');
+console.log('Home component:', Home);
+
+console.log('Root element:', document.getElementById('root'));
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Home />
