@@ -24,10 +24,16 @@ setInterval(async () => {
 // Listen for extension installation/update
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('[Background] Extension installed/updated:', details.reason);
+  console.log('[Background] Details:', details);
   
   if (details.reason === 'install' || details.reason === 'chrome_update') {
+    console.log('[Background] Opening landing page...');
     chrome.tabs.create({
       url: chrome.runtime.getURL('src/landing.html')
+    }).then((tab) => {
+      console.log('[Background] Landing page tab created:', tab);
+    }).catch((error) => {
+      console.error('[Background] Error creating landing page tab:', error);
     });
   }
   
@@ -37,13 +43,6 @@ chrome.runtime.onInstalled.addListener((details) => {
       console.log(`[Background] Post-install cleanup: removed ${cleanedCount} expired intentions`);
     }
   });
-
-  if (details.reason === 'install') {
-    // Open welcome page when extension is first installed
-    chrome.tabs.create({
-      url: chrome.runtime.getURL('welcome.html')
-    });
-  }
 });
 
 // Listen for messages from content scripts or popup

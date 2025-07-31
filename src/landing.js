@@ -7,47 +7,29 @@ function submitDemo() {
 }
 
 function openExtension() {
-    if (chrome && chrome.action) {
-        // Try to open popup directly first
-        chrome.action.openPopup().then(() => {
-            // If successful, close the current tab
-            if (chrome.tabs) {
-                chrome.tabs.getCurrent((tab) => {
-                    if (tab && tab.id) {
-                        chrome.tabs.remove(tab.id);
-                    }
-                });
-            }
-        }).catch((error) => {
-            console.log('Could not open popup directly:', error);
-            // Fallback: try through background script
-            if (chrome.runtime) {
-                chrome.runtime.sendMessage({ type: 'OPEN_POPUP' }, (response) => {
-                    if (response && response.success && chrome.tabs) {
-                        chrome.tabs.getCurrent((tab) => {
-                            if (tab && tab.id) {
-                                chrome.tabs.remove(tab.id);
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    } else {
-        window.close();
-    }
+    console.log('[Landing] Get Started button clicked');
+    console.log('[Landing] Redirecting to how-it-works.html');
+    // Redirect to how-it-works.html
+    window.location.href = 'how-it-works.html';
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('[Landing] DOM loaded, setting up event listeners');
+    
     const heroButton = document.getElementById('heroCtaButton');
     const footerButton = document.getElementById('footerCtaButton');
     
+    console.log('[Landing] Hero button found:', !!heroButton);
+    console.log('[Landing] Footer button found:', !!footerButton);
+    
     if (heroButton) {
         heroButton.addEventListener('click', openExtension);
+        console.log('[Landing] Hero button event listener added');
     }
     
     if (footerButton) {
         footerButton.addEventListener('click', openExtension);
+        console.log('[Landing] Footer button event listener added');
     }
 
     document.getElementById('demoButton').addEventListener('click', submitDemo);

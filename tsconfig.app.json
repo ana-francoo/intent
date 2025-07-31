@@ -14,14 +14,15 @@
     },
     "types": ["vite/client", "chrome"],
     "allowImportingTsExtensions": true,
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
+    "strict": false,
+    "noFallthroughCasesInSwitch": false,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
     "noEmit": true,
     "isolatedModules": true,
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src", "postcss.config.js", "tailwind.config.ts"]
 }

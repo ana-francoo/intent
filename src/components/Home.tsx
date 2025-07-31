@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import logo from '@/assets/logo2.png';
-import HowItWorks from './HowItWorks';
 import WebsiteBlocking from './WebsiteBlocking';
 import PopoverDashboard from './PopoverDashboard';
 // import IntentOnboarding from './intent-onboarding-component/src/IntentOnboarding';
@@ -20,10 +19,9 @@ import './intent-onboarding-component/src/styles.css';
 
 const PAGES = {
   home: 0,
-  'how-it-works': 1,
-  auth: 2,
-  'website-blocking': 3,
-  main: 4,
+  auth: 1,
+  'website-blocking': 2,
+  main: 3,
 } as const;
 
 const PAGE_NAMES = Object.keys(PAGES) as Array<keyof typeof PAGES>;
@@ -125,9 +123,6 @@ export default function Home() {
   };
 
   const handleNext = () => {
-    if (currentPage === 'how-it-works') {
-      setCameFromHowItWorks(true);
-    }
     setCurrentPageIndex((prev: number) =>
       Math.min(PAGE_NAMES.length - 1, prev + 1)
     );
@@ -161,7 +156,7 @@ export default function Home() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
-    setCurrentPage('how-it-works');
+    setCurrentPage('auth');
   };
 
   // Check subscription status periodically for logged-in users
@@ -185,12 +180,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [session, showExpiredAccess]);
 
-  const handleHowItWorksNext = () => {
-    setCameFromHowItWorks(true);
-    setCameFromLogin(false);
-    setCurrentPage('auth');
-  };
-
   const handleGoBackToHome = () => {
     setCurrentPage('home');
     setCameFromLogin(false);
@@ -199,10 +188,8 @@ export default function Home() {
   const getNavigationButtons = () => {
     if (currentPageIndex === 0) return null;
 
+    // Hide navigation buttons for auth page since it has its own navigation
     if (currentPage === 'auth') return null;
-
-    // Hide navigation buttons for how-it-works page since it has its own carousel navigation
-    if (currentPage === 'how-it-works') return null;
 
     // Hide next button on website-blocking page since it has its own "Finish adding" button
     if (currentPage === 'website-blocking') return null;
@@ -326,8 +313,6 @@ export default function Home() {
             </div>
           </div>
         );
-      case 'how-it-works':
-        return <HowItWorks onLastSlideViewed={handleLastSlideViewed} onNext={handleHowItWorksNext} />;
       case 'auth':
         return <AuthComponent onAuthSuccess={() => {}} defaultToLogin={cameFromLogin} onGoBack={handleGoBackToHome} />;
       case 'website-blocking':

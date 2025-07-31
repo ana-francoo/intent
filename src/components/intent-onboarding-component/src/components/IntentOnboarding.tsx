@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Button } from './components/ui/button';
-import { Card } from './components/ui/card';
-import { Progress } from './components/ui/progress';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Progress } from './ui/progress';
 import { ChevronLeft, ChevronRight, Target, Eye, RefreshCw, TrendingUp, Flame } from 'lucide-react';
-import { cn } from './utils';
 
 const OnboardingStep = ({ 
   step, 
