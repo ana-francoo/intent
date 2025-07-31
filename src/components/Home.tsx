@@ -33,8 +33,6 @@ export default function Home() {
   const [showBlackBackground, setShowBlackBackground] = useState(true);
   const [currentPageIndex, setCurrentPageIndex] = useState<number>(PAGES.home);
   const [cameFromLogin, setCameFromLogin] = useState(false);
-  const [cameFromHowItWorks, setCameFromHowItWorks] = useState(false);
-  const [hasViewedLastSlide, setHasViewedLastSlide] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
@@ -133,7 +131,6 @@ export default function Home() {
   };
 
   const handleToAuth = () => {
-    setCameFromHowItWorks(false);
     setCameFromLogin(true);
     setCurrentPage('auth');
   };
@@ -142,21 +139,12 @@ export default function Home() {
     setCurrentPage('main');
   };
 
-  const handleLastSlideViewed = () => {
-    setHasViewedLastSlide(true);
-  };
-
   const handleCloseExpiredAccess = () => {
     setShowExpiredAccess(false);
     // Allow trial users to continue for now
     if (subscriptionStatus?.isTrialActive) {
       setCurrentPage('main');
     }
-  };
-
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    setCurrentPage('auth');
   };
 
   // Check subscription status periodically for logged-in users

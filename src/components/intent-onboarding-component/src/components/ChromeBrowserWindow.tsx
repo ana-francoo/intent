@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
-import { Eye, Monitor } from 'lucide-react';
+import { Monitor } from 'lucide-react';
 
 interface ChromeBrowserWindowProps {
   title: string;

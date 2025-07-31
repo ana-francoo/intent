@@ -47,8 +47,6 @@ const OnboardingStep = ({
 
 const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
   const [currentStep, setCurrentStep] = useState(0);
-  const [intentionText, setIntentionText] = useState('');
-  const [demoActivity, setDemoActivity] = useState('focused');
 
   const steps = [
     {

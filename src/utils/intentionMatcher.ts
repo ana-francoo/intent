@@ -92,7 +92,7 @@ export const checkIntentionMatch = async (
  * Prepare page content for AI analysis
  */
 const prepareContentForAnalysis = (pageContent: PageContent): string => {
-  const { title, description, relevantText, domain } = pageContent;
+  const { title, description, relevantText } = pageContent;
   
   // Combine relevant content, prioritizing title and description
   let content = '';

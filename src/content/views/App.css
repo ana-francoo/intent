@@ -3,12 +3,13 @@
   right: 0;
   bottom: 0;
   margin: 1.25rem;
-  z-index: 100;
+  z-index: 2147483647;
   display: flex;
   align-items: flex-end;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
   user-select: none;
   line-height: 1em;
+  pointer-events: auto;
 }
 
 .popup-content {

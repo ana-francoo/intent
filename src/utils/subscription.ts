@@ -10,7 +10,7 @@ export interface SubscriptionStatus {
 }
 
 // 2 weeks in milliseconds
-const TRIAL_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
+// const TRIAL_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
  * Get the user's subscription status and access level

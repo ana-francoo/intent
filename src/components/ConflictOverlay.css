@@ -1,0 +1,116 @@
+.conflict-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(ellipse at 50% 30%, rgba(43, 37, 37, 0.99) 60%, rgba(0, 0, 0, 0.99) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  color: white;
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
+}
+
+.conflict-overlay.closing {
+  opacity: 0;
+}
+
+.conflict-overlay-content {
+  max-width: 500px;
+  width: 90%;
+  padding: 40px;
+  text-align: center;
+}
+
+.conflict-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.intention-display {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.intention-label {
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+.intention-text {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.conflict-message {
+  font-size: 18px;
+  margin-bottom: 30px;
+  line-height: 1.4;
+}
+
+.conflict-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.conflict-button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.conflict-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.continue-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.continue-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.new-intention-button {
+  background: #ff6000;
+  color: white;
+}
+
+.new-intention-button:hover {
+  background: #e55a15;
+}
+
+.cancel-button {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}

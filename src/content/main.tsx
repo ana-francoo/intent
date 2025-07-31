@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './views/App.tsx'
-import { saveIntention, getIntention, isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
-import { injectOverlay, injectIntentionMismatchOverlay } from '../utils/overlay'
-import { shouldCheckIntentionForUrl } from '../utils/urlHandlers'
+import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
+import { initializeRouteInterceptor } from '../utils/routeInterceptor'
+import { startIntentionMonitoring } from '../utils/intentionMonitor'
 import { hasExtensionAccess } from '../utils/subscription'
 
 // Clean up expired intentions on content script load
@@ -19,96 +19,36 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
 
 const container = document.createElement('div')
 container.id = 'crxjs-app'
+container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2147483647;'
 document.body.appendChild(container)
+
+console.log('🎯 Content script container created:', container)
+
 createRoot(container).render(
   <StrictMode>
     <App />
   </StrictMode>,
 )
 
-// Single consolidated function for checking intention and triggering appropriate overlay
-const checkIntentionAndTriggerOverlay = async (currentUrl: string) => {
+// Route interceptor initialization - runs as early as possible
+const initializeInterceptor = async () => {
   try {
-    console.log('🎬 Starting intention check for URL:', currentUrl);
-    
-    // Check if chrome.storage is available
-    if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
-      console.error('❌ Chrome storage is not available, skipping intention check');
-      return;
-    }
-    
-    // Check if user has access to extension features
-    const hasAccess = await hasExtensionAccess();
-    console.log('🔐 User has access:', hasAccess);
-    if (!hasAccess) {
-      console.log('❌ User access expired, skipping intention check');
-      // Still allow basic browsing but no intention features
-      return;
-    }
-    
-    // Check if the URL is blocked
-    const isBlocked = await isUrlBlocked(currentUrl);
-    console.log('🚫 URL blocked status:', isBlocked);
-  
-    // Only proceed if the URL is blocked
-    if (isBlocked) {
-      // Check custom URL handling rules
-      const urlHandlerResult = shouldCheckIntentionForUrl(currentUrl);
-      console.log('🔗 URL handler result:', urlHandlerResult);
-      
-      // If custom handler says not to check intention, allow access
-      if (!urlHandlerResult.shouldCheckIntention) {
-        console.log('✅ Custom handler allows access:', urlHandlerResult.reason);
-        return;
-      }
-
-      // Get/pull/extract the most recent intention statement associated to that url
-      const intentionData = await getIntention(currentUrl);
-      
-      // If intention statement associated to that url exists
-      if (intentionData && intentionData.intention) {
-        console.log('📝 Intention found:', intentionData.intention);
-        
-        // Call the intentionMatcher function and capture the value of whether the alignment of intention is true or false
-        const { checkIntentionMatch } = await import('../utils/intentionMatcher');
-        console.log('🔍 Calling checkIntentionMatch with URL:', currentUrl);
-        console.log('🔍 Calling checkIntentionMatch with intention:', intentionData.intention);
-        
-        const result = await checkIntentionMatch(currentUrl);
-        console.log('🎯 Intention match result:', result);
-        console.log('🎯 Intention matches (boolean):', result.matches);
-        console.log('🎯 Confidence score:', result.confidence);
-        console.log('🎯 Reasoning:', result.reasoning);
-        console.log('🎯 User intention:', result.userIntention);
-        console.log('🎯 Scraped page content:', result.pageContent);
-        console.log('🎯 Timestamp:', result.timestamp);
-        
-        // If intention statement matched returns false
-        if (!result.matches) {
-          console.log('❌ Intention mismatch detected, showing overlay #2');
-          // Prompt overlay film #2
-          injectIntentionMismatchOverlay();
-          return;
-        } else {
-          console.log('✅ Intention matches, no overlay needed');
-        }
-      } else {
-        console.log('📝 No intention found, showing overlay #1');
-        // Else (intention statement doesn't exist yet)
-        // Prompt appearance of overlay #1
-        injectOverlay();
-        return;
-      }
-    } else {
-      // URL is not blocked, no overlay needed
-    }
+    console.log('🛡️ Initializing route interceptor for:', window.location.href);
+    await initializeRouteInterceptor();
   } catch (error) {
-    console.error('❌ Error checking intention and triggering overlay:', error);
+    console.error('❌ Error initializing route interceptor:', error);
   }
 };
 
-// Check for blocked URLs when page loads
-checkIntentionAndTriggerOverlay(window.location.href);
+// Initialize route interceptor immediately
+initializeInterceptor();
+
+// Check if we should start monitoring (after successful intention setting)
+if (sessionStorage.getItem('intent_start_monitoring') === 'true') {
+  sessionStorage.removeItem('intent_start_monitoring');
+  console.log('🔍 Starting intention monitoring after redirect');
+  startIntentionMonitoring();
+}
 
 // Listen for URL changes (for single-page applications)
 let lastUrl = window.location.href;
@@ -116,9 +56,9 @@ const observer = new MutationObserver(() => {
   const currentUrl = window.location.href;
   if (currentUrl !== lastUrl) {
     lastUrl = currentUrl;
-    // Add a small delay to ensure the page has fully loaded
+    // Re-initialize interceptor for new URL
     setTimeout(() => {
-      checkIntentionAndTriggerOverlay(currentUrl);
+      initializeInterceptor();
     }, 100);
   }
 });
@@ -130,7 +70,7 @@ observer.observe(document, { subtree: true, childList: true });
 if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg && msg.type === 'SHOW_OVERLAY') {
-      injectOverlay();
+      initializeInterceptor();
     }
   });
 }
@@ -206,10 +146,10 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
   return null;
 };
 
-// Add global function to manually trigger overlay
+// Add global function to manually trigger interceptor
 (window as any).triggerOverlay = () => {
-  console.log('🎬 Manually triggering overlay...');
-  injectOverlay();
+  console.log('🛡️ Manually triggering route interceptor...');
+  initializeInterceptor();
 };
 
 // Add global function to test the full flow
@@ -227,12 +167,12 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     const isBlocked = await isUrlBlocked(currentUrl);
     console.log('🚫 URL is blocked:', isBlocked);
     
-    // Test 3: If blocked, trigger overlay
+    // Test 3: If blocked, trigger interceptor
     if (isBlocked) {
-      console.log('🎬 Triggering overlay for blocked URL...');
-      injectOverlay();
+      console.log('🛡️ Triggering route interceptor for blocked URL...');
+      await initializeRouteInterceptor();
     } else {
-      console.log('✅ URL is not blocked, no overlay needed');
+      console.log('✅ URL is not blocked, no interceptor needed');
     }
     
     return { hasAccess, isBlocked, currentUrl };
