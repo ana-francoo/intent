@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './views/App.tsx'
 import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
 import { initializeRouteInterceptor } from '../utils/routeInterceptor'
-// import { startIntentionMonitoring } from '../utils/intentionMonitor' // Disabled for testing
+import { startIntentionMonitoring } from '../utils/intentionMonitor'
 import { hasExtensionAccess } from '../utils/subscription'
 
 // Clean up expired intentions on content script load
@@ -46,9 +46,8 @@ initializeInterceptor();
 // Check if we should start monitoring (after successful intention setting)
 if (sessionStorage.getItem('intent_start_monitoring') === 'true') {
   sessionStorage.removeItem('intent_start_monitoring');
-  console.log('🔍 Intention monitoring disabled for testing - letting user use site freely');
-  // TODO: Re-enable once we have proper AI matching tuned
-  // startIntentionMonitoring();
+  console.log('🔍 Starting AI-powered intention monitoring after redirect');
+  startIntentionMonitoring();
   
   // Clean up the intent_just_set flag after a delay to ensure we don't need it anymore
   setTimeout(() => {

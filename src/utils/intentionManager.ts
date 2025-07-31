@@ -1,7 +1,6 @@
 import { normalizeUrlToDomain, isStorageAvailable } from './storage';
 
-// Timer duration for intentions (30 seconds for testing)
-const INTENTION_TIMER_MS = 30 * 1000; // 30 seconds
+// No automatic timer - AI monitoring handles intention lifecycle
 
 export interface ActiveIntention {
   domain: string;
@@ -62,7 +61,8 @@ export const setActiveIntention = async (domain: string, intention: string): Pro
 
   try {
     const now = Date.now();
-    const expiresAt = now + INTENTION_TIMER_MS;
+    // No automatic expiration - AI monitoring will handle lifecycle
+    const expiresAt = now + (24 * 60 * 60 * 1000); // 24 hours as fallback only
     
     const activeIntention: ActiveIntention = {
       domain,
@@ -82,20 +82,11 @@ export const setActiveIntention = async (domain: string, intention: string): Pro
       accessible_sites: accessibleSites
     });
     
-    console.log(`✅ Active intention saved for ${domain}: "${intention}" (expires in ${INTENTION_TIMER_MS/1000}s)`);
+    console.log(`✅ Active intention saved for ${domain}: "${intention}" (AI monitoring will handle lifecycle)`);
     
     // Verify the save worked
     const verification = await chrome.storage.local.get(['active_intention', 'accessible_sites']);
     console.log('🔍 Verification - data actually saved:', verification);
-    
-    // Set up timer to clear intention when it expires
-    setTimeout(async () => {
-      const current = await getActiveIntention();
-      if (current && current.startTime === activeIntention.startTime) {
-        console.log(`⏰ Timer expired for intention on ${domain}`);
-        await clearActiveIntention();
-      }
-    }, INTENTION_TIMER_MS);
     
   } catch (error) {
     console.error('Error setting active intention:', error);
@@ -208,7 +199,7 @@ export const getTimeRemaining = async (): Promise<number> => {
 /**
  * Extend the current intention timer (for AI matching success)
  */
-export const extendIntentionTimer = async (additionalMs: number = INTENTION_TIMER_MS): Promise<void> => {
+export const extendIntentionTimer = async (additionalMs: number = 60 * 60 * 1000): Promise<void> => {
   const activeIntention = await getActiveIntention();
   if (!activeIntention) {
     return;

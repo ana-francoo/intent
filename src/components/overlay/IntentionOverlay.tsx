@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { setActiveIntention, normalizeUrlToDomain } from '../../utils/intentionManager';
-import Flame from '../home/Flame';
+// import Flame from '../home/Flame'; // Currently disabled in template
 import './IntentionOverlay.css';
 
 interface IntentionOverlayProps {
@@ -31,6 +31,18 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
     setIsSubmitting(true);
     
     try {
+      // First, validate the intention using AI
+      const { validateIntention } = await import('../../utils/intentionMatcher');
+      const [isValid, reason] = await validateIntention(intention.trim());
+      
+      if (!isValid) {
+        // Show error and allow user to try again
+        setIsSubmitting(false);
+        setShowFlame(false);
+        alert(reason || 'Please provide a more specific intention.');
+        return;
+      }
+      
       // Show flame animation
       setShowFlame(true);
       
