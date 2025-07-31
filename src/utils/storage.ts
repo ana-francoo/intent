@@ -5,7 +5,7 @@ const INTENTION_EXPIRY_HOURS = 8;
 const INTENTION_EXPIRY_MS = INTENTION_EXPIRY_HOURS * 60 * 60 * 1000; // 8 hours in milliseconds
 
 // Helper function to check if chrome.storage is available
-const isStorageAvailable = () => {
+export const isStorageAvailable = () => {
   try {
     return typeof chrome !== 'undefined' && 
            chrome.storage && 
@@ -23,7 +23,7 @@ const isStorageAvailable = () => {
 };
 
 // Helper function to normalize URL to domain for robust matching
-const normalizeUrlToDomain = (url: string): string => {
+export const normalizeUrlToDomain = (url: string): string => {
   try {
     const urlObj = new URL(url);
     // Remove www. prefix and return just the hostname
