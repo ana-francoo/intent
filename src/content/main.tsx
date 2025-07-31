@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './views/App.tsx'
 import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
 import { initializeRouteInterceptor } from '../utils/routeInterceptor'
-import { startIntentionMonitoring } from '../utils/intentionMonitor'
+// import { startIntentionMonitoring } from '../utils/intentionMonitor' // Disabled for testing
 import { hasExtensionAccess } from '../utils/subscription'
 
 // Clean up expired intentions on content script load
@@ -46,8 +46,15 @@ initializeInterceptor();
 // Check if we should start monitoring (after successful intention setting)
 if (sessionStorage.getItem('intent_start_monitoring') === 'true') {
   sessionStorage.removeItem('intent_start_monitoring');
-  console.log('🔍 Starting intention monitoring after redirect');
-  startIntentionMonitoring();
+  console.log('🔍 Intention monitoring disabled for testing - letting user use site freely');
+  // TODO: Re-enable once we have proper AI matching tuned
+  // startIntentionMonitoring();
+  
+  // Clean up the intent_just_set flag after a delay to ensure we don't need it anymore
+  setTimeout(() => {
+    sessionStorage.removeItem('intent_just_set');
+    console.log('🧹 Cleaned up intent_just_set flag after successful access');
+  }, 5000);
 }
 
 // Listen for URL changes (for single-page applications)
@@ -196,6 +203,41 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     });
   }
   return overlay;
+};
+
+// Add global function to debug Chrome storage
+(window as any).debugStorage = async () => {
+  console.log('🔍 Debugging Chrome storage...');
+  
+  try {
+    // Check all storage data
+    const allData = await chrome.storage.local.get(null);
+    console.log('📦 All Chrome storage data:', allData);
+    
+    // Check specific intention data
+    const intentionData = await chrome.storage.local.get(['active_intention', 'accessible_sites']);
+    console.log('🎯 Intention-specific data:', intentionData);
+    
+    // Check if there's an active intention
+    const { getActiveIntention } = await import('../utils/intentionManager');
+    const activeIntention = await getActiveIntention();
+    console.log('🔍 getActiveIntention() result:', activeIntention);
+    
+    // Check current URL status
+    const { checkIntentionStatus } = await import('../utils/intentionManager');
+    const status = await checkIntentionStatus(window.location.href);
+    console.log('🔍 checkIntentionStatus() result:', status);
+    
+    return {
+      allData,
+      intentionData,
+      activeIntention,
+      status
+    };
+  } catch (error) {
+    console.error('❌ Error debugging storage:', error);
+    return null;
+  }
 };
 
 // Add global function to test URL normalization

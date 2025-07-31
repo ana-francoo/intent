@@ -1,6 +1,6 @@
 import { createRoot, Root } from 'react-dom/client';
-import IntentionOverlay from '../components/IntentionOverlay';
-import ConflictOverlay from '../components/ConflictOverlay';
+import IntentionOverlay from '../components/overlay/IntentionOverlay';
+import ConflictOverlay from '../components/overlay/ConflictOverlay';
 
 let overlayRoot: Root | null = null;
 let overlayContainer: HTMLElement | null = null;

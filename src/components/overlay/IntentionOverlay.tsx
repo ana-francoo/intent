@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { setActiveIntention, normalizeUrlToDomain } from '../utils/intentionManager';
-import Flame from './home/Flame';
+import { setActiveIntention, normalizeUrlToDomain } from '../../utils/intentionManager';
+import Flame from '../home/Flame';
 import './IntentionOverlay.css';
 
 interface IntentionOverlayProps {
@@ -37,9 +37,10 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
       // Save intention
       await setActiveIntention(domain, intention.trim());
       
-      // Wait for flame animation, then close
+      // Wait for flame animation, then redirect to the intended site
       setTimeout(() => {
-        handleClose();
+        // Redirect to the domain the user intended to visit
+        window.location.href = url;
       }, 2000);
       
     } catch (error) {
@@ -56,6 +57,9 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
       onClose();
     }, 300); // Match CSS transition duration
   };
+
+  // Suppress unused variable warning - this function is kept for potential future use
+  void handleClose;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -109,14 +113,14 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
         ) : (
           // Flame phase - show flame with intention
           <div className="flame-container">
-            <div className="flame-with-logo">
+            {/* <div className="flame-with-logo">
               <img 
                 src={chrome.runtime.getURL('src/assets/logo2.png')} 
                 alt="Intent Logo" 
                 className="flame-logo"
               />
               <Flame />
-            </div>
+            </div> */}
             
             <div className="intention-text">
               {intention}

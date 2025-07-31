@@ -9,9 +9,12 @@ import { initializeRouteInterceptor } from './routeInterceptor';
 export class IntentionMonitor {
   private checkInterval: number | null = null;
   private isMonitoring: boolean = false;
+  private startTime: number = 0;
   
-  // Check every 10 seconds while user is browsing
-  private readonly CHECK_INTERVAL_MS = 10 * 1000;
+  // Check every 30 seconds while user is browsing (less aggressive)
+  private readonly CHECK_INTERVAL_MS = 30 * 1000;
+  // Grace period after redirect before starting strict checking (60 seconds)
+  private readonly GRACE_PERIOD_MS = 60 * 1000;
   
   /**
    * Start monitoring the user's activity
@@ -21,16 +24,19 @@ export class IntentionMonitor {
       return;
     }
 
-    console.log('🔍 Starting intention monitoring');
+    console.log('🔍 Starting intention monitoring with grace period');
     this.isMonitoring = true;
+    this.startTime = Date.now();
 
-    // Check immediately
-    await this.checkCurrentActivity();
-
-    // Set up periodic checking
-    this.checkInterval = window.setInterval(async () => {
-      await this.checkCurrentActivity();
-    }, this.CHECK_INTERVAL_MS);
+    // Don't check immediately - give user time to settle on the page
+    // Set up periodic checking after the grace period
+    setTimeout(() => {
+      if (this.isMonitoring) {
+        this.checkInterval = window.setInterval(async () => {
+          await this.checkCurrentActivity();
+        }, this.CHECK_INTERVAL_MS);
+      }
+    }, this.GRACE_PERIOD_MS);
   }
 
   /**
@@ -68,6 +74,13 @@ export class IntentionMonitor {
         return;
       }
 
+      // Check if we're still in grace period
+      const timeSinceStart = Date.now() - this.startTime;
+      if (timeSinceStart < this.GRACE_PERIOD_MS) {
+        console.log(`🕐 Still in grace period (${Math.round((this.GRACE_PERIOD_MS - timeSinceStart) / 1000)}s remaining), skipping check`);
+        return;
+      }
+
       // Use AI to check if current page content matches intention
       const result = await checkIntentionMatch(currentUrl);
       
@@ -77,9 +90,9 @@ export class IntentionMonitor {
         reasoning: result.reasoning
       });
 
-      // If intention doesn't match, show interceptor again
-      if (!result.matches) {
-        console.log('❌ Intention mismatch detected, re-intercepting page');
+      // Only clear intention if we have very low confidence and user has been browsing for a while
+      if (!result.matches && result.confidence < 0.1 && timeSinceStart > (5 * 60 * 1000)) { // 5 minutes
+        console.log('❌ Persistent intention mismatch detected after 5 minutes, re-intercepting page');
         
         // Clear the active intention
         await clearActiveIntention();
@@ -90,7 +103,7 @@ export class IntentionMonitor {
         // Re-initialize route interceptor to block access
         await initializeRouteInterceptor();
       } else {
-        console.log('✅ Activity matches intention, continuing monitoring');
+        console.log('✅ Activity acceptable or not enough time elapsed, continuing monitoring');
       }
 
     } catch (error) {

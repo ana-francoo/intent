@@ -59,10 +59,28 @@ export class RouteInterceptor {
 
       // Check intention status
       const status = await checkIntentionStatus(this.originalUrl);
+      console.log('🔍 Intention status check result:', status);
       
       if (status.action === 'allow') {
         console.log('✅ Active intention allows access, proceeding normally');
         return;
+      }
+
+      // Check if we just set an intention (to prevent infinite loop)
+      const justSetIntention = sessionStorage.getItem('intent_just_set');
+      if (justSetIntention) {
+        const intentionData = JSON.parse(justSetIntention);
+        const domain = normalizeUrlToDomain(this.originalUrl);
+        
+        // If we just set an intention for this domain and it's less than 10 seconds old
+        if (intentionData.domain === domain && (Date.now() - intentionData.timestamp) < 10000) {
+          console.log('✅ Just set intention for this domain, allowing access');
+          // Don't remove the flag here - let it expire naturally or be cleaned up later
+          return;
+        } else if ((Date.now() - intentionData.timestamp) >= 10000) {
+          // Clean up expired flag
+          sessionStorage.removeItem('intent_just_set');
+        }
       }
 
       // Stop the page from loading and replace content
@@ -697,10 +715,24 @@ export class RouteInterceptor {
       // Save intention
       await setActiveIntention(domain, intention);
 
+      // Verify the intention was actually saved
+      const { getActiveIntention } = await import('./intentionManager');
+      const savedIntention = await getActiveIntention();
+      console.log('✅ Intention saved successfully:', savedIntention);
+
+      // Store flag to prevent infinite loop immediately after setting intention
+      sessionStorage.setItem('intent_just_set', JSON.stringify({
+        domain: domain,
+        timestamp: Date.now()
+      }));
+
       // Wait for flame animation, then redirect
       setTimeout(() => {
         // Store flag to start monitoring after redirect
         sessionStorage.setItem('intent_start_monitoring', 'true');
+        
+        // Verify the intention was saved before redirecting
+        console.log('🔄 Redirecting to:', this.originalUrl);
         window.location.href = this.originalUrl;
       }, 2000);
 

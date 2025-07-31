@@ -24,21 +24,26 @@ export const getActiveIntention = async (): Promise<ActiveIntention | null> => {
   }
 
   try {
+    console.log('🔍 Getting active intention from Chrome storage...');
     const result = await chrome.storage.local.get('active_intention');
+    console.log('📦 Chrome storage result:', result);
     const activeIntention = result.active_intention as ActiveIntention | undefined;
     
     if (!activeIntention) {
+      console.log('❌ No active intention found in storage');
       return null;
     }
     
     // Check if intention has expired
     const now = Date.now();
+    console.log('⏰ Current time:', now, 'Intention expires at:', activeIntention.expiresAt);
     if (now > activeIntention.expiresAt) {
-      console.log(`Active intention for ${activeIntention.domain} has expired, clearing`);
+      console.log(`⏰ Active intention for ${activeIntention.domain} has expired, clearing`);
       await clearActiveIntention();
       return null;
     }
     
+    console.log('✅ Found active intention:', activeIntention);
     return activeIntention;
   } catch (error) {
     console.error('Error getting active intention:', error);
@@ -69,18 +74,25 @@ export const setActiveIntention = async (domain: string, intention: string): Pro
     // Clear any existing accessible sites and set new one
     const accessibleSites: AccessibleSites = { [domain]: true };
     
+    console.log('💾 Saving active intention to Chrome storage:', activeIntention);
+    console.log('💾 Saving accessible sites:', accessibleSites);
+    
     await chrome.storage.local.set({
       active_intention: activeIntention,
       accessible_sites: accessibleSites
     });
     
-    console.log(`Active intention set for ${domain}: "${intention}" (expires in ${INTENTION_TIMER_MS/1000}s)`);
+    console.log(`✅ Active intention saved for ${domain}: "${intention}" (expires in ${INTENTION_TIMER_MS/1000}s)`);
+    
+    // Verify the save worked
+    const verification = await chrome.storage.local.get(['active_intention', 'accessible_sites']);
+    console.log('🔍 Verification - data actually saved:', verification);
     
     // Set up timer to clear intention when it expires
     setTimeout(async () => {
       const current = await getActiveIntention();
       if (current && current.startTime === activeIntention.startTime) {
-        console.log(`Timer expired for intention on ${domain}`);
+        console.log(`⏰ Timer expired for intention on ${domain}`);
         await clearActiveIntention();
       }
     }, INTENTION_TIMER_MS);
@@ -159,19 +171,24 @@ export const checkIntentionStatus = async (url: string): Promise<{
   domain: string;
 }> => {
   const domain = normalizeUrlToDomain(url);
+  console.log('🔍 Checking intention status for domain:', domain);
   const activeIntention = await getActiveIntention();
+  console.log('🔍 Active intention result:', activeIntention);
   
   // No active intention - show overlay to set one
   if (!activeIntention) {
+    console.log('❌ No active intention found, showing overlay');
     return { action: 'show_overlay', domain };
   }
   
   // Same domain as active intention - allow access
   if (activeIntention.domain === domain) {
+    console.log('✅ Same domain as active intention, allowing access');
     return { action: 'allow', activeIntention, domain };
   }
   
   // Different domain with active intention - show conflict overlay
+  console.log('⚠️ Different domain, showing conflict overlay');
   return { action: 'show_conflict', activeIntention, domain };
 };
 

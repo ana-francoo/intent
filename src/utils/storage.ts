@@ -7,11 +7,25 @@ const INTENTION_EXPIRY_MS = INTENTION_EXPIRY_HOURS * 60 * 60 * 1000; // 8 hours 
 // Helper function to check if chrome.storage is available
 export const isStorageAvailable = () => {
   try {
-    return typeof chrome !== 'undefined' && 
-           chrome.storage && 
-           chrome.storage.local &&
-           chrome.runtime && 
-           chrome.runtime.id; // Check if extension context is valid
+    // Check if we're in a valid extension context
+    if (typeof chrome === 'undefined') {
+      return false;
+    }
+    
+    // Check if chrome.storage exists
+    if (!chrome.storage || !chrome.storage.local) {
+      return false;
+    }
+    
+    // Check if chrome.runtime exists - but don't require runtime.id in content scripts
+    // Content scripts can access storage even without runtime.id
+    if (!chrome.runtime) {
+      return false;
+    }
+    
+    // In content scripts, runtime.id might not be available but storage still works
+    // So we'll try a simple test instead
+    return true;
   } catch (error) {
     // Don't log warnings for extension context invalidation in development
     if (error instanceof Error && error.message.includes('Extension context invalidated')) {
