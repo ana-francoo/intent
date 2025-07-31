@@ -1,4 +1,4 @@
-import { getActiveIntention, clearActiveIntention } from './intentionManager';
+import { getIntention } from './storage';
 import { checkIntentionMatch } from './intentionMatcher';
 import { initializeRouteInterceptor } from './routeInterceptor';
 
@@ -50,23 +50,18 @@ export class IntentionMonitor {
    */
   private async checkCurrentActivity(): Promise<void> {
     try {
-      // Get active intention
-      const activeIntention = await getActiveIntention();
-      if (!activeIntention) {
-        // No active intention, stop monitoring
+      const currentUrl = window.location.href;
+      
+      // Get intention for current URL using old storage system
+      const intentionData = await getIntention(currentUrl);
+      if (!intentionData || !intentionData.intention) {
+        // No intention for this URL, stop monitoring
+        console.log('🔍 No intention found for current URL, stopping monitoring');
         this.stopMonitoring();
         return;
       }
 
-      // Check if we're still on the same domain
-      const currentUrl = window.location.href;
-      const currentDomain = new URL(currentUrl).hostname.replace(/^www\./, '');
-      
-      if (currentDomain !== activeIntention.domain) {
-        // User navigated to different domain, stop monitoring
-        this.stopMonitoring();
-        return;
-      }
+      console.log('🔍 Found intention for URL:', intentionData.intention);
 
       // Use AI to check if current page content matches intention
       const result = await checkIntentionMatch(currentUrl);
@@ -80,9 +75,6 @@ export class IntentionMonitor {
       // If intention doesn't match, show interceptor again
       if (!result.matches) {
         console.log('❌ Intention mismatch detected, re-intercepting page');
-        
-        // Clear the active intention
-        await clearActiveIntention();
         
         // Stop monitoring
         this.stopMonitoring();

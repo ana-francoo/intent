@@ -1,5 +1,4 @@
-import { checkIntentionStatus, setActiveIntention, normalizeUrlToDomain } from './intentionManager';
-import { isUrlBlocked } from './storage';
+import { getIntention, saveIntention, normalizeUrlToDomain, isUrlBlocked } from './storage';
 import { shouldCheckIntentionForUrl } from './urlHandlers';
 import { hasExtensionAccess } from './subscription';
 
@@ -57,12 +56,17 @@ export class RouteInterceptor {
         return;
       }
 
-      // Check intention status
-      const status = await checkIntentionStatus(this.originalUrl);
-      console.log('🔍 Intention status check result:', status);
+      // Check if there's an existing intention for this URL
+      const intentionData = await getIntention(this.originalUrl);
+      console.log('🔍 Intention check result:', intentionData);
       
-      if (status.action === 'allow') {
-        console.log('✅ Active intention allows access, proceeding normally');
+      if (intentionData && intentionData.intention) {
+        console.log('✅ Existing intention found, allowing access and starting monitoring');
+        
+        // Start AI monitoring for existing intention
+        const { startIntentionMonitoring } = await import('./intentionMonitor');
+        await startIntentionMonitoring();
+        
         return;
       }
 
@@ -84,7 +88,7 @@ export class RouteInterceptor {
       }
 
       // Stop the page from loading and replace content
-      this.replacePageContent(status);
+      this.replacePageContent();
 
     } catch (error) {
       console.error('❌ Error in route interceptor:', error);
@@ -94,7 +98,7 @@ export class RouteInterceptor {
   /**
    * Replace the entire page content with intention interface
    */
-  private replacePageContent(status: any): void {
+  private replacePageContent(): void {
     console.log('🛡️ Intercepting page and replacing content');
     
     // Stop any ongoing page loading
@@ -109,7 +113,7 @@ export class RouteInterceptor {
     const contentScriptContainer = document.getElementById('crxjs-app');
 
     // Clear the entire document and replace with our interface
-    document.documentElement.innerHTML = this.generateIntentionPageHTML(status);
+    document.documentElement.innerHTML = this.generateIntentionPageHTML();
 
     // Restore chrome object reference
     if (chromeRef && !window.chrome) {
@@ -134,13 +138,13 @@ export class RouteInterceptor {
     };
 
     // Initialize the intention interface
-    this.initializeIntentionInterface(status);
+    this.initializeIntentionInterface();
   }
 
   /**
    * Generate the full HTML for the intention page
    */
-  private generateIntentionPageHTML(status: any): string {
+  private generateIntentionPageHTML(): string {
     const domain = normalizeUrlToDomain(this.originalUrl);
     const websiteName = domain.charAt(0).toUpperCase() + domain.slice(1);
 
@@ -537,7 +541,7 @@ export class RouteInterceptor {
 <body>
     <div class="background-glow"></div>
     <div id="intention-interface">
-        ${status.action === 'show_conflict' ? this.generateConflictHTML(status) : this.generateIntentionHTML(websiteName)}
+        ${this.generateIntentionHTML(websiteName)}
     </div>
 </body>
 </html>`;
@@ -584,48 +588,12 @@ export class RouteInterceptor {
         </div>`;
   }
 
-  /**
-   * Generate HTML for conflict interface
-   */
-  private generateConflictHTML(status: any): string {
-    const currentDomain = normalizeUrlToDomain(this.originalUrl);
-    const currentSiteName = currentDomain.charAt(0).toUpperCase() + currentDomain.slice(1);
-    const activeSiteName = status.activeIntention.domain.charAt(0).toUpperCase() + status.activeIntention.domain.slice(1);
-
-    return `
-        <div class="conflict-container show">
-            <h2 class="conflict-title">You have an active intention</h2>
-            
-            <div class="intention-display">
-                <div class="intention-label">Your intention for ${activeSiteName}:</div>
-                <div class="intention-display-text">${status.activeIntention.intention}</div>
-            </div>
-
-            <p class="conflict-message">You're trying to visit ${currentSiteName}. What would you like to do?</p>
-
-            <div class="conflict-buttons">
-                <button class="conflict-button continue-button" id="continue-btn">
-                    Continue with ${activeSiteName}
-                </button>
-                <button class="conflict-button new-intention-button" id="new-intention-btn">
-                    Set intention for ${currentSiteName}
-                </button>
-                <button class="conflict-button cancel-button" id="cancel-btn">
-                    Go back
-                </button>
-            </div>
-        </div>`;
-  }
 
   /**
    * Initialize the intention interface with event listeners
    */
-  private initializeIntentionInterface(status: any): void {
-    if (status.action === 'show_conflict') {
-      this.initializeConflictInterface(status);
-    } else {
-      this.initializeIntentionInput();
-    }
+  private initializeIntentionInterface(): void {
+    this.initializeIntentionInput();
   }
 
   /**
@@ -654,33 +622,6 @@ export class RouteInterceptor {
     });
   }
 
-  /**
-   * Initialize conflict interface
-   */
-  private initializeConflictInterface(status: any): void {
-    const continueBtn = document.getElementById('continue-btn');
-    const newIntentionBtn = document.getElementById('new-intention-btn');
-    const cancelBtn = document.getElementById('cancel-btn');
-
-    continueBtn?.addEventListener('click', () => {
-      window.location.href = `https://${status.activeIntention.domain}`;
-    });
-
-    newIntentionBtn?.addEventListener('click', () => {
-      // Replace conflict interface with intention interface
-      const interfaceContainer = document.getElementById('intention-interface');
-      if (interfaceContainer) {
-        const domain = normalizeUrlToDomain(this.originalUrl);
-        const websiteName = domain.charAt(0).toUpperCase() + domain.slice(1);
-        interfaceContainer.innerHTML = this.generateIntentionHTML(websiteName);
-        this.initializeIntentionInput();
-      }
-    });
-
-    cancelBtn?.addEventListener('click', () => {
-      window.history.back();
-    });
-  }
 
   /**
    * Submit intention and proceed to original URL
@@ -712,12 +653,11 @@ export class RouteInterceptor {
         intentionText.textContent = intention;
       }
 
-      // Save intention
-      await setActiveIntention(domain, intention);
+      // Save intention using old storage system
+      await saveIntention(this.originalUrl, intention);
 
       // Verify the intention was actually saved
-      const { getActiveIntention } = await import('./intentionManager');
-      const savedIntention = await getActiveIntention();
+      const savedIntention = await getIntention(this.originalUrl);
       console.log('✅ Intention saved successfully:', savedIntention);
 
       // Store flag to prevent infinite loop immediately after setting intention

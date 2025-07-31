@@ -1,6 +1,5 @@
-import { checkIntentionStatus } from './intentionManager';
-import { showReactIntentionOverlay, showReactConflictOverlay } from './reactOverlayManager';
-import { isUrlBlocked } from './storage';
+import { getIntention, isUrlBlocked } from './storage';
+import { showReactIntentionOverlay } from './reactOverlayManager';
 
 /**
  * Main controller that decides what to do when a page loads
@@ -14,32 +13,18 @@ export const handlePageLoad = async (url: string): Promise<void> => {
       return;
     }
 
-    console.log(`URL ${url} is blocked, checking intention status`);
+    console.log(`URL ${url} is blocked, checking for existing intention`);
 
-    // Check intention status
-    const status = await checkIntentionStatus(url);
+    // Check if there's already an intention for this URL
+    const intentionData = await getIntention(url);
     
-    switch (status.action) {
-      case 'allow':
-        console.log(`Allowing access to ${status.domain} with active intention`);
-        // No overlay needed, user can browse freely
-        break;
-        
-      case 'show_overlay':
-        console.log(`Showing intention overlay for ${status.domain}`);
-        showReactIntentionOverlay(url);
-        break;
-        
-      case 'show_conflict':
-        console.log(`Showing conflict overlay for ${status.domain} (active: ${status.activeIntention?.domain})`);
-        if (status.activeIntention) {
-          showReactConflictOverlay(status.domain, status.activeIntention);
-        }
-        break;
-        
-      default:
-        console.warn('Unknown action:', status.action);
-        showReactIntentionOverlay(url);
+    if (intentionData && intentionData.intention) {
+      console.log(`Found existing intention for ${url}, allowing access`);
+      // No overlay needed, user can browse freely
+      return;
+    } else {
+      console.log(`No intention found for ${url}, showing overlay`);
+      showReactIntentionOverlay(url);
     }
   } catch (error) {
     console.error('Error in handlePageLoad:', error);
@@ -65,8 +50,9 @@ export const checkPageAccess = async (url: string): Promise<boolean> => {
       return true; // Not a blocked site, allow access
     }
 
-    const status = await checkIntentionStatus(url);
-    return status.action === 'allow';
+    // Check if there's an intention for this URL
+    const intentionData = await getIntention(url);
+    return !!(intentionData && intentionData.intention);
   } catch (error) {
     console.error('Error checking page access:', error);
     return false; // Default to blocking on error

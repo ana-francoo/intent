@@ -217,21 +217,15 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     const intentionData = await chrome.storage.local.get(['active_intention', 'accessible_sites']);
     console.log('🎯 Intention-specific data:', intentionData);
     
-    // Check if there's an active intention
-    const { getActiveIntention } = await import('../utils/intentionManager');
-    const activeIntention = await getActiveIntention();
-    console.log('🔍 getActiveIntention() result:', activeIntention);
-    
-    // Check current URL status
-    const { checkIntentionStatus } = await import('../utils/intentionManager');
-    const status = await checkIntentionStatus(window.location.href);
-    console.log('🔍 checkIntentionStatus() result:', status);
+    // Check if there's an intention for current URL
+    const { getIntention } = await import('../utils/storage');
+    const intentionForUrl = await getIntention(window.location.href);
+    console.log('🔍 getIntention(currentUrl) result:', intentionForUrl);
     
     return {
       allData,
       intentionData,
-      activeIntention,
-      status
+      intentionForUrl
     };
   } catch (error) {
     console.error('❌ Error debugging storage:', error);

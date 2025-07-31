@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { setActiveIntention, normalizeUrlToDomain } from '../../utils/intentionManager';
+import { saveIntention, normalizeUrlToDomain } from '../../utils/storage';
 // import Flame from '../home/Flame'; // Currently disabled in template
 import './IntentionOverlay.css';
 
@@ -46,8 +46,8 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
       // Show flame animation
       setShowFlame(true);
       
-      // Save intention
-      await setActiveIntention(domain, intention.trim());
+      // Save intention using old storage system
+      await saveIntention(url, intention.trim());
       
       // Wait for flame animation, then redirect to the intended site
       setTimeout(() => {
