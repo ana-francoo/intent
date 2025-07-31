@@ -15,7 +15,7 @@ import Flame from './Flame';
 import './Flame.css';
 import './Home.css';
 import '../popup/App.css';
-import './intent-onboarding-component/src/styles.css';
+import App from '@/components/intent-onboarding-component/src/App.tsx'
 
 const PAGES = {
   home: 0,
@@ -246,7 +246,7 @@ export default function Home() {
         zIndex: 1000,
         background: 'var(--background, #171717)'
       }}>
-        <div>Onboarding component would go here</div>
+        <App />
       </div>
     );
   }
