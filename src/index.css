@@ -1,0 +1,211 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Geist';
+  src: url('./fonts/geist.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--intent-radius) - 4px);
+  --radius-md: calc(var(--intent-radius) - 2px);
+  --radius-lg: var(--intent-radius);
+  --radius-xl: calc(var(--intent-radius) + 4px);
+  --color-background: var(--intent-background);
+  --color-foreground: var(--intent-foreground);
+  --color-card: var(--intent-card);
+  --color-card-foreground: var(--intent-card-foreground);
+  --color-popover: var(--intent-popover);
+  --color-popover-foreground: var(--intent-popover-foreground);
+  --color-primary: var(--intent-primary);
+  --color-primary-foreground: var(--intent-primary-foreground);
+  --color-secondary: var(--intent-secondary);
+  --color-secondary-foreground: var(--intent-secondary-foreground);
+  --color-muted: var(--intent-muted);
+  --color-muted-foreground: var(--intent-muted-foreground);
+  --color-accent: var(--intent-accent);
+  --color-accent-foreground: var(--intent-accent-foreground);
+  --color-destructive: var(--intent-destructive);
+  --color-border: var(--intent-border);
+  --color-input: var(--intent-input);
+  --color-ring: var(--intent-ring);
+  --color-chart-1: var(--intent-chart-1);
+  --color-chart-2: var(--intent-chart-2);
+  --color-chart-3: var(--intent-chart-3);
+  --color-chart-4: var(--intent-chart-4);
+  --color-chart-5: var(--intent-chart-5);
+  --color-sidebar: var(--intent-sidebar);
+  --color-sidebar-foreground: var(--intent-sidebar-foreground);
+  --color-sidebar-primary: var(--intent-sidebar-primary);
+  --color-sidebar-primary-foreground: var(--intent-sidebar-primary-foreground);
+  --color-sidebar-accent: var(--intent-sidebar-accent);
+  --color-sidebar-accent-foreground: var(--intent-sidebar-accent-foreground);
+  --color-sidebar-border: var(--intent-sidebar-border);
+  --color-sidebar-ring: var(--intent-sidebar-ring);
+}
+
+:root {
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --intent-radius: 0.625rem;
+  --intent-background: oklch(0.141 0.005 285.823);
+  --intent-foreground: oklch(0.985 0 0);
+  --intent-card: oklch(0.21 0.006 285.885);
+  --intent-card-foreground: oklch(0.985 0 0);
+  --intent-popover: oklch(0.21 0.006 285.885);
+  --intent-popover-foreground: oklch(0.985 0 0);
+  --intent-primary: oklch(0.92 0.004 286.32);
+  --intent-primary-foreground: oklch(0.21 0.006 285.885);
+  --intent-secondary: oklch(0.274 0.006 286.033);
+  --intent-secondary-foreground: oklch(0.985 0 0);
+  --intent-muted: oklch(0.274 0.006 286.033);
+  --intent-muted-foreground: oklch(0.705 0.015 286.067);
+  --intent-accent: oklch(0.274 0.006 286.033);
+  --intent-accent-foreground: oklch(0.985 0 0);
+  --intent-destructive: oklch(0.704 0.191 22.216);
+  --intent-border: oklch(1 0 0 / 10%);
+  --intent-input: oklch(1 0 0 / 15%);
+  --intent-ring: oklch(0.552 0.016 285.938);
+  --intent-chart-1: oklch(0.488 0.243 264.376);
+  --intent-chart-2: oklch(0.696 0.17 162.48);
+  --intent-chart-3: oklch(0.769 0.188 70.08);
+  --intent-chart-4: oklch(0.627 0.265 303.9);
+  --intent-chart-5: oklch(0.645 0.246 16.439);
+  --intent-sidebar: oklch(0.21 0.006 285.885);
+  --intent-sidebar-foreground: oklch(0.985 0 0);
+  --intent-sidebar-primary: oklch(0.488 0.243 264.376);
+  --intent-sidebar-primary-foreground: oklch(0.985 0 0);
+  --intent-sidebar-accent: oklch(0.274 0.006 286.033);
+  --intent-sidebar-accent-foreground: oklch(0.985 0 0);
+  --intent-sidebar-border: oklch(1 0 0 / 10%);
+  --intent-sidebar-ring: oklch(0.552 0.016 285.938);
+
+  /* Custom Intent theme tokens */
+  --flame-glow: 25 100% 45%;
+  --flame-core: 35 95% 65%;
+  --candle-base: 35 60% 40%;
+  --intention-glow: 25 90% 50%;
+  --focus-ring: 25 80% 55%;
+  
+  /* Gradients */
+  --gradient-flame: linear-gradient(135deg, hsl(var(--flame-core)), hsl(var(--flame-glow)));
+  --gradient-glow: radial-gradient(circle, hsl(var(--intention-glow) / 0.3), transparent 70%);
+  --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(222 12% 12%));
+  
+  /* Shadows */
+  --shadow-glow: 0 0 40px hsl(var(--intention-glow) / 0.4);
+  --shadow-card: 0 10px 30px -10px hsl(222 15% 3% / 0.8);
+  --shadow-intense: 0 0 60px hsl(var(--flame-glow) / 0.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Custom gradient backgrounds */
+  .bg-gradient-glow {
+    background: var(--gradient-glow);
+  }
+  
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .bg-gradient-flame {
+    background: var(--gradient-flame);
+  }
+  
+  /* Custom text colors */
+  .text-intention {
+    color: hsl(var(--flame-glow));
+  }
+  
+  /* Custom borders */
+  .border-focus {
+    border-color: hsl(var(--focus-ring));
+  }
+  
+  /* Custom shadows */
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .shadow-intense {
+    box-shadow: var(--shadow-intense);
+  }
+}
+
+@layer components {
+  /* Custom animations */
+  @keyframes slide-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.05);
+    }
+  }
+  
+  @keyframes flame-flicker {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+    25% {
+      opacity: 0.9;
+      transform: scale(1.02) rotate(1deg);
+    }
+    50% {
+      opacity: 0.95;
+      transform: scale(0.98) rotate(-1deg);
+    }
+    75% {
+      opacity: 0.92;
+      transform: scale(1.01) rotate(0.5deg);
+    }
+  }
+  
+  .animate-slide-in-up {
+    animation: slide-in-up 0.7s ease-out forwards;
+  }
+  
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  
+  .animate-flame-flicker {
+    animation: flame-flicker 2s ease-in-out infinite;
+  }
+}

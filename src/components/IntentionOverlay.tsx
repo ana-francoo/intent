@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { setActiveIntention, normalizeUrlToDomain } from '../utils/intentionManager';
-import Flame from './Flame';
+import Flame from './home/Flame';
 import './IntentionOverlay.css';
 
 interface IntentionOverlayProps {

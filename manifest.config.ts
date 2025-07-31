@@ -16,7 +16,7 @@ export default defineManifest({
     default_popup: 'src/popup/index.html',
   },
           web_accessible_resources: [{
-          resources: ['src/assets/logo2.png', 'public/logo.png', 'welcome.html', 'how-it-works.html', 'auth.html', 'website-blocking.html', 'smoke-test.html', 'src/landing.html', 'src/landing.js'],
+          resources: ['src/assets/logo2.png', 'public/logo.png', 'src/landing.html', 'src/landing.js'],
           matches: ['https://*/*']
         }],
   background: {

@@ -8,9 +8,20 @@ function submitDemo() {
 
 function openExtension() {
     console.log('[Landing] Get Started button clicked');
-    console.log('[Landing] Redirecting to how-it-works.html');
-    // Redirect to how-it-works.html
-    window.location.href = 'how-it-works.html';
+    // Send message to background script to open popup
+    chrome.runtime.sendMessage({ type: 'OPEN_POPUP_WITH_ROUTE', route: '/how-it-works' }, (response) => {
+        if (response && response.success) {
+            console.log('[Landing] Popup opened successfully');
+            // Close the landing page
+            window.close();
+        } else {
+            console.error('[Landing] Failed to open popup:', response?.error);
+            // Fallback: try to open the popup directly
+            chrome.action.openPopup().catch(() => {
+                console.error('[Landing] Direct popup open failed');
+            });
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
