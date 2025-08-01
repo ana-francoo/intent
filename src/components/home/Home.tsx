@@ -6,7 +6,7 @@ import PopoverDashboard from '@/components/main-dashboard/PopoverDashboard';
 import AuthComponent from '@/components/auth/Auth';
 import ExpiredAccess from '@/components/expired-access/ExpiredAccess';
 import { supabase } from '../../supabaseClient';
-import { triggerOverlay } from '../../utils/overlay';
+import { showReactIntentionOverlay } from '../../utils/reactOverlayManager';
 import { getSubscriptionStatus, SubscriptionStatus } from '../../utils/subscription';
 import Flame from './Flame';
 import './Flame.css';
@@ -111,7 +111,7 @@ export default function Home() {
 
   const handleBack = () => {
     if (currentPage === 'main') {
-      triggerOverlay();
+      showReactIntentionOverlay(window.location.href);
     } else {
       setCurrentPageIndex((prev: number) => Math.max(0, prev - 1));
     }

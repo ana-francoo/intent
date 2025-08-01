@@ -1,6 +1,6 @@
 import { createRoot, Root } from 'react-dom/client';
 import IntentionOverlay from '../components/overlay/IntentionOverlay';
-import ConflictOverlay from '../components/overlay/ConflictOverlay';
+import { Toaster } from '../components/ui/toaster';
 
 let overlayRoot: Root | null = null;
 let overlayContainer: HTMLElement | null = null;
@@ -47,36 +47,13 @@ export const showReactIntentionOverlay = (url: string): void => {
 
   if (overlayRoot) {
     overlayRoot.render(
-      <IntentionOverlay 
-        url={url} 
-        onClose={handleClose}
-      />
-    );
-  }
-};
-
-export const showReactConflictOverlay = (
-  currentDomain: string, 
-  activeIntention: { domain: string; intention: string }
-): void => {
-  createOverlayContainer();
-  
-  const handleClose = () => {
-    removeOverlay();
-  };
-
-  const handleSetNewIntention = () => {
-    showReactIntentionOverlay(window.location.href);
-  };
-
-  if (overlayRoot) {
-    overlayRoot.render(
-      <ConflictOverlay 
-        currentDomain={currentDomain}
-        activeIntention={activeIntention}
-        onClose={handleClose}
-        onSetNewIntention={handleSetNewIntention}
-      />
+      <>
+        <IntentionOverlay 
+          url={url} 
+          onClose={handleClose}
+        />
+        <Toaster />
+      </>
     );
   }
 };

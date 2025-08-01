@@ -1,9 +1,8 @@
-import { triggerOverlay } from '../utils/overlay';
+import { showReactIntentionOverlay } from '../utils/reactOverlayManager';
 
 export default function Main() {
   const handleBlockClick = () => {
-    triggerOverlay();
-    // Close the popup window after a short delay to allow the message to be sent
+    showReactIntentionOverlay(window.location.href);
     setTimeout(() => {
       window.close();
     }, 100);

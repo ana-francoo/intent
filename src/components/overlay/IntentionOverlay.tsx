@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { saveIntention, normalizeUrlToDomain } from '../../utils/storage';
-// import Flame from '../home/Flame'; // Currently disabled in template
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
+import { useToast } from '@/hooks/use-toast';
+import { Check } from 'lucide-react';
 
 interface IntentionOverlayProps {
   url: string;
@@ -11,68 +13,47 @@ interface IntentionOverlayProps {
 
 const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => {
   const [intention, setIntention] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showFlame, setShowFlame] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const { toast } = useToast();
 
   const domain = normalizeUrlToDomain(url);
   const websiteName = domain.charAt(0).toUpperCase() + domain.slice(1);
 
-  useEffect(() => {
-    // Focus the textarea when component mounts
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, []);
-
   const handleSubmit = async () => {
-    if (!intention.trim() || isSubmitting) return;
+    if (!intention.trim() || isLoading) return;
 
-    setIsSubmitting(true);
+    setIsLoading(true);
+    setError('');
     
     try {
-      // First, validate the intention using AI
       const { validateIntention } = await import('../../utils/intentionMatcher');
       const [isValid, reason] = await validateIntention(intention.trim());
       
       if (!isValid) {
-        // Show error and allow user to try again
-        setIsSubmitting(false);
-        setShowFlame(false);
-        alert(reason || 'Please provide a more specific intention.');
+        setError(reason || 'Please provide a more specific intention.');
+        setIsLoading(false);
         return;
       }
       
-      // Show flame animation
-      setShowFlame(true);
-      
-      // Save intention using old storage system
       await saveIntention(url, intention.trim());
+      setIsSuccess(true);
       
-      // Wait for flame animation, then redirect to the intended site
       setTimeout(() => {
-        // Redirect to the domain the user intended to visit
-        window.location.href = url;
-      }, 2000);
+        onClose();
+      }, 1500);
       
     } catch (error) {
       console.error('Error setting intention:', error);
-      setIsSubmitting(false);
-      setShowFlame(false);
-      alert('Error setting intention. Please try again.');
+      setIsLoading(false);
+      toast({
+        title: "Error",
+        description: "Failed to set intention. Please try again.",
+        variant: "destructive",
+      });
     }
   };
-
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 300); // Match CSS transition duration
-  };
-
-  // Suppress unused variable warning - this function is kept for potential future use
-  void handleClose;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -83,71 +64,60 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setIntention(e.target.value);
-    
-    // Auto-resize textarea
-    const textarea = e.target;
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    if (error) setError('');
   };
-
+  console.log('SDOFIJSODIFJIOSDJFOISJDFOISJDFIOSDJ');
   return (
-    <div 
-      className={cn(
-        "fixed inset-0 z-[2147483647] flex items-center justify-center",
-        "bg-gradient-to-b from-[rgba(43,37,37,0.99)] via-[rgba(43,37,37,0.99)] to-[rgba(0,0,0,0.99)]",
-        "backdrop-blur-lg",
-        "font-['Geist'] text-white",
-        "transition-opacity duration-300 ease-out",
-        isClosing && "opacity-0"
-      )}
-    >
-      <div className="flex flex-col items-center max-w-[500px] w-[90%] text-center">
-        {!showFlame ? (
-          // Input phase - show candle
+    <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/95 backdrop-blur-sm">
+      <div className="flex flex-col items-center max-w-md w-[90%] text-center">
+        {!isSuccess ? (
           <>
-            <div className="mb-10">
-              <div className="relative w-[120px] h-[120px] mx-auto mb-5">
-                <img 
-                  src={chrome.runtime.getURL('src/assets/logo2.png')} 
-                  alt="Intent Logo" 
-                  className="w-full h-full object-contain opacity-80"
-                />
-              </div>
-            </div>
+            <img 
+              src={chrome.runtime.getURL('src/assets/logo2.png')} 
+              alt="Intent" 
+              className="w-20 h-20 mb-8 opacity-80"
+            />
             
-            <div className="w-full">
-              <h2 className="text-2xl font-medium mb-5 leading-relaxed">
-                What's your intention for visiting {websiteName}?
-              </h2>
-              
+            <h2 className="text-2xl font-medium mb-6 text-white">
+              What's your intention for visiting {websiteName}?
+            </h2>
+            
+            <div className="w-full relative">
               <Textarea
-                ref={textareaRef}
                 value={intention}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your intention here..."
                 className={cn(
-                  "min-h-[60px] max-h-[120px] resize-none"
+                  "min-h-[80px] resize-none pr-10",
+                  "bg-white/5 border-white/20 text-white placeholder:text-white/40",
+                  "focus:border-white/40 focus-visible:ring-white/20",
+                  error && "border-red-500/50 focus:border-red-500/50"
                 )}
-                disabled={isSubmitting}
+                disabled={isLoading}
+                autoFocus
               />
+              {isLoading && (
+                <div className="absolute right-3 top-3">
+                  <Spinner size="sm" className="text-white/60" />
+                </div>
+              )}
             </div>
+            
+            {error && (
+              <p className="mt-2 text-sm text-red-400">{error}</p>
+            )}
+            
+            <p className="mt-4 text-sm text-white/60">
+              Press Enter to continue
+            </p>
           </>
         ) : (
-          // Flame phase - show flame with intention
-          <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* <div className="relative w-[150px] h-[200px] mb-[30px]">
-              <img 
-                src={chrome.runtime.getURL('src/assets/logo2.png')} 
-                alt="Intent Logo" 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120px] h-[120px] object-contain opacity-60 z-[1]"
-              />
-              <Flame />
-            </div> */}
-            
-            <div className="text-lg font-normal leading-relaxed max-w-[400px] animate-in fade-in slide-in-from-bottom-2 duration-500 delay-1000">
-              {intention}
+          <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-green-500" />
             </div>
+            <p className="text-lg text-white/80">Intention set!</p>
           </div>
         )}
       </div>

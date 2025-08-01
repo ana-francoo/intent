@@ -5,6 +5,7 @@ import Auth from '@/components/auth/Auth'
 import CarouselApp from '@/components/carousel/App'
 import WebsiteBlocking from '@/components/website-blocking/WebsiteBlocking'
 import Smoke from '@/components/smoke-test/Smoke'
+import IntentionOverlayPage from '@/components/overlay/IntentionOverlayPage'
 import './App.css'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/how-it-works" element={<CarouselApp />} />
         <Route path="/website-blocking" element={<WebsiteBlocking onSave={() => {}} />} />
         <Route path="/smoke-test" element={<Smoke />} />
+        <Route path="/overlay" element={<IntentionOverlayPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
