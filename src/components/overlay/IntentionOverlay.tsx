@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { saveIntention, normalizeUrlToDomain } from '../../utils/storage';
 // import Flame from '../home/Flame'; // Currently disabled in template
-import './IntentionOverlay.css';
+import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 interface IntentionOverlayProps {
   url: string;
@@ -90,51 +91,61 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
   };
 
   return (
-    <div className={`intention-overlay ${isClosing ? 'closing' : ''}`}>
-      <div className="intention-overlay-content">
+    <div 
+      className={cn(
+        "fixed inset-0 z-[2147483647] flex items-center justify-center",
+        "bg-gradient-to-b from-[rgba(43,37,37,0.99)] via-[rgba(43,37,37,0.99)] to-[rgba(0,0,0,0.99)]",
+        "backdrop-blur-lg",
+        "font-['Geist'] text-white",
+        "transition-opacity duration-300 ease-out",
+        isClosing && "opacity-0"
+      )}
+    >
+      <div className="flex flex-col items-center max-w-[500px] w-[90%] text-center">
         {!showFlame ? (
           // Input phase - show candle
           <>
-            <div className="candle-container">
-              <div className="candle">
+            <div className="mb-10">
+              <div className="relative w-[120px] h-[120px] mx-auto mb-5">
                 <img 
                   src={chrome.runtime.getURL('src/assets/logo2.png')} 
                   alt="Intent Logo" 
-                  className="candle-logo"
+                  className="w-full h-full object-contain opacity-80"
                 />
-                <div className="wick"></div>
               </div>
             </div>
             
-            <div className="input-section">
-              <h2 className="question">
+            <div className="w-full">
+              <h2 className="text-2xl font-medium mb-5 leading-relaxed">
                 What's your intention for visiting {websiteName}?
               </h2>
               
-              <textarea
+              <Textarea
                 ref={textareaRef}
                 value={intention}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Type your intention here..."
-                className="intention-input"
+                className={cn(
+                  "min-h-[60px] max-h-[120px] resize-none"
+                )}
                 disabled={isSubmitting}
               />
             </div>
           </>
         ) : (
           // Flame phase - show flame with intention
-          <div className="flame-container">
-            {/* <div className="flame-with-logo">
+          <div className="flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* <div className="relative w-[150px] h-[200px] mb-[30px]">
               <img 
                 src={chrome.runtime.getURL('src/assets/logo2.png')} 
                 alt="Intent Logo" 
-                className="flame-logo"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120px] h-[120px] object-contain opacity-60 z-[1]"
               />
               <Flame />
             </div> */}
             
-            <div className="intention-text">
+            <div className="text-lg font-normal leading-relaxed max-w-[400px] animate-in fade-in slide-in-from-bottom-2 duration-500 delay-1000">
               {intention}
             </div>
           </div>
