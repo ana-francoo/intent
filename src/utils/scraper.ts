@@ -14,6 +14,24 @@ export interface PageContent {
  * Uses semantic weighting to prioritize important content blocks
  * Filters out browser noise and focuses on meaningful content
  */
+
+//Youtube specific scraper
+export function extractYouTubeMetadata(): string {
+  // Validate that we're on the correct YouTube URL
+  const title =
+    document.querySelector('meta[name="title"]')?.getAttribute('content') ||
+    document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+    document.title || 'No title found';
+
+  const description =
+    document.querySelector('meta[name="description"]')?.getAttribute('content') ||
+    document.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+    '';
+
+  return `title: ${title.trim()}\ndescription: ${description.trim()}`;
+}
+
+
 export function extractRelevantContentFromPage(): string {
   // 1. Collect metadata with noise filtering
   const metadata = [
@@ -22,8 +40,7 @@ export function extractRelevantContentFromPage(): string {
     (document.querySelector('meta[property="og:title"]') as HTMLMetaElement)?.content,
     (document.querySelector('meta[property="og:description"]') as HTMLMetaElement)?.content,
     (document.querySelector('meta[name="twitter:description"]') as HTMLMetaElement)?.content
-  ].filter(Boolean)
-  .filter(text => !isBrowserNoise(text)); // Filter out browser noise
+  ].filter(Boolean);
 
   // 2. Define tag weights (semantic signal)
   const tagPriority: Record<string, number> = {
@@ -57,11 +74,10 @@ export function extractRelevantContentFromPage(): string {
         text,
         weight: (tagPriority[el.tagName] || 0),
         isVisible,
-        length: text.length,
-        isNoise: isBrowserNoise(text)
+        length: text.length
       };
     })
-    .filter(el => el.isVisible && el.length > 30 && !el.isNoise) // Increased min length, filter noise
+    .filter(el => el.isVisible && el.length > 30) // Increased min length, filter noise
     .sort((a, b) => (b.length * b.weight) - (a.length * b.weight))
     .slice(0, 8) // Top 8 longest + high-weight blocks
     .map(el => el.text);
@@ -72,54 +88,56 @@ export function extractRelevantContentFromPage(): string {
 }
 
 /**
- * Check if text is browser noise (like "youtube (527)", "Loading...", etc.)
- */
-function isBrowserNoise(text: string): boolean {
-  if (!text || text.length < 3) return true;
-  
-  const noisePatterns = [
-    /^[a-zA-Z\s]+\(\d+\)$/, // "youtube (527)", "facebook (3)"
-    /^Loading\.{1,3}$/, // "Loading...", "Loading.."
-    /^Please wait\.{1,3}$/, // "Please wait..."
-    /^Connecting\.{1,3}$/, // "Connecting..."
-    /^[A-Za-z\s]+\.{1,3}$/, // Generic loading patterns
-    /^\d+$/, // Just numbers
-    /^[A-Za-z\s]+\s\(\d+\)$/, // "YouTube (527)" with spaces
-    /^[A-Za-z\s]+\s-\s[A-Za-z\s]+$/, // "YouTube - Home" type patterns
-    /^[A-Za-z\s]+\s\|\s[A-Za-z\s]+$/, // "YouTube | Home" type patterns
-  ];
-  
-  return noisePatterns.some(pattern => pattern.test(text.trim()));
-}
-
-/**
  * Extract comprehensive content from the current page
  * Returns structured data with relevant text content
  */
 export const scrapeCurrentPage = (): PageContent => {
+  //in this function dynamically direct to the correct scraper based on the url
   const url = window.location.href;
-  const domain = window.location.hostname;
-  
-  // Get page title with noise filtering
-  const rawTitle = document.title || '';
-  const title = isBrowserNoise(rawTitle) ? '' : rawTitle;
-  
-  // Get meta description
-  const metaDescription = document.querySelector('meta[name="description"]') as HTMLMetaElement;
-  const description = metaDescription?.content || '';
+  if (url.includes('youtube.com')) {
+    const metadataString = extractYouTubeMetadata(url);
+    // Parse the metadata string to extract title and description
+    const titleMatch = metadataString.match(/title: (.+)/);
+    const descriptionMatch = metadataString.match(/description: (.+)/);
+    
+    const title = titleMatch ? titleMatch[1] : 'No title found';
+    const description = descriptionMatch ? descriptionMatch[1] : '';
+    
+    return {
+      title: title,
+      description: description,
+      url: url,
+      domain: new URL(url).hostname,
+      relevantText: description,
+      timestamp: new Date()
+    };
+  }
   
   // Get relevant text content using the improved extraction method
   const relevantText = extractRelevantContentFromPage();
   
   return {
-    title,
-    description,
-    url,
-    domain,
-    relevantText,
+    title: document.title || '',
+    description: (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || '',
+    url: url,
+    domain: new URL(url).hostname,
+    relevantText: relevantText,
     timestamp: new Date()
   };
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Extract content from a specific URL (for testing purposes)
@@ -248,3 +266,5 @@ export const testScraper = () => {
     summary
   };
 }; 
+
+

@@ -1,3 +1,7 @@
+/**
+ * This is the page responsible for the intention matching logic
+ */
+
 import { PageContent } from './scraper';
 import { getIntention } from './storage';
 import { CONFIG, getOpenRouterHeaders } from './config';

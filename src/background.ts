@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install' || details.reason === 'chrome_update') {
     console.log('[Background] Opening landing page...');
     chrome.tabs.create({
-      url: chrome.runtime.getURL('src/landing.html')
+      url: chrome.runtime.getURL('welcome.html')
     }).then((tab) => {
       console.log('[Background] Landing page tab created:', tab);
     }).catch((error) => {
