@@ -26,7 +26,7 @@ export default function App() {
     <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth onAuthSuccess={() => {}} />} />
-        <Route path="/welcome" element={<Home />} />
+        <Route path="/welcome" element={<CarouselApp />} />
         <Route path="/how-it-works" element={<CarouselApp />} />
         <Route path="/website-blocking" element={<WebsiteBlocking onSave={() => {}} />} />
         <Route path="/smoke-test" element={<Smoke />} />

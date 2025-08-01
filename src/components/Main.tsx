@@ -1,11 +1,7 @@
-import { showReactIntentionOverlay } from '../utils/reactOverlayManager';
-
 export default function Main() {
   const handleBlockClick = () => {
-    showReactIntentionOverlay(window.location.href);
-    setTimeout(() => {
-      window.close();
-    }, 100);
+    const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay?targetUrl=${encodeURIComponent(window.location.href)}`;
+    window.location.href = overlayUrl;
   };
 
   return (

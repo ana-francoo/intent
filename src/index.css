@@ -155,7 +155,6 @@
 }
 
 @layer components {
-  /* Custom animations */
   @keyframes slide-in-up {
     from {
       opacity: 0;
@@ -207,5 +206,14 @@
   
   .animate-flame-flicker {
     animation: flame-flicker 2s ease-in-out infinite;
+  }
+}
+
+body {
+  min-height: 100dvh;
+  min-width: 100dvw;
+  #root {
+    width: 100%;
+    height: 100%;
   }
 }

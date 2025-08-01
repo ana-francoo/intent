@@ -6,7 +6,6 @@ import PopoverDashboard from '@/components/main-dashboard/PopoverDashboard';
 import AuthComponent from '@/components/auth/Auth';
 import ExpiredAccess from '@/components/expired-access/ExpiredAccess';
 import { supabase } from '../../supabaseClient';
-import { showReactIntentionOverlay } from '../../utils/reactOverlayManager';
 import { getSubscriptionStatus, SubscriptionStatus } from '../../utils/subscription';
 import Flame from './Flame';
 import './Flame.css';
@@ -111,7 +110,8 @@ export default function Home() {
 
   const handleBack = () => {
     if (currentPage === 'main') {
-      showReactIntentionOverlay(window.location.href);
+      const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay?targetUrl=${encodeURIComponent(window.location.href)}`;
+      window.location.href = overlayUrl;
     } else {
       setCurrentPageIndex((prev: number) => Math.max(0, prev - 1));
     }
