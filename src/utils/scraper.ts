@@ -15,21 +15,7 @@ export interface PageContent {
  * Filters out browser noise and focuses on meaningful content
  */
 
-//Youtube specific scraper
-export function extractYouTubeMetadata(): string {
-  // Validate that we're on the correct YouTube URL
-  const title =
-    document.querySelector('meta[name="title"]')?.getAttribute('content') ||
-    document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
-    document.title || 'No title found';
 
-  const description =
-    document.querySelector('meta[name="description"]')?.getAttribute('content') ||
-    document.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
-    '';
-
-  return `title: ${title.trim()}\ndescription: ${description.trim()}`;
-}
 
 
 export function extractRelevantContentFromPage(): string {
@@ -95,7 +81,7 @@ export const scrapeCurrentPage = (): PageContent => {
   //in this function dynamically direct to the correct scraper based on the url
   const url = window.location.href;
   if (url.includes('youtube.com')) {
-    const metadataString = extractYouTubeMetadata(url);
+    const metadataString = extractYouTubeMetadata();
     // Parse the metadata string to extract title and description
     const titleMatch = metadataString.match(/title: (.+)/);
     const descriptionMatch = metadataString.match(/description: (.+)/);
@@ -268,3 +254,39 @@ export const testScraper = () => {
 }; 
 
 
+////////////////CUSTOM SCRAPERS//////////////////////
+
+//Youtube specific scraper
+//TODO TEST
+export function extractYouTubeMetadata(): string {
+  // Validate that we're on the correct YouTube URL
+  const title =
+    document.querySelector('meta[name="title"]')?.getAttribute('content') ||
+    document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+    document.title || 'No title found';
+
+  const description =
+    document.querySelector('meta[name="description"]')?.getAttribute('content') ||
+    document.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+    '';
+
+  return `title: ${title.trim()}\ndescription: ${description.trim()}`;
+}
+
+//Reddit specific scraper
+export function extractRedditMetadata(): string {
+  const title = document.querySelector('h1[id*="post-title"]')?.textContent?.trim() || 'No title found';
+
+  const description = Array.from(
+    document.querySelector('[property="schema:articleBody"]')?.querySelectorAll('p') || []
+  )
+    .map(p => p.textContent?.trim())
+    .filter(Boolean)
+    .join('\n\n') || '';
+
+    if (!title && !description) {
+      return 'blank';
+    }
+
+  return `title: ${title}\ndescription: ${description}`;
+}
