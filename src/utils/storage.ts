@@ -394,10 +394,14 @@ export const getBlockedSites = async () => {
           'https://www.instagram.com',
           'https://youtube.com',
           'https://www.youtube.com',
+          'https://linkedin.com',
+          'https://www.linkedin.com',
           'https://facebook.com',
           'https://www.facebook.com',
           'https://twitter.com',
           'https://www.twitter.com',
+          'https://x.com',
+          'https://www.x.com',
           'https://tiktok.com',
           'https://www.tiktok.com'
         ];
