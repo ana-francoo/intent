@@ -66,7 +66,7 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
     setIntention(e.target.value);
     if (error) setError('');
   };
-  console.log('SDOFIJSODIFJIOSDJFOISJDFOISJDFIOSDJ');
+
   return (
     <div className="fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/95 backdrop-blur-sm">
       <div className="flex flex-col items-center max-w-md w-[90%] text-center">

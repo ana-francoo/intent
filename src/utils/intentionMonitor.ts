@@ -2,20 +2,13 @@ import { getIntention } from './storage';
 import { checkIntentionMatch } from './intentionMatcher';
 import { initializeRouteInterceptor } from './routeInterceptor';
 
-/**
- * Monitor user's browsing activity and check if it matches their intention
- * This runs in the background after user sets an intention
- */
+const MONITORING_FLAG_KEY = 'intent_monitoring_active';
+
 export class IntentionMonitor {
   private checkInterval: number | null = null;
   private isMonitoring: boolean = false;
-  
-  // Check every 10 seconds while user is browsing
   private readonly CHECK_INTERVAL_MS = 10 * 1000;
   
-  /**
-   * Start monitoring the user's activity
-   */
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
       return;
@@ -23,39 +16,31 @@ export class IntentionMonitor {
 
     console.log('🔍 Starting AI-powered intention monitoring');
     this.isMonitoring = true;
+    sessionStorage.setItem(MONITORING_FLAG_KEY, 'true');
 
-    // Check immediately
     await this.checkCurrentActivity();
 
-    // Set up periodic checking
     this.checkInterval = window.setInterval(async () => {
       await this.checkCurrentActivity();
     }, this.CHECK_INTERVAL_MS);
   }
 
-  /**
-   * Stop monitoring
-   */
   stopMonitoring(): void {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
     }
     this.isMonitoring = false;
+    sessionStorage.removeItem(MONITORING_FLAG_KEY);
     console.log('🔍 Stopped intention monitoring');
   }
 
-  /**
-   * Check if current activity matches the user's intention
-   */
   private async checkCurrentActivity(): Promise<void> {
     try {
       const currentUrl = window.location.href;
       
-      // Get intention for current URL using old storage system
       const intentionData = await getIntention(currentUrl);
       if (!intentionData || !intentionData.intention) {
-        // No intention for this URL, stop monitoring
         console.log('🔍 No intention found for current URL, stopping monitoring');
         this.stopMonitoring();
         return;
@@ -63,7 +48,6 @@ export class IntentionMonitor {
 
       console.log('🔍 Found intention for URL:', intentionData.intention);
 
-      // Use AI to check if current page content matches intention
       const result = await checkIntentionMatch(currentUrl);
       
       console.log('🎯 Intention match result:', {
@@ -72,14 +56,9 @@ export class IntentionMonitor {
         reasoning: result.reasoning
       });
 
-      // If intention doesn't match, show interceptor again
       if (!result.matches) {
         console.log('❌ Intention mismatch detected, re-intercepting page');
-        
-        // Stop monitoring
         this.stopMonitoring();
-        
-        // Re-initialize route interceptor to block access
         await initializeRouteInterceptor();
       } else {
         console.log('✅ Activity matches intention, continuing monitoring');
@@ -87,38 +66,35 @@ export class IntentionMonitor {
 
     } catch (error) {
       console.error('❌ Error checking intention match:', error);
-      // On error, continue monitoring rather than blocking user
     }
   }
 
-  /**
-   * Check if monitoring is currently active
-   */
   isActive(): boolean {
     return this.isMonitoring;
   }
 }
 
-// Global monitor instance
 let globalMonitor: IntentionMonitor | null = null;
 
-/**
- * Start intention monitoring for the current page
- */
 export const startIntentionMonitoring = async (): Promise<void> => {
-  // Stop any existing monitoring
+  const shouldMonitor = sessionStorage.getItem(MONITORING_FLAG_KEY) === 'true';
+  
+  if (!shouldMonitor) {
+    if (globalMonitor) {
+      globalMonitor.stopMonitoring();
+      globalMonitor = null;
+    }
+    return;
+  }
+
   if (globalMonitor) {
     globalMonitor.stopMonitoring();
   }
 
-  // Create new monitor and start
   globalMonitor = new IntentionMonitor();
   await globalMonitor.startMonitoring();
 };
 
-/**
- * Stop intention monitoring
- */
 export const stopIntentionMonitoring = (): void => {
   if (globalMonitor) {
     globalMonitor.stopMonitoring();
@@ -126,9 +102,6 @@ export const stopIntentionMonitoring = (): void => {
   }
 };
 
-/**
- * Check if intention monitoring is currently active
- */
 export const isIntentionMonitoringActive = (): boolean => {
   return globalMonitor?.isActive() || false;
 };

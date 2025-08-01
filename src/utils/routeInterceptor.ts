@@ -49,9 +49,9 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     console.log('🔍 Intention check result:', intentionData);
     
     if (intentionData && intentionData.intention) {
-      console.log('✅ Existing intention found, allowing access and starting monitoring');
+      console.log('✅ Existing intention found, allowing access');
       
-      // Start AI monitoring for existing intention
+      sessionStorage.setItem('intent_monitoring_active', 'true');
       const { startIntentionMonitoring } = await import('./intentionMonitor');
       await startIntentionMonitoring();
       
