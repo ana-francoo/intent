@@ -62,15 +62,7 @@ export const CONFIG = {
   }
 };
 
-// Debug logging for configuration
-if (typeof window !== 'undefined') {
-  console.log('🔧 Intent Extension Configuration:');
-  console.log('  - AI Features Enabled:', !!CONFIG.OPENROUTER.API_KEY);
-  console.log('  - Site URL:', CONFIG.OPENROUTER.SITE_URL);
-  console.log('  - Site Name:', CONFIG.OPENROUTER.SITE_NAME);
-  console.log('  - Default Model:', CONFIG.OPENROUTER.DEFAULT_MODEL);
-  console.log('  - Confidence Threshold:', CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD);
-}
+// Configuration loaded
 
 // Helper function to check if AI features are available
 export const isAIFeaturesEnabled = (): boolean => {

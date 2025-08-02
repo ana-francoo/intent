@@ -80,8 +80,6 @@ export const saveIntention = async (url: string, intentionText: string) => {
       }
     };
     await chrome.storage.local.set(data);
-    
-    console.log(`Intention saved for ${normalizedUrl} (original: ${url}), expires at ${new Date(expiresAt).toLocaleString()}`);
   } catch (error) {
     // Handle extension context invalidation specifically
     if (error instanceof Error && error.message.includes('Extension context invalidated')) {
@@ -116,7 +114,6 @@ export const getIntention = async (url: string): Promise<IntentionData | null> =
     // Check if intention has expired
     const now = Date.now();
     if (intentionData.expiresAt && now > intentionData.expiresAt) {
-      console.log(`Intention for ${normalizedUrl} has expired, removing from storage`);
       await chrome.storage.local.remove(normalizedUrl);
       return null;
     }
@@ -165,7 +162,7 @@ export const cleanupExpiredIntentions = async () => {
     
     if (urlsToRemove.length > 0) {
       await chrome.storage.local.remove(urlsToRemove);
-      console.log(`Cleaned up ${urlsToRemove.length} expired intentions`);
+
     }
     
     return urlsToRemove.length;
@@ -303,7 +300,6 @@ export const getStorageDebugInfo = async () => {
 
 export const saveBlockedSites = async (urls: string[]) => {
   try {
-    console.log('💾 Saving blocked sites:', urls);
     
     // Get the current authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -312,18 +308,14 @@ export const saveBlockedSites = async (urls: string[]) => {
       console.error('❌ Authentication error:', userError);
       // In development, this is expected - just log and continue
       if (userError.message.includes('Auth session missing')) {
-        console.log('ℹ️ No active session - this is normal in development');
         return null;
       }
       throw new Error('Authentication error: ' + userError.message);
     }
     
     if (!user) {
-      console.log('ℹ️ No authenticated user - this is normal in development');
       return null;
     }
-    
-    console.log('👤 Authenticated user:', user.id);
     
     // First, let's check what's currently in the database for this user
     const { data: existingData, error: fetchError } = await supabase
@@ -337,14 +329,11 @@ export const saveBlockedSites = async (urls: string[]) => {
     }
     
     const existingUrls = existingData?.map(item => item.url) || [];
-    console.log('📋 Existing blocked sites for user:', existingUrls);
     
     // Filter out URLs that already exist for this user
     const newUrls = urls.filter(url => !existingUrls.includes(url));
-    console.log('🆕 New URLs to add:', newUrls);
     
     if (newUrls.length === 0) {
-      console.log('ℹ️ No new URLs to add');
       return existingData;
     }
     
@@ -362,13 +351,11 @@ export const saveBlockedSites = async (urls: string[]) => {
       throw error;
     }
     
-    console.log('✅ Successfully saved blocked sites:', data);
     return data;
   } catch (error) {
     console.error('❌ Failed to save blocked sites:', error);
     // In development, don't throw the error - just log it
     if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      console.log('ℹ️ Development mode - continuing without saving to database');
       return null;
     }
     throw error;
@@ -378,7 +365,6 @@ export const saveBlockedSites = async (urls: string[]) => {
 
 export const getBlockedSites = async () => {
   try {
-    console.log('📋 Fetching blocked sites for authenticated user...');
     
     // Get the current authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -387,7 +373,6 @@ export const getBlockedSites = async () => {
       console.error('❌ Authentication error:', userError);
       // In development, this is expected - just log and continue
       if (userError.message.includes('Auth session missing')) {
-        console.log('ℹ️ No active session - this is normal in development');
         // DEVELOPMENT: Return test blocked sites for development
         const testBlockedSites = [
           'https://instagram.com',

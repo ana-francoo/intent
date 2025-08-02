@@ -1,5 +1,5 @@
 // Web scraping utilities for extracting relevant page content
-
+import { getWebsiteCategory } from './domainCategories';
 //there should be parent scraper function, that redirects to the correct scraper based on the url
 
 export interface PageContent {
@@ -77,24 +77,32 @@ export function extractRelevantContentFromPage(): string {
 export const scrapeCurrentPage = (): PageContent => {
   //in this function dynamically direct to the correct scraper based on the url
   const url = window.location.href;
+  const category = getWebsiteCategory(url);
+  let content = '';
+
   if (url.includes('youtube.com')) {
-    const content = extractYouTubeMetadata();
+    content = extractYouTubeMetadata();
   }
   else if (url.includes('reddit.com')) {
-    const content = extractRedditMetadata();
-  }
-  else if (url.includes('news.com')) { // update to categorize a news site
-    const content = extractNewsTitle();
+    content = extractRedditMetadata();
   }
   else if (url.includes('pinterest.com')) {
-    const content = extractPinterestSearchQuery();
+    content = extractPinterestSearchQuery();
+  }  else if (category === 'news') { // update to categorize a news site
+    content = extractNewsTitle();
+  } else if (category === 'social') {
+    content = extractSocialContent();
+  } else if (category === 'shopping') {
+    content = extractShoppingContent();
+  } else if (category === 'entertainment') {
+    content = extractEntertainmentContent();
+  } else {
+    content = extractRelevantContentFromPage();
   }
   // Get relevant text content using the improved extraction method
   const relevantText = extractRelevantContentFromPage();
   
-  return {
-    {content}
-  };
+  return { content };
 };
 
 
@@ -102,7 +110,7 @@ export const scrapeCurrentPage = (): PageContent => {
 
 
 
-
+// TODO: add scrapers for each category
 
 
 

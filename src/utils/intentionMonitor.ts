@@ -11,11 +11,12 @@ import { checkIntentionMatch } from './intentionMatcher'; // this actually has a
 import { initializeRouteInterceptor } from './routeInterceptor';
 
 const MONITORING_FLAG_KEY = 'intent_monitoring_active';
+// Module-level variable (outside the class)
+let previousUrl: string | null = null;
 
 export class IntentionMonitor {
   private checkInterval: number | null = null;
   private isMonitoring: boolean = false;
-  private previousUrl: string | null = null;  // Add this line
   private readonly CHECK_INTERVAL_MS = 10 * 1000;
   
   async startMonitoring(): Promise<void> {
@@ -23,7 +24,6 @@ export class IntentionMonitor {
       return;
     }
 
-    console.log('🔍 Starting AI-powered intention monitoring');
     this.isMonitoring = true;
     sessionStorage.setItem(MONITORING_FLAG_KEY, 'true');
 
@@ -41,7 +41,6 @@ export class IntentionMonitor {
     }
     this.isMonitoring = false;
     sessionStorage.removeItem(MONITORING_FLAG_KEY);
-    console.log('🔍 Stopped intention monitoring');
   }
 
   private async checkCurrentActivity(): Promise<void> {
@@ -50,37 +49,72 @@ export class IntentionMonitor {
       
       const intentionData = await getIntention(currentUrl);
       if (!intentionData || !intentionData.intention) {
-        console.log('🔍 No intention found for current URL, stopping monitoring');
+        previousUrl = null;
         this.stopMonitoring();
         return;
       }
-
-      console.log('🔍 Found intention for URL:', intentionData.intention);
-
-      // 4. [KEY CHANGE] Check if URL has changed since last check
-      if (currentUrl == this.previousUrl){
-        // User is still on the same page, no need to re-analyze
-        this.stopMonitoring();
-        return;
-      }
-      // 5. URL has changed - proceed with existing logic
-      const result = await checkIntentionMatch(currentUrl);
-      // This does:
-      //   - Scrapes the current page content
-      //   - Sends intention + page content to AI
-      //   - AI decides if they match (returns confidence score)
+      console.log('🔍 Previous URL:', previousUrl);
+      console.log('🔍 URLs match?', currentUrl === previousUrl);
       
-      // 6. Check if AI says the page matches user's intention
+      if (currentUrl === previousUrl){
+        // User is still on the same page, no need to re-analyze
+        console.log('🔍 Same URL detected, stopping monitoring');
+        this.stopMonitoring();
+        return;
+      }
+      
+      previousUrl = currentUrl;
+      
+      const result = await checkIntentionMatch(currentUrl);
+      
       if (result.matches == false){
         // User is doing something different than intended
+        console.log('🔍 Intention mismatch, stopping monitoring');
         this.stopMonitoring();
         await initializeRouteInterceptor();  // Redirect to overlay to set new intention
       }else{
         // User is still on track, keep monitoring
-        this.previousUrl = currentUrl;  // Update for next check
+        console.log('🔍 Intention matches, continuing monitoring');
       }
+      console.log('🔍 checkCurrentActivity completed successfully');
     } catch (error) {
-      console.error('❌ Error checking intention match:', error);
+      // Enhanced error handling for different types of failures
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      
+      console.error('❌ Error in checkCurrentActivity:', {
+        error: errorMessage,
+        type: errorName,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      });
+
+      // Handle specific error types - ALL errors should stop monitoring to prevent weird states
+      if (errorName === 'NetworkError' || errorMessage.includes('fetch')) {
+        console.error('🌐 Network error detected - stopping monitoring to prevent infinite loops');
+        this.stopMonitoring();
+        return;
+      }
+      
+      if (errorName === 'TimeoutError' || errorMessage.includes('timeout')) {
+        console.error('⏰ AI analysis timeout - stopping monitoring to prevent infinite loops');
+        this.stopMonitoring();
+        return;
+      }
+      
+      if (errorMessage.includes('API') || errorMessage.includes('OpenRouter')) {
+        console.error('🤖 AI service error - stopping monitoring to prevent cost escalation');
+        this.stopMonitoring();
+        return;
+      }
+      
+      if (errorMessage.includes('storage') || errorMessage.includes('chrome.storage')) {
+        console.error('💾 Storage error - stopping monitoring');
+        this.stopMonitoring();
+        return;
+      }
+      
+      this.stopMonitoring();
     }
   }
 

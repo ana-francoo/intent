@@ -18,7 +18,6 @@ export interface SubscriptionStatus {
  */
 export const getSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
   // DEVELOPMENT: Always return pro subscription status
-  console.log('DEVELOPMENT: Returning pro subscription status');
   
   return {
     hasAccess: true,
@@ -106,7 +105,7 @@ export const handleSubscriptionSuccess = async (subscriptionId: string, customer
       throw error;
     }
 
-    console.log('Subscription successfully activated');
+
     
   } catch (error) {
     console.error('Error handling subscription success:', error);
