@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { saveIntention, normalizeUrlToDomain } from '../../utils/storage';
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Spinner } from '@/components/ui/spinner';
 import { useToast } from '@/hooks/use-toast';
-import { Check } from 'lucide-react';
+import OverlayFlame from './OverlayFlame';
 
 interface IntentionOverlayProps {
   url: string;
@@ -16,7 +16,16 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showFlame, setShowFlame] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        setShowFlame(true);
+      }, 200);
+    }
+  }, [isSuccess]);
 
   const domain = normalizeUrlToDomain(url);
   const websiteName = domain.charAt(0).toUpperCase() + domain.slice(1);
@@ -42,7 +51,7 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
       
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 10000);
       
     } catch (error) {
       console.error('Error setting intention:', error);
@@ -113,11 +122,14 @@ const IntentionOverlay: React.FC<IntentionOverlayProps> = ({ url, onClose }) => 
             </p>
           </>
         ) : (
-          <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
-            <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-              <Check className="w-8 h-8 text-green-500" />
+          <div className="flex flex-col items-center animate-in fade-in duration-500">
+            <OverlayFlame isVisible={showFlame} />
+            <div className="mt-6 text-center max-w-sm">
+              <p className="text-sm text-white/60 mb-1">Your intention:</p>
+              <p className="text-base text-white/90 font-medium leading-relaxed italic">
+                {intention.length > 100 ? `${intention.substring(0, 100)}...` : intention}
+              </p>
             </div>
-            <p className="text-lg text-white/80">Intention set!</p>
           </div>
         )}
       </div>
