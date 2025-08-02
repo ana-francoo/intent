@@ -290,3 +290,6 @@ export function extractRedditMetadata(): string {
 
   return `title: ${title}\ndescription: ${description}`;
 }
+
+//instagram specific scraper
+// this is a SCAPER. however, i dont think we should scrape contnet, instead just check for scroll acitivty

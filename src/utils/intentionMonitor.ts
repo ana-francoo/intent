@@ -1,5 +1,13 @@
+/**
+ * Monitors page changes for intention matching and blocks if it doesn't match
+ */
+
+
+
+
+
 import { getIntention } from './storage';
-import { checkIntentionMatch } from './intentionMatcher';
+import { checkIntentionMatch } from './intentionMatcher'; // this actually has api call to check intent vs scraped content
 import { initializeRouteInterceptor } from './routeInterceptor';
 
 const MONITORING_FLAG_KEY = 'intent_monitoring_active';
