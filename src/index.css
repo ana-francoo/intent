@@ -124,6 +124,15 @@
   --animate-border-width: border-width 3s infinite alternate;
   --animate-slide-out-up: slide-out-up 0.7s var(--ease-out-expo) forwards;
 
+
+  /* Flame animations */
+  --animate-spark-flame: sparkFlame 0.3s ease-in forwards;
+  --animate-move-flame: moveFlame 3s linear infinite 1s;
+  --animate-enlarge-flame: enlargeFlame 5s ease-out infinite 1s;
+  --animate-glow-fade: glowFadeIn 0.2s ease-in forwards 0.6s;
+  --animate-glow-fade-delayed: glowFadeIn 0.2s ease-in forwards 0.7s;
+  --animate-blink: blinkIt 0.1s infinite 0.9s;
+
   @keyframes slide-out-up {
     from {
       opacity: 1;
@@ -158,6 +167,70 @@
     to {
       width: 100px;
       opacity: 1;
+    }
+  }
+
+  @keyframes sparkFlame {
+    0% {
+      height: 0;
+      opacity: 0;
+      transform: translateX(-50%) scale(0.1);
+      filter: brightness(2);
+    }
+    10% {
+      height: 16px;
+      opacity: 1;
+      transform: translateX(-50%) scale(1.6) rotate(10deg);
+      filter: brightness(4) saturate(2);
+    }
+    30% {
+      height: 35px;
+      transform: translateX(-50%) scale(0.9) rotate(-5deg);
+      filter: brightness(1.5);
+    }
+    70% {
+      height: 70px;
+      transform: translateX(-50%) scale(1) rotate(0deg);
+      filter: brightness(1);
+    }
+    100% {
+      height: 90px;
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes moveFlame {
+    0%, 100% {
+      transform: translateX(-50%) rotate(-2deg);
+    }
+    50% {
+      transform: translateX(-50%) rotate(2deg);
+    }
+  }
+
+  @keyframes enlargeFlame {
+    0%, 100% {
+      height: 90px;
+    }
+    50% {
+      height: 105px;
+    }
+  }
+
+  @keyframes glowFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes blinkIt {
+    50% {
+      opacity: 0.8;
     }
   }
 }
