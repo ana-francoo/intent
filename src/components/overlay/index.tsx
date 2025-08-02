@@ -1,5 +1,3 @@
-"use client";
-
 import { useSearchParams } from "react-router-dom";
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
@@ -104,31 +102,34 @@ export default function IntentionOverlay() {
   
   const [state, formAction] = useActionState(submitIntention, {
     success: false,
-    error: null
+    error: null,
   });
 
   useEffect(() => {
-    if (state.success) {
+    if (state.success && targetUrl) {
       const timer = setTimeout(() => {
-        window.close();
-      }, 2000);
+        window.location.href = targetUrl;
+      }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [state.success]);
+  }, [state.success, targetUrl]);
 
   return (
     <div className="min-h-screen w-full relative bg-background">
       <div className="absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70%" />
-      <div className={cn("relative max-w-xl mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up")}>
-        <div className="space-y-8 w-full relative">
-          <div className="flex justify-center">
-            <div className="absolute -top-34 left-1/2 -translate-x-1/2">
-              <Flame />
+        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-750")}>
+          <div className="flex justify-center relative">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
+              <Flame className={cn(
+                "scale-y-55 scale-x-65",
+                state.success 
+                  ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards" 
+                  : "opacity-0 scale-0"
+              )}/>
             </div>
-            <img src={logo} alt="Logo" className="size-24" />
+            <img src={logo} alt="Logo" className="size-24 opacity-80" />
           </div>
-          
-          <form action={formAction} className="space-y-1">
+          <form action={formAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             
             <div className='relative'>
@@ -145,9 +146,8 @@ export default function IntentionOverlay() {
               </div>
             </div>
             
-            {state.error && <div className="text-red-500/80 text-sm">{state.error}</div>}
-          </form>
-        </div>
+          {state.error && <div className="text-red-500/80 text-sm">{state.error}</div>}
+        </form>
       </div>
     </div>
   );
