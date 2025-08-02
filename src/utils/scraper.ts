@@ -291,5 +291,30 @@ export function extractRedditMetadata(): string {
   return `title: ${title}\ndescription: ${description}`;
 }
 
+
+//
+
+export function extractNewsTitle(): string {
+  // Priority 1: Standard <meta> tags
+  const metaTitle =
+    document.querySelector('meta[property="og:title"]')?.getAttribute('content');
+
+  // Priority 2: Document title tag
+  const docTitle = document.title;
+
+  // Priority 3: First <h1> tag (commonly used for article headlines)
+  const h1Title = document.querySelector('h1')?.textContent?.trim();
+
+  // Final decision logic
+  const title = metaTitle?.trim() || h1Title || docTitle?.trim() || '';
+
+  return title ? `title: ${title}` : 'blank';
+}
+
+
+
+
+
+
 //instagram specific scraper
 // this is a SCAPER. however, i dont think we should scrape contnet, instead just check for scroll acitivty
