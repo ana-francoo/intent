@@ -122,10 +122,10 @@ export default function IntentionOverlay() {
       <div className={cn("relative max-w-xl mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up")}>
         <div className="space-y-8 w-full relative">
           <div className="flex justify-center">
-            <div className="absolute -top-38.5 left-1/2 -translate-x-1/2">
+            <div className="absolute -top-34 left-1/2 -translate-x-1/2">
               <Flame />
             </div>
-            <img src={logo} alt="Logo" className="size-16" />
+            <img src={logo} alt="Logo" className="size-24" />
           </div>
           
           <form action={formAction} className="space-y-1">
@@ -133,7 +133,7 @@ export default function IntentionOverlay() {
             
             <div className='relative'>
               <div className='absolute top-0 flex w-full justify-center'>
-                <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-border via-primary to-border transition-all duration-1000' />
+                <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
               </div>
               
               <div className="relative animate-slide-in-up">
