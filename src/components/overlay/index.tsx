@@ -122,7 +122,7 @@ export default function IntentionOverlay() {
       <div className="relative max-w-xl mx-auto flex flex-col items-center min-h-screen pt-[450px]">
         <div className="space-y-8 w-full">
           <div className="flex justify-center">
-            <div className="size-16 bg-muted rounded-full"/>
+            <div className="size-16 bg-muted rounded-full animate-slide-in-up"/>
           </div>
           
           <form action={formAction} className="space-y-1">
@@ -133,7 +133,7 @@ export default function IntentionOverlay() {
                 <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-border via-primary to-border transition-all duration-1000' />
               </div>
               
-              <div className="relative">
+              <div className="relative animate-slide-in-up">
                 <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
                 <LoadingIcon />
                 <TextareaWithStatus 
