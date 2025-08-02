@@ -119,23 +119,22 @@ export default function IntentionOverlay() {
       <div className="absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70%" />
         <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-750")}>
           <div className="flex justify-center relative">
-            <div className={cn(
-              "absolute size-48 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl -z-10",
-              "bg-radial-[circle_at_center] from-orange-500/30 via-amber-600/20 to-transparent",
-              state.success 
-                ? "animate-in fade-in zoom-in duration-500 fill-mode-forwards" 
-                : "opacity-0 scale-50"
-            )} />
-            
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
               <Flame className={cn(
-                "scale-40",
+                "scale-45",
                 state.success 
                   ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards" 
                   : "opacity-0 scale-0"
               )}/>
             </div>
-            <img src={logo} alt="Logo" className="size-24 opacity-80" />
+            <img src={logo} alt="Logo" className={cn(
+              "size-24 opacity-80 transition-all duration-500",
+              state.success && [
+                "rounded-full",
+                "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-amber-400)_15%,transparent)_60%,transparent_100%)]",
+                "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-amber-400)_8%,transparent)]"
+              ]
+            )} />
           </div>
           <form action={formAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
