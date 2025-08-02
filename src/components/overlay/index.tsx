@@ -13,7 +13,7 @@ interface FormState {
   error: string | null;
 }
 
-async function submitIntention(prevState: FormState, formData: FormData): Promise<FormState> {
+async function submitIntention(_: FormState, formData: FormData): Promise<FormState> {
   const intention = formData.get('intention')?.toString()?.trim();
   const targetUrl = formData.get('targetUrl')?.toString();
   
