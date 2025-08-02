@@ -207,6 +207,21 @@
   .animate-flame-flicker {
     animation: flame-flicker 2s ease-in-out infinite;
   }
+  
+  @keyframes border-width {
+    from {
+      width: 10px;
+      opacity: 0;
+    }
+    to {
+      width: 100px;
+      opacity: 1;
+    }
+  }
+  
+  .animate-border-width {
+    animation: border-width 3s infinite alternate;
+  }
 }
 
 body {
