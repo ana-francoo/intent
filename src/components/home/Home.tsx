@@ -8,7 +8,6 @@ import ExpiredAccess from '@/components/expired-access/ExpiredAccess';
 import { supabase } from '../../supabaseClient';
 import { getSubscriptionStatus, SubscriptionStatus } from '../../utils/subscription';
 import Flame from './Flame';
-import './Flame.css';
 import './Home.css';
 import App from '@/components/carousel/App.tsx'
 
