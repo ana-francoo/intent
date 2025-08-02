@@ -119,9 +119,17 @@ export default function IntentionOverlay() {
       <div className="absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70%" />
         <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-750")}>
           <div className="flex justify-center relative">
+            <div className={cn(
+              "absolute size-48 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl -z-10",
+              "bg-radial-[circle_at_center] from-orange-500/30 via-amber-600/20 to-transparent",
+              state.success 
+                ? "animate-in fade-in zoom-in duration-500 fill-mode-forwards" 
+                : "opacity-0 scale-50"
+            )} />
+            
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
               <Flame className={cn(
-                "scale-y-55 scale-x-65",
+                "scale-40",
                 state.success 
                   ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards" 
                   : "opacity-0 scale-0"
