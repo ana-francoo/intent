@@ -15,6 +15,7 @@ const MONITORING_FLAG_KEY = 'intent_monitoring_active';
 export class IntentionMonitor {
   private checkInterval: number | null = null;
   private isMonitoring: boolean = false;
+  private previousUrl: string | null = null;  // Add this line
   private readonly CHECK_INTERVAL_MS = 10 * 1000;
   
   async startMonitoring(): Promise<void> {
@@ -56,22 +57,28 @@ export class IntentionMonitor {
 
       console.log('🔍 Found intention for URL:', intentionData.intention);
 
-      const result = await checkIntentionMatch(currentUrl);
-      
-      console.log('🎯 Intention match result:', {
-        matches: result.matches,
-        confidence: result.confidence,
-        reasoning: result.reasoning
-      });
-
-      if (!result.matches) {
-        console.log('❌ Intention mismatch detected, re-intercepting page');
+      // 4. [KEY CHANGE] Check if URL has changed since last check
+      if (currentUrl == this.previousUrl){
+        // User is still on the same page, no need to re-analyze
         this.stopMonitoring();
-        await initializeRouteInterceptor();
-      } else {
-        console.log('✅ Activity matches intention, continuing monitoring');
+        return;
       }
-
+      // 5. URL has changed - proceed with existing logic
+      const result = await checkIntentionMatch(currentUrl);
+      // This does:
+      //   - Scrapes the current page content
+      //   - Sends intention + page content to AI
+      //   - AI decides if they match (returns confidence score)
+      
+      // 6. Check if AI says the page matches user's intention
+      if (result.matches == false){
+        // User is doing something different than intended
+        this.stopMonitoring();
+        await initializeRouteInterceptor();  // Redirect to overlay to set new intention
+      }else{
+        // User is still on track, keep monitoring
+        this.previousUrl = currentUrl;  // Update for next check
+      }
     } catch (error) {
       console.error('❌ Error checking intention match:', error);
     }
