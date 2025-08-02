@@ -7,6 +7,9 @@ import { PenLine, Loader2 } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { normalizeUrlToDomain, saveIntention } from "@/utils/storage";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils";
+import logo from "@/assets/logo2.png";
+import Flame from "../home/Flame";
 
 interface FormState {
   success: boolean;
@@ -115,14 +118,14 @@ export default function IntentionOverlay() {
 
   return (
     <div className="min-h-screen w-full relative bg-background">
-      <div className="absolute inset-0 z-0" style={{
-        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.25), transparent 70%), #000000",
-      }} />
-      
-      <div className="relative max-w-xl mx-auto flex flex-col items-center min-h-screen pt-[450px]">
-        <div className="space-y-8 w-full">
+      <div className="absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70%" />
+      <div className={cn("relative max-w-xl mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up")}>
+        <div className="space-y-8 w-full relative">
           <div className="flex justify-center">
-            <div className="size-16 bg-muted rounded-full animate-slide-in-up"/>
+            <div className="absolute -top-38.5 left-1/2 -translate-x-1/2">
+              <Flame />
+            </div>
+            <img src={logo} alt="Logo" className="size-16" />
           </div>
           
           <form action={formAction} className="space-y-1">

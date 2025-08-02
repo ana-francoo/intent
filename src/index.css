@@ -121,6 +121,20 @@
   --ease-out-expo: var(--ease-out-expo);
   --animate-slide-in-up: slide-in-up 0.7s var(--ease-out-expo);
   --animate-border-width: border-width 3s infinite alternate;
+  --animate-slide-out-up: slide-out-up 0.7s var(--ease-out-expo);
+
+  @keyframes slide-out-up {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-32px);
+      filter: blur(8px);
+    }
+  }
 
   @keyframes slide-in-up {
     from {
