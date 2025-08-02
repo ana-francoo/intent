@@ -1,12 +1,9 @@
 // Web scraping utilities for extracting relevant page content
 
+//there should be parent scraper function, that redirects to the correct scraper based on the url
+
 export interface PageContent {
-  title: string;
-  description: string;
-  url: string;
-  domain: string;
-  relevantText: string;
-  timestamp: Date;
+  content: string;
 }
 
 /**
@@ -81,34 +78,22 @@ export const scrapeCurrentPage = (): PageContent => {
   //in this function dynamically direct to the correct scraper based on the url
   const url = window.location.href;
   if (url.includes('youtube.com')) {
-    const metadataString = extractYouTubeMetadata();
-    // Parse the metadata string to extract title and description
-    const titleMatch = metadataString.match(/title: (.+)/);
-    const descriptionMatch = metadataString.match(/description: (.+)/);
-    
-    const title = titleMatch ? titleMatch[1] : 'No title found';
-    const description = descriptionMatch ? descriptionMatch[1] : '';
-    
-    return {
-      title: title,
-      description: description,
-      url: url,
-      domain: new URL(url).hostname,
-      relevantText: description,
-      timestamp: new Date()
-    };
+    const content = extractYouTubeMetadata();
   }
-  
+  else if (url.includes('reddit.com')) {
+    const content = extractRedditMetadata();
+  }
+  else if (url.includes('news.com')) { // update to categorize a news site
+    const content = extractNewsTitle();
+  }
+  else if (url.includes('pinterest.com')) {
+    const content = extractPinterestSearchQuery();
+  }
   // Get relevant text content using the improved extraction method
   const relevantText = extractRelevantContentFromPage();
   
   return {
-    title: document.title || '',
-    description: (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || '',
-    url: url,
-    domain: new URL(url).hostname,
-    relevantText: relevantText,
-    timestamp: new Date()
+    {content}
   };
 };
 
@@ -125,19 +110,6 @@ export const scrapeCurrentPage = (): PageContent => {
 
 
 
-/**
- * Extract content from a specific URL (for testing purposes)
- * Note: This requires the page to be loaded in the current context
- */
-export const scrapePageFromUrl = (url: string): PageContent | null => {
-  // Check if we're on the requested URL
-  if (window.location.href !== url) {
-    console.warn('URL mismatch. Current page URL must match the requested URL for scraping.');
-    return null;
-  }
-  
-  return scrapeCurrentPage();
-};
 
 /**
  * Get a summary of the page content for quick analysis
@@ -226,33 +198,6 @@ export const extractContentWithFilters = (options: {
   return combined.slice(0, 5000);
 };
 
-/**
- * Test function to demonstrate the scraper functionality
- * Call this from the browser console to test the scraper
- */
-export const testScraper = () => {
-  console.log('🧪 Testing New Scraper Functionality...');
-  
-  // Test the main extraction function
-  const relevantContent = extractRelevantContentFromPage();
-  console.log('📄 Extracted Content Length:', relevantContent.length);
-  console.log('📄 First 500 characters:', relevantContent.substring(0, 500));
-  
-  // Test the structured data
-  const pageData = scrapeCurrentPage();
-  console.log('📊 Page Data:', pageData);
-  
-  // Test the summary
-  const summary = getPageSummary();
-  console.log('📋 Page Summary:', summary);
-  
-  return {
-    relevantContent,
-    pageData,
-    summary
-  };
-}; 
-
 
 ////////////////CUSTOM SCRAPERS//////////////////////
 
@@ -312,6 +257,27 @@ export function extractNewsTitle(): string {
 }
 
 
+export function extractPinterestSearchQuery(): string {
+  // If user is on the Pinterest homepage with no path, check for doomscrolling
+  if (window.location.hostname.includes('pinterest.com') && window.location.pathname === '/') {
+    if (doomscrolling()) {
+      return 'blocked';
+    }
+  }
+
+  // Try to extract from the search input field
+  const inputValue = document.querySelector('input[placeholder*="Search"]').value?.trim();
+
+  if(inputValue==''){
+    return 'blank';
+  }
+
+  
+  // Decide final value
+  const search = inputValue;
+
+  return search ? `search: ${search}` : 'blank';
+}
 
 
 
