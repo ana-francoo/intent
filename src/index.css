@@ -88,6 +88,7 @@
   --intent-sidebar-accent-foreground: oklch(0.985 0 0);
   --intent-sidebar-border: oklch(1 0 0 / 10%);
   --intent-sidebar-ring: oklch(0.552 0.016 285.938);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
 
   /* Custom Intent theme tokens */
   --flame-glow: 25 100% 45%;
@@ -113,6 +114,36 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@theme {
+  --ease-out-expo: var(--ease-out-expo);
+  --animate-slide-in-up: slide-in-up 0.7s var(--ease-out-expo);
+  --animate-border-width: border-width 3s infinite alternate;
+
+  @keyframes slide-in-up {
+    from {
+      opacity: 0;
+      filter: blur(8px);
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0px);
+    }
+  }
+
+  @keyframes border-width {
+    from {
+      width: 10px;
+      opacity: 0;
+    }
+    to {
+      width: 100px;
+      opacity: 1;
+    }
   }
 }
 
@@ -155,17 +186,6 @@
 }
 
 @layer components {
-  @keyframes slide-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
   @keyframes glow-pulse {
     0%, 100% {
       opacity: 0.3;
@@ -196,31 +216,12 @@
     }
   }
   
-  .animate-slide-in-up {
-    animation: slide-in-up 0.7s ease-out forwards;
-  }
-  
   .animate-glow-pulse {
     animation: glow-pulse 3s ease-in-out infinite;
   }
   
   .animate-flame-flicker {
     animation: flame-flicker 2s ease-in-out infinite;
-  }
-  
-  @keyframes border-width {
-    from {
-      width: 10px;
-      opacity: 0;
-    }
-    to {
-      width: 100px;
-      opacity: 1;
-    }
-  }
-  
-  .animate-border-width {
-    animation: border-width 3s infinite alternate;
   }
 }
 
