@@ -63,18 +63,18 @@ export const checkIntentionMatch = async ( //FYI - logic of only processing cont
     // Call AI to analyze intention match
     const aiResult = await analyzeIntentionWithAI(
       intentionData.intention,
-      contentForAnalysis,
+      contentForAnalysis.content,
       finalOptions
     );
     
     return {
-      match: aiResult.
+      match: aiResult.match
     };
     
   } catch (error) {
     console.error('Error checking intention match:', error);
     return {
-      match: true; //CURRENTLY HAVE ERROR DEFAULTING TO TRUE 
+      match: true //CURRENTLY HAVE ERROR DEFAULTING TO TRUE 
     };
   }
 };
