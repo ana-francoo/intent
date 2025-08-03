@@ -23,19 +23,19 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen gap-8">
       <div className="flex justify-center relative animate-slide-in-up">
         <div className="absolute left-1/2 -translate-x-1/2 bottom-15.5">
-            <Flame className="origin-bottom animate-flame-ignition scale-90 scale-y-60" />
+          <Flame className="origin-bottom animate-flame-ignition scale-90 scale-y-60" />
         </div>
         <img src={logo} alt="Logo" className="size-36 transition-all duration-500 rounded-full bg-radial from-orange-400/15 from-60% to-transparent shadow-[0_0_40px_10px_rgb(251_146_60),0_0_0_4px_rgb(251_146_60/0.08)] opacity-100" />
       </div>
 
       <div className="flex flex-col items-center gap-6">
-        <div className="space-y-1">
-        <h1 className="text-2xl font-semibold animate-slide-in-up delay-300">
-          Ready to reclaim your focus?
-        </h1>
-        <p className="text-muted-foreground text-sm animate-slide-in-up delay-500">
-          Follow-through with your intention, distraction-free.
-        </p>
+        <div className="space-y-1 text-center">
+          <h1 className="text-2xl font-semibold animate-slide-in-up delay-300">
+            Ready to reclaim your focus?
+          </h1>
+          <p className="text-muted-foreground text-sm animate-slide-in-up delay-500">
+            Follow-through with your intention, distraction-free.
+          </p>
         </div>
         <div className="flex flex-col items-center gap-1">
           <div className="animate-slide-in-up delay-700">
