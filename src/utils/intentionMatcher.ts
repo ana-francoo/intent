@@ -206,40 +206,11 @@ export const isIntentionMatchingAvailable = (): boolean => {
 
 /////////////////INTENTION VALIDITY CHECK///////////
 
-//prompt that defined validity of input intention. Can be changed later based on feedbacl
-
-const createValidityPrompt = (intentionText: string): string => {
-  return `You are a focus assistant. Users must declare a valid reason to access a blocked site. A valid input must:
-- Be specific and clear.
-- Express a goal-oriented or intentional use.
-- Avoid vague, low-effort, or unserious responses.
-- Not describe compulsive, passive, or addictive behavior.
-
-Input: "${intentionText}"
-
-Is this a valid intention? Respond in a succinct way. If valid, reply with "Valid". If invalid, reply with "Invalid" and a short reason.`;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
 // Validate an intention statement. Returns [isValid, reason].
 export const validateIntention = async (intentionText: string): Promise<[boolean, string]> => {
   if (!CONFIG.OPENROUTER.API_KEY) {
-    // Fallback: always valid if no API key
     return [true, ''];
   }
-
-  const prompt = createValidityPrompt(intentionText);
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -250,14 +221,18 @@ export const validateIntention = async (intentionText: string): Promise<[boolean
         messages: [
           {
             role: 'system',
-            content: 'You are an empowering focus assistant that determines if a user\'s intention for accessing a blocked site is valid. Only respond with "Valid" or "Invalid", and if invalid, give a short reason that encourages the user to try again.'
+            content:
+              `You decide if a user intention is valid: specific, goal-driven, not vague. Only respond with a strict JSON object:\n` +
+              `{ "valid": true }\n` +
+              `or\n` +
+              `{ "valid": false, "reason": "short explanation" }`
           },
           {
             role: 'user',
-            content: prompt
+            content: `Is this intention valid: "${intentionText}"`
           }
         ],
-        max_tokens: 100,
+        max_tokens: 60,
         temperature: 0.0,
       }),
     });
@@ -270,20 +245,21 @@ export const validateIntention = async (intentionText: string): Promise<[boolean
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content?.trim() || '';
 
-    // Parse the AI's response
-    if (aiResponse.toLowerCase().startsWith('valid')) {
-      return [true, ''];
-    } else if (aiResponse.toLowerCase().startsWith('invalid')) {
-      // Extract the reason after "Invalid"
-      const reason = aiResponse.replace(/^invalid[:,]?\s*/i, '');
-      return [false, reason || 'Your intention is not valid.'];
-    } else {
-      // Fallback: treat as valid if unclear
-      return [true, ''];
+    // Parse the expected JSON response
+    const match = aiResponse.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (parsed.valid === true) {
+        return [true, ''];
+      } else if (parsed.valid === false) {
+        return [false, parsed.reason || 'Your intention is not valid.'];
+      }
     }
+
+    // Fallback: treat as valid if format is off
+    return [true, ''];
   } catch (error) {
     console.error('Error validating intention:', error);
-    // On error, fallback to valid to avoid blocking user
     return [true, ''];
   }
 };
