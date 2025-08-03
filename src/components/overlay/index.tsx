@@ -12,6 +12,7 @@ import Flame from "../home/Flame";
 interface FormState {
   success: boolean;
   error: string | null;
+  intention?: string;
 }
 
 async function submitIntention(_: FormState, formData: FormData): Promise<FormState> {
@@ -44,7 +45,7 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
     }
     
     await saveIntention(targetUrl, intention);
-    return { success: true, error: null };
+    return { success: true, error: null, intention };
     
   } catch (error) {
     console.error('Error setting intention:', error);
@@ -109,7 +110,7 @@ export default function IntentionOverlay() {
     if (state.success && targetUrl) {
       const timer = setTimeout(() => {
         window.location.href = targetUrl;
-      }, 1000);
+      }, 1250);
       return () => clearTimeout(timer);
     }
   }, [state.success, targetUrl]);
@@ -117,7 +118,7 @@ export default function IntentionOverlay() {
   return (
     <div className="min-h-screen w-full relative bg-background">
       <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-amber-900/20")} />
-        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-750")}>
+        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1000")}>
           <div className="flex justify-center relative animate-slide-in-up">
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
               <Flame className={cn(
@@ -140,22 +141,31 @@ export default function IntentionOverlay() {
           <form action={formAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             
-            <div className={cn(
-              'relative border-2 border-transparent rounded-xl',
-              state.error && "animate-shake"
-            )}>
-              <div className='absolute top-0 flex w-full justify-center'>
-                <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
+            {!state.success ? (
+              <div className={cn(
+                'relative border-2 border-transparent rounded-xl',
+                state.error && "animate-shake"
+              )}>
+                <div className='absolute top-0 flex w-full justify-center'>
+                  <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
+                </div>
+                
+                <div className="relative animate-slide-in-up delay-150 opacity-0">
+                  <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
+                  <LoadingIcon />
+                  <TextareaWithStatus domain={domain} />
+                </div>
               </div>
-              
-              <div className="relative animate-slide-in-up delay-150 opacity-0">
-                <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
-                <LoadingIcon />
-                <TextareaWithStatus 
-                  domain={domain}
-                />
+            ) : (
+              <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4">
+                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-amber-500/80">
+                  {state.intention}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Your intention for {domain}
+                </p>
               </div>
-            </div>
+            )}
             
             {state.error && <div className="text-red-900 text-sm">{state.error}</div>}
         </form>
