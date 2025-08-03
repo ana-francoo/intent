@@ -35,8 +35,8 @@ export const CONFIG = {
     SITE_URL: getEnvVar('SITE_URL', 'https://intent-extension.com'),
     SITE_NAME: getEnvVar('SITE_NAME', 'Intent Extension'),
     DEFAULT_MODEL: getEnvVar('OPENROUTER_MODEL', 'mistralai/mistral-small-3.2-24b-instruct:free'),
-    MAX_TOKENS: 500,
-    TEMPERATURE: 0.3,
+    MAX_TOKENS: 12,
+    TEMPERATURE: 0.0,
   },
   
   // Intention Matching Configuration

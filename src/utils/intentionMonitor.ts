@@ -61,9 +61,10 @@ export class IntentionMonitor {
     try {
       const currentUrl = window.location.href;
 
-      //apply doom scrolling check depending on website s
-      const intentionData = await getIntention(currentUrl);
+      //apply doom scrolling check depending on website s. Actually it sokay, because if there isnt an intention set for this url, the call will return false
+      const intentionData = await getIntention(currentUrl); 
 
+      //if there isnt an intention set for this url, stop monitoring
       if (!intentionData || !intentionData.intention) {
         previousUrl = null;
         this.stopMonitoring();

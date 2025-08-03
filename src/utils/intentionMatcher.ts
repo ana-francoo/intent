@@ -5,15 +5,10 @@
 import { PageContent } from './scraper';
 import { getIntention } from './storage';
 import { CONFIG, getOpenRouterHeaders } from './config';
-import { getWebsiteCategory } from './domainCategories';
+
 
 export interface IntentionMatchResult {
-  matches: boolean;
-  confidence: number; // 0-1 scale
-  reasoning: string;
-  userIntention: string;
-  pageContent: string;
-  timestamp: Date;
+  match: boolean; // will remove confidence score for now, can reimplement again in the future as future feature
 }
 
 export interface IntentionMatchOptions {
@@ -29,28 +24,28 @@ export interface IntentionMatchOptions {
 const DEFAULT_OPTIONS: IntentionMatchOptions = {
   model: CONFIG.OPENROUTER.DEFAULT_MODEL,
   maxTokens: CONFIG.OPENROUTER.MAX_TOKENS,
-  temperature: CONFIG.OPENROUTER.TEMPERATURE,
-  confidenceThreshold: CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD
+  temperature: CONFIG.OPENROUTER.TEMPERATURE
 };
 
 /**
  * Check if the current page content matches the user's intention
  */
-export const checkIntentionMatch = async (
+export const checkIntentionMatch = async ( //FYI - logic of only processing content where theres stuff to be scraped (aka no doomscrolling) is handled on the function call side - this is onyl called for non 'social' ctaegories in the intentionMonitoring file
   currentUrl: string,
   options: IntentionMatchOptions = {}
 ): Promise<IntentionMatchResult> => {
   try {
     // Get user's intention for this URL
+
+
+
+    // is this neccesary? checkIntentionmatch should not be called if intention is not set for this url
+
+
     const intentionData = await getIntention(currentUrl);
-    if (!intentionData?.intention) {
+    if (!intentionData?.intention) { //return false immediately if no associated saved intention to this url
       return {
-        matches: false,
-        confidence: 0,
-        reasoning: 'No intention statement found for this URL',
-        userIntention: '',
-        pageContent: '',
-        timestamp: new Date()
+        match: false
       };
     }
 
@@ -59,11 +54,8 @@ export const checkIntentionMatch = async (
 //     let urlCategory = getWebsiteCategory(currentUrl);
 
 //     if (currentUrl )
-//     const { scrapeCurrentPage } = await import('./scraper');
-    const pageContent = scrapeCurrentPage();
-    
-    // Prepare content for AI analysis
-    const contentForAnalysis = prepareContentForAnalysis(pageContent);
+    const { scrapeCurrentPage } = await import('./scraper');
+    const contentForAnalysis = scrapeCurrentPage(); //dynamically returns content depending on w
     
     // Merge options with defaults
     const finalOptions = { ...DEFAULT_OPTIONS, ...options };
@@ -76,73 +68,17 @@ export const checkIntentionMatch = async (
     );
     
     return {
-      matches: aiResult.confidence >= finalOptions.confidenceThreshold!,
-      confidence: aiResult.confidence,
-      reasoning: aiResult.reasoning,
-      userIntention: intentionData.intention,
-      pageContent: contentForAnalysis,
-      timestamp: new Date()
+      match: aiResult.
     };
     
   } catch (error) {
     console.error('Error checking intention match:', error);
     return {
-      matches: false,
-      confidence: 0,
-      reasoning: `Error analyzing content: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      userIntention: '',
-      pageContent: '',
-      timestamp: new Date()
+      match: true; //CURRENTLY HAVE ERROR DEFAULTING TO TRUE 
     };
   }
 };
 
-/**
- * Prepare page content for AI analysis
- */
-const prepareContentForAnalysis = (pageContent: PageContent): string => {
-  const { title, description, relevantText } = pageContent;
-  
-  // Combine relevant content, prioritizing title and description
-  let content = '';
-  
-  if (title && !isBrowserNoise(title)) {
-    content += `Page Title: ${title}\n\n`;
-  }
-  
-  if (description) {
-    content += `Page Description: ${description}\n\n`;
-  }
-  
-  if (relevantText) {
-    // Take first N characters of main content based on config
-    const truncatedContent = relevantText.substring(0, CONFIG.INTENTION_MATCHING.MAX_CONTENT_LENGTH);
-    content += `Main Content: ${truncatedContent}`;
-  }
-  
-  return content.trim();
-};
-
-/**
- * Check if text is browser noise (helper function)
- */
-function isBrowserNoise(text: string): boolean {
-  if (!text || text.length < 3) return true;
-  
-  const noisePatterns = [
-    /^[a-zA-Z\s]+\(\d+\)$/, // "youtube (527)", "facebook (3)"
-    /^Loading\.{1,3}$/, // "Loading...", "Loading.."
-    /^Please wait\.{1,3}$/, // "Please wait..."
-    /^Connecting\.{1,3}$/, // "Connecting..."
-    /^[A-Za-z\s]+\.{1,3}$/, // Generic loading patterns
-    /^\d+$/, // Just numbers
-    /^[A-Za-z\s]+\s\(\d+\)$/, // "YouTube (527)" with spaces
-    /^[A-Za-z\s]+\s-\s[A-Za-z\s]+$/, // "YouTube - Home" type patterns
-    /^[A-Za-z\s]+\s\|\s[A-Za-z\s]+$/, // "YouTube | Home" type patterns
-  ];
-  
-  return noisePatterns.some(pattern => pattern.test(text.trim()));
-}
 
 /**
  * Analyze intention match using OpenRouter AI
@@ -151,7 +87,7 @@ const analyzeIntentionWithAI = async (
   userIntention: string,
   pageContent: string,
   options: IntentionMatchOptions
-): Promise<{ confidence: number; reasoning: string }> => {
+): Promise<{ match: boolean }> => {
   if (!CONFIG.OPENROUTER.API_KEY) {
     throw new Error('OpenRouter API key not configured');
   }
@@ -171,7 +107,14 @@ const analyzeIntentionWithAI = async (
         messages: [
           {
             role: 'system',
-            content: 'You are an AI assistant that analyzes whether a user\'s intention matches the content they are viewing on a webpage. Provide a confidence score (0-1) and clear reasoning for your assessment.'
+            content: `You are an AI that determines whether a user's intention aligns with a short snippet of webpage content.
+
+Be SEMANTIC and TOLERANT:
+- If the content could plausibly help the user achieve their goal, return match: true.
+- If the content is clearly irrelevant, return match: false.
+
+Reply only with:
+{ "match": true } or { "match": false }`
           },
           {
             role: 'user',
@@ -213,76 +156,29 @@ const analyzeIntentionWithAI = async (
  * Create the analysis prompt for the AI
  */
 const createAnalysisPrompt = (userIntention: string, pageContent: string): string => {
-  return `You are analyzing whether a user's intention aligns with the webpage content they are viewing. Be ROBUST and TOLERANT of noise in the content.
-
-User's Intention: "${userIntention}"
-
-Webpage Content:
-${pageContent}
-
-IMPORTANT GUIDELINES:
-1. **Be tolerant of noise**: The content may contain browser noise, loading states, or incomplete data. Focus on ANY meaningful content that could align with the intention.
-2. **Look for partial matches**: Even if content is limited or noisy, if ANY aspect suggests alignment with the intention, consider it a match.
-3. **Consider the domain context**: If the domain/website type aligns with the intention, this is a positive signal.
-4. **Default to allowing**: When in doubt, prefer to allow the user to proceed rather than block them.
-
-ANALYSIS APPROACH:
-- Look for ANY content that could serve the user's stated goal
-- Consider the website type and typical content
-- Ignore loading states, browser noise, or incomplete data
-- Focus on the essence of the user's intention vs. available content
-- If the website type matches the intention category, this is a positive signal
-
-Please provide your analysis in the following JSON format:
-{
-  "confidence": 0.85,
-  "reasoning": "Even though the content shows limited information, this appears to be [website type] which aligns with the user's intention to [goal]. The available content suggests this could serve their stated purpose."
-}
-
-Confidence scoring (be generous):
-- 0.8-1.0: Clear alignment or website type matches intention
-- 0.6-0.7: Good alignment with some relevant content
-- 0.4-0.5: Moderate alignment, website type relevant
-- 0.2-0.3: Weak alignment but not clearly misaligned
-- 0.0-0.1: Only if clearly distracting or completely irrelevant
-
-Remember: It's better to allow a potentially relevant activity than to block a user who might be on the right track.
-
-Respond only with valid JSON.`;
+  return `Intention:${userIntention},Content:${pageContent}`
 };
 
 /**
  * Parse the AI response to extract confidence and reasoning
  */
-const parseAIResponse = (aiResponse: string): { confidence: number; reasoning: string } => {
+const parseAIResponse = (aiResponse: string): { match: boolean } => {
   try {
-    // Try to extract JSON from the response
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      return {
-        confidence: Math.max(0, Math.min(1, parsed.confidence || 0)),
-        reasoning: parsed.reasoning || 'No reasoning provided'
-      };
+      return { match: Boolean(parsed.match) };
     }
-    
-    // Fallback: try to extract confidence from text
-    const confidenceMatch = aiResponse.match(/confidence["\s:]*([0-9]*\.?[0-9]+)/i);
-    const confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.5;
-    
-    return {
-      confidence: Math.max(0, Math.min(1, confidence)),
-      reasoning: aiResponse.replace(/confidence["\s:]*[0-9]*\.?[0-9]+/i, '').trim()
-    };
-    
+    // Fallback: attempt loose check
+    if (/true/i.test(aiResponse)) return { match: true };
+    if (/false/i.test(aiResponse)) return { match: false };
+    return { match: false };
   } catch (error) {
     console.error('Error parsing AI response:', error);
-    return {
-      confidence: 0.5,
-      reasoning: 'Unable to parse AI response'
-    };
+    return { match: false };
   }
 };
+
 
 /**
  * Get a summary of the user's intention for display
