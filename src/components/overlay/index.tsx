@@ -185,7 +185,7 @@ export default function IntentionOverlay() {
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
               <Flame className={cn(
                 "scale-35 scale-x-45",
-                state.success ? "animate-[var(--animate-flame-ignition)]" : "opacity-0 scale-0"
+                state.success ? "animate-flame-ignition" : "opacity-0 scale-0"
               )}/>
             </div>
             <img src={logo} alt="Logo" className={cn(
