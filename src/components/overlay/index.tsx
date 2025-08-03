@@ -179,7 +179,7 @@ export default function IntentionOverlay() {
 
   return (
     <div className="min-h-screen w-full relative bg-background">
-      <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-amber-900/20")} />
+      <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-orange-900/20")} />
         <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1000")}>
           <div className="flex justify-center relative animate-slide-in-up">
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
@@ -192,8 +192,8 @@ export default function IntentionOverlay() {
               "size-24 opacity-80 transition-all duration-500",
               state.success && [
                 "rounded-full",
-                "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-amber-400)_15%,transparent)_60%,transparent_100%)]",
-                "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-amber-400)_8%,transparent)]",
+                "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-orange-400)_15%,transparent)_60%,transparent_100%)]",
+                "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-orange-400)_8%,transparent)]",
                 "opacity-100"
               ]
             )} />
@@ -208,7 +208,7 @@ export default function IntentionOverlay() {
               )}>
                 {!isTimeBasedCategory && (
                   <div className='absolute top-0 flex w-full justify-center'>
-                    <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
+                    <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
                   </div>
                 )}
                 
@@ -228,7 +228,7 @@ export default function IntentionOverlay() {
               </div>
             ) : (
               <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4">
-                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-amber-500/80">
+                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
                   {state.intention?.startsWith('block:') 
                     ? `Blocked for ${state.intention.replace('block:', '')} minutes`
                     : state.intention

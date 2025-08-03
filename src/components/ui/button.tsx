@@ -22,6 +22,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         gradient:
           "bg-linear-135 from-orange-300 to-orange-600 text-primary-foreground hover:opacity-90 shadow-glow",
+        accent:
+          "bg-orange-500 hover:bg-orange-500/90 text-primary-foreground",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

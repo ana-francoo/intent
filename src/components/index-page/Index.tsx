@@ -28,7 +28,7 @@ const Index = () => {
           <p className="text-xl text-muted-foreground mb-6">
             Follow-through with your intention,<br />distraction-free.
           </p>
-          <Button variant="intention" size="lg" onClick={() => setShowOnboarding(true)}>
+          <Button size="lg" onClick={() => setShowOnboarding(true)} variant="gradient">
             Review Onboarding
           </Button>
         </div>

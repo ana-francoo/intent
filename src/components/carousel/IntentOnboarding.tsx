@@ -424,9 +424,9 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                   key={index}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     index === currentStep
-                      ? 'bg-intention shadow-glow'
+                      ? 'bg-orange-600 shadow-md shadow-orange-600/50'
                       : index < currentStep
-                      ? 'bg-focus'
+                      ? 'bg-orange-950'
                       : 'bg-muted'
                   }`}
                 />
@@ -434,9 +434,9 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
             </div>
 
             <Button
-              variant={currentStep === steps.length - 1 ? "intention" : "focus"}
+              variant={currentStep === steps.length - 1 ? "gradient" : "accent"}
               onClick={nextStep}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-1"
             >
               <span>{currentStep === steps.length - 1 ? "Get Started" : "Next"}</span>
               <ChevronRight className="w-4 h-4" />

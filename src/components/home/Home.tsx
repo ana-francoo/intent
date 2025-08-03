@@ -39,7 +39,7 @@ export default function Home() {
         </div>
         <div className="flex flex-col items-center gap-1">
           <div className="animate-slide-in-up delay-700">
-            <Button variant="secondary" onClick={handleGetStarted} className="group rounded-lg bg-amber-600 hover:bg-amber-600/90">
+            <Button variant="secondary" onClick={handleGetStarted} className="group rounded-lg bg-orange-600 hover:bg-orange-600/90">
               I'm Ready
               <ArrowRightIcon
                 className="-me-1 ml-1 stroke-3 opacity-60 transition-transform group-hover:translate-x-0.5"

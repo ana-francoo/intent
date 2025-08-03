@@ -265,10 +265,6 @@
     background: var(--gradient-card);
   }
   
-  .bg-gradient-flame {
-    background: var(--gradient-flame);
-  }
-  
   /* Custom text colors */
   .text-intention {
     color: hsl(var(--flame-glow));
