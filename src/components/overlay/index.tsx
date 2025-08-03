@@ -1,10 +1,13 @@
 import { useSearchParams } from "react-router-dom";
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { PenLine, Loader2 } from "lucide-react";
+import { PenLine, Loader2, Clock } from "lucide-react";
 import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { normalizeUrlToDomain, saveIntention } from "@/utils/storage";
-import { useEffect } from "react";
+import { getWebsiteCategory } from "@/utils/domainCategories";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
@@ -20,11 +23,20 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
   const targetUrl = formData.get('targetUrl')?.toString();
   
   if (!intention) {
-    return { error: 'Please provide an intention', success: false };
+    return { error: 'Please provide an intention or time', success: false };
   }
 
   if (!targetUrl) {
     return { error: 'Target URL is missing', success: false };
+  }
+  
+  // Handle time-based blocking (just a number means minutes)
+  if (/^\d+$/.test(intention)) {
+    const minutes = parseInt(intention);
+    if (minutes > 0) {
+      await saveIntention(targetUrl, `block:${minutes}`);
+      return { success: true, error: null, intention: `block:${minutes}` };
+    }
   }
 
   try {
@@ -96,15 +108,65 @@ function TextareaWithStatus({ domain }: { domain: string }) {
   );
 }
 
+function TimeSelector({ domain, customMinutes, setCustomMinutes }: { 
+  domain: string;
+  customMinutes: string;
+  setCustomMinutes: (value: string) => void;
+}) {
+  const { pending } = useFormStatus();
+
+  return (
+    <>
+      <h3 className="text-lg font-medium text-center mb-6">
+        Block intent on {domain} for:
+      </h3>
+      
+      <div className="flex gap-2 justify-center">
+        <div className="relative flex-1 max-w-40">
+          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            type="number"
+            name="intention"
+            value={customMinutes}
+            onChange={(e) => setCustomMinutes(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.closest('form')?.requestSubmit();
+              }
+            }}
+            placeholder="Enter minutes"
+            min="1"
+            max="999"
+            disabled={pending}
+            className="pl-10"
+          />
+        </div>
+        <Button 
+          type="submit" 
+          disabled={pending || !customMinutes}
+          className="shrink-0 h-9"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : "Block"}
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export default function IntentionOverlay() {
   const [searchParams] = useSearchParams();
   const targetUrl = searchParams.get('targetUrl');
   const domain = normalizeUrlToDomain(targetUrl || '');
+  const category = targetUrl ? getWebsiteCategory(targetUrl) : 'other';
+  const isTimeBasedCategory = category === 'entertainment' || category === 'shopping';
   
   const [state, formAction] = useActionState(submitIntention, {
     success: false,
     error: null,
   });
+  
+  const [customMinutes, setCustomMinutes] = useState("");
 
   useEffect(() => {
     if (state.success && targetUrl) {
@@ -120,11 +182,11 @@ export default function IntentionOverlay() {
       <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-amber-900/20")} />
         <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1000")}>
           <div className="flex justify-center relative animate-slide-in-up">
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
               <Flame className={cn(
-                "scale-45",
+                "scale-35 scale-x-45",
                 state.success 
-                  ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards ease-out-expo" 
+                  ? "duration-500 fill-mode-forwards ease-out-expo" 
                   : "opacity-0 scale-0"
               )}/>
             </div>
@@ -143,26 +205,42 @@ export default function IntentionOverlay() {
             
             {!state.success ? (
               <div className={cn(
-                'relative border-2 border-transparent rounded-xl',
+                'relative animate-slide-in-up delay-150 opacity-0 border-2 border-transparent rounded-xl',
                 state.error && "animate-shake"
               )}>
-                <div className='absolute top-0 flex w-full justify-center'>
-                  <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
-                </div>
+                {!isTimeBasedCategory && (
+                  <div className='absolute top-0 flex w-full justify-center'>
+                    <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
+                  </div>
+                )}
                 
-                <div className="relative animate-slide-in-up delay-150 opacity-0">
-                  <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
-                  <LoadingIcon />
-                  <TextareaWithStatus domain={domain} />
-                </div>
+                {isTimeBasedCategory ? (
+                  <TimeSelector
+                    domain={domain}
+                    customMinutes={customMinutes}
+                    setCustomMinutes={setCustomMinutes}
+                  />
+                ) : (
+                  <>
+                    <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
+                    <LoadingIcon />
+                    <TextareaWithStatus domain={domain} />
+                  </>
+                )}
               </div>
             ) : (
               <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4">
                 <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-amber-500/80">
-                  {state.intention}
+                  {state.intention?.startsWith('block:') 
+                    ? `Blocked for ${state.intention.replace('block:', '')} minutes`
+                    : state.intention
+                  }
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Your intention for {domain}
+                  {state.intention?.startsWith('block:') 
+                    ? `Intent blocked on ${domain}`
+                    : `Your intention for ${domain}`
+                  }
                 </p>
               </div>
             )}
