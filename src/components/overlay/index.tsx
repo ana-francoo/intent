@@ -109,21 +109,21 @@ export default function IntentionOverlay() {
     if (state.success && targetUrl) {
       const timer = setTimeout(() => {
         window.location.href = targetUrl;
-      }, 1500);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [state.success, targetUrl]);
 
   return (
     <div className="min-h-screen w-full relative bg-background">
-      <div className="absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70%" />
+      <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-amber-900/20")} />
         <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-750")}>
-          <div className="flex justify-center relative">
+          <div className="flex justify-center relative animate-slide-in-up">
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10">
               <Flame className={cn(
                 "scale-45",
                 state.success 
-                  ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards" 
+                  ? "animate-in zoom-in fade-in duration-500 fill-mode-forwards ease-out-expo" 
                   : "opacity-0 scale-0"
               )}/>
             </div>
@@ -132,19 +132,23 @@ export default function IntentionOverlay() {
               state.success && [
                 "rounded-full",
                 "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-amber-400)_15%,transparent)_60%,transparent_100%)]",
-                "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-amber-400)_8%,transparent)]"
+                "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-amber-400)_8%,transparent)]",
+                "opacity-100"
               ]
             )} />
           </div>
           <form action={formAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             
-            <div className='relative'>
+            <div className={cn(
+              'relative border-2 border-transparent rounded-xl',
+              state.error && "animate-shake"
+            )}>
               <div className='absolute top-0 flex w-full justify-center'>
                 <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-amber-700 to-transparent transition-all duration-1000' />
               </div>
               
-              <div className="relative animate-slide-in-up">
+              <div className="relative animate-slide-in-up delay-150 opacity-0">
                 <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
                 <LoadingIcon />
                 <TextareaWithStatus 
@@ -153,7 +157,7 @@ export default function IntentionOverlay() {
               </div>
             </div>
             
-          {state.error && <div className="text-red-500/80 text-sm">{state.error}</div>}
+            {state.error && <div className="text-red-900 text-sm">{state.error}</div>}
         </form>
       </div>
     </div>
