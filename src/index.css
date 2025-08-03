@@ -231,12 +231,12 @@
     }
     25% {
       opacity: 0.7;
-      transform: scale(0.6) rotate(-6deg);
+      transform: scale(0.6) rotate(-2deg);
       filter: brightness(2.5) saturate(2);
     }
     45% {
       opacity: 1;
-      transform: scale(1.2) rotate(2deg);
+      transform: scale(1.1) rotate(2deg);
       filter: brightness(2) saturate(2.2);
     }
     65% {
