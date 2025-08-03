@@ -74,7 +74,7 @@ export function extractRelevantContentFromPage(): string {
  * Extract comprehensive content from the current page
  * Returns structured data with relevant text content
  */
-export const scrapeCurrentPage = (): PageContent => {
+export const scrapeCurrentPage = (): PageContent => { //certain categories will not be scraped, this should be identified before
   //in this function dynamically direct to the correct scraper based on the url
   const url = window.location.href;
   const category = getWebsiteCategory(url);
@@ -91,13 +91,17 @@ export const scrapeCurrentPage = (): PageContent => {
   }  else if (category === 'news') { // update to categorize a news site
     content = extractNewsTitle();
   } else if (category === 'social') {
-    content = extractSocialContent();
+    content = extractSocialContent();//no scraping, will just doom scrolling function - search bar and roll
+
   } else if (category === 'shopping') {
     content = extractShoppingContent();
-  } else if (category === 'entertainment') {
-    content = extractEntertainmentContent();
+
+  } else if (category === 'entertainment') { // no scraping, will just ask for a time limit - 
+
+    content = extractEntertainmentContent();//netflix, hbo, automatically block for now
   } else {
     content = extractRelevantContentFromPage();
+
   }
   // Get relevant text content using the improved extraction method
   const relevantText = extractRelevantContentFromPage();

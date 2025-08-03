@@ -5,6 +5,7 @@
 import { PageContent } from './scraper';
 import { getIntention } from './storage';
 import { CONFIG, getOpenRouterHeaders } from './config';
+import { getWebsiteCategory } from './domainCategories';
 
 export interface IntentionMatchResult {
   matches: boolean;
@@ -54,7 +55,11 @@ export const checkIntentionMatch = async (
     }
 
     // Scrape current page content
-    const { scrapeCurrentPage } = await import('./scraper');
+// // 
+//     let urlCategory = getWebsiteCategory(currentUrl);
+
+//     if (currentUrl )
+//     const { scrapeCurrentPage } = await import('./scraper');
     const pageContent = scrapeCurrentPage();
     
     // Prepare content for AI analysis
