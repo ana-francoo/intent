@@ -9,7 +9,7 @@ function submitDemo() {
 function openExtension() {
     console.log('[Landing] Get Started button clicked');
     // Send message to background script to open popup
-    chrome.runtime.sendMessage({ type: 'OPEN_POPUP_WITH_ROUTE', route: '/how-it-works' }, (response) => {
+    chrome.runtime.sendMessage({ type: 'OPEN_POPUP_WITH_ROUTE', route: '/' }, (response) => {
         if (response && response.success) {
             console.log('[Landing] Popup opened successfully');
             // Close the landing page

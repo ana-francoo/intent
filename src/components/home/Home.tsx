@@ -9,15 +9,6 @@ import { Button } from '../ui/button';
 
 export default function Home() {
   const navigate = useNavigate();
-  
-  const handleGetStarted = () => {
-    navigate('/welcome');
-  };
-
-  const handleToAuth = () => {
-    navigate('/auth');
-  };
-
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8">
@@ -39,7 +30,7 @@ export default function Home() {
         </div>
         <div className="flex flex-col items-center gap-1">
           <div className="animate-slide-in-up delay-700">
-            <Button variant="secondary" onClick={handleGetStarted} className="group rounded-lg bg-orange-600 hover:bg-orange-600/90">
+            <Button variant="secondary" onClick={() => navigate('/onboarding')} className="group rounded-lg bg-orange-600 hover:bg-orange-600/90">
               I'm Ready
               <ArrowRightIcon
                 className="-me-1 ml-1 stroke-3 opacity-60 transition-transform group-hover:translate-x-0.5"
@@ -51,7 +42,7 @@ export default function Home() {
 
         <div className="text-sm animate-slide-in-up delay-900">
           <span className="text-muted-foreground">Have an account? </span>
-          <Button className='px-1' variant="link" onClick={handleToAuth}>
+          <Button className='px-1' variant="link" onClick={() => navigate('/auth')}>
             Log in
           </Button>
         </div>
