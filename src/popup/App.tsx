@@ -10,7 +10,8 @@ import CarouselApp from '@/components/carousel/App'
 export default function App() {
   return (
     <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<PopoverDashboard />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/onboarding" element={<CarouselApp />} />
         <Route path="/auth" element={<Auth onAuthSuccess={() => {}} />} />
         <Route path="/website-blocking" element={<WebsiteBlocking onSave={() => {}} />} />
