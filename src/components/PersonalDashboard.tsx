@@ -51,7 +51,28 @@ const PersonalDashboard = () => {
   });
   
   const [emailError, setEmailError] = useState('');
+  const [enableScroll, setEnableScroll] = useState(false);
   
+  // Enable scrolling after animations complete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEnableScroll(true);
+    }, 300); // Increased delay for Account Settings animations (longest delay is 225ms + animation duration + buffer)
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Re-enable scrolling when switching to Account Settings
+  useEffect(() => {
+    if (showAccount) {
+      const timer = setTimeout(() => {
+        setEnableScroll(true);
+      }, 400); // Wait for Account Settings animations to complete
+
+      return () => clearTimeout(timer);
+    }
+  }, [showAccount]);
+
   // Email validation function
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -127,8 +148,45 @@ const PersonalDashboard = () => {
   ]);
 
   useEffect(() => {
-    // Simulate getting current URL
-    setCurrentUrl('https://example.com');
+    // Function to update current URL
+    const updateCurrentUrl = () => {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.url) {
+          try {
+            const url = new URL(tabs[0].url);
+            setCurrentUrl(url.hostname);
+          } catch (error) {
+            setCurrentUrl('Unknown site');
+          }
+        } else {
+          setCurrentUrl('No active tab');
+        }
+      });
+    };
+
+    // Get initial URL
+    updateCurrentUrl();
+
+    // Listen for tab updates
+    const handleTabUpdate = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+      if (changeInfo.status === 'complete' && tab.active) {
+        updateCurrentUrl();
+      }
+    };
+
+    const handleTabActivate = (activeInfo: chrome.tabs.TabActiveInfo) => {
+      updateCurrentUrl();
+    };
+
+    // Add listeners
+    chrome.tabs.onUpdated.addListener(handleTabUpdate);
+    chrome.tabs.onActivated.addListener(handleTabActivate);
+
+    // Cleanup listeners
+    return () => {
+      chrome.tabs.onUpdated.removeListener(handleTabUpdate);
+      chrome.tabs.onActivated.removeListener(handleTabActivate);
+    };
   }, []);
 
   const toggleCategory = (categoryId: string) => {
@@ -184,70 +242,88 @@ const PersonalDashboard = () => {
 
   if (showAccount) {
     return (
-      <div className="w-[400px] h-[600px] bg-background border border-border rounded-xl shadow-lg overflow-hidden font-['Geist'] flex flex-col">
-        <div className="p-4 border-b border-border bg-muted/20">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setShowAccount(false)}>
-              ←
-            </Button>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-full opacity-30"></div>
-              <div className="relative bg-gradient-card p-2 rounded-full border border-focus/50 shadow-card">
-                <User className="w-5 h-5 text-intention" />
+      <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
+        background: 'radial-gradient(circle at center, #2D1B11 0%, #1E120B 40%, #0F0905 100%)'
+      }}>
+        <div className="p-4 border-b border-[#5A351E]/20 animate-in slide-in-from-top duration-300 ease-out" style={{
+          background: 'linear-gradient(135deg, #1E120B 0%, #2D1B11 50%, #3E2718 100%)'
+        }}>
+                      <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setShowAccount(false)} className="text-[#F5E6D3] hover:bg-[#5A351E]/20">
+                ←
+              </Button>
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#FF944D]/20 animate-pulse rounded-full"></div>
+                <div className="relative bg-gradient-to-br from-[#5A351E] to-[#3A2315] p-2 rounded-full border border-[#FF944D]/30 shadow-lg">
+                  <User className="w-5 h-5 text-[#FF944D]" />
+                </div>
+              </div>
+              <div>
+                <h2 className="font-bold text-[#F5E6D3] text-lg">Account Settings</h2>
+                <p className="text-sm text-[#D4C4A8] -mt-0.5">Manage your preferences</p>
               </div>
             </div>
-            <div>
-              <h2 className="font-bold text-foreground text-lg">Account Settings</h2>
-              <p className="text-sm text-muted-foreground -mt-0.5">Manage your preferences</p>
-            </div>
-          </div>
         </div>
         
-        <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-          <Card className="border-focus/50 shadow-card hover:shadow-glow transition-shadow rounded-xl">
-            <CardHeader className="bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5 rounded-t-xl">
+        <div className={`p-4 space-y-4 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{
+          background: 'radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)'
+        }}>
+          <Card className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-150" style={{
+            background: 'linear-gradient(135deg, rgba(90, 53, 30, 0.8) 0%, rgba(58, 35, 21, 0.9) 30%, rgba(30, 18, 11, 0.95) 60%, rgba(90, 53, 30, 0.7) 100%)',
+            boxShadow: '0 4px 20px rgba(255, 148, 77, 0.08), 0 2px 8px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 148, 77, 0.15)'
+          }}>
+            <CardHeader className="rounded-t-xl" style={{
+              background: 'linear-gradient(135deg, rgba(90, 53, 30, 0.6) 0%, rgba(58, 35, 21, 0.7) 30%, rgba(30, 18, 11, 0.8) 60%, rgba(90, 53, 30, 0.5) 100%)'
+            }}>
               <CardTitle className="flex items-center gap-3 text-sm">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-30"></div>
-                  <div className="relative bg-gradient-card p-1.5 rounded-xl border border-focus/50">
-                    <CreditCard className="w-4 h-4 text-intention" />
+                  <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
+                  <div className="relative bg-gradient-to-br from-[#5A351E]/90 to-[#3A2315]/90 p-1.5 rounded-xl border border-[#FF944D]/40">
+                    <CreditCard className="w-4 h-4 text-[#FF944D]" />
                   </div>
                 </div>
                 <div>
-                  <span>Subscription</span>
-                  <p className="text-xs text-muted-foreground -mt-0.5">Manage your plan</p>
+                  <span className="text-[#F5E6D3]">Subscription</span>
+                  <p className="text-xs text-[#D4C4A8] -mt-0.5">Manage your plan</p>
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Plan</span>
-                <Badge variant="secondary" className="bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-full">Pro</Badge>
+                <span className="text-sm text-[#D4C4A8]">Plan</span>
+                <Badge className="bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full">Pro</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <Badge className="bg-green-500/10 text-green-600 border-green-500/20 rounded-full">Active</Badge>
+                <span className="text-sm text-[#D4C4A8]">Status</span>
+                <Badge className="bg-[#8FBC8F]/20 text-[#8FBC8F] border-[#8FBC8F]/30 rounded-full">Active</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Next billing</span>
-                <span className="text-sm font-medium">Dec 15, 2024</span>
+                <span className="text-sm text-[#D4C4A8]">Next billing</span>
+                <span className="text-sm font-medium text-[#F5E6D3]">Dec 15, 2024</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-focus/50 shadow-card hover:shadow-glow transition-shadow rounded-xl">
-            <CardHeader className="bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 rounded-t-xl">
+          <Card className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-225" style={{
+            background: 'linear-gradient(135deg, rgba(90, 53, 30, 0.8) 0%, rgba(58, 35, 21, 0.9) 30%, rgba(30, 18, 11, 0.95) 60%, rgba(90, 53, 30, 0.7) 100%)',
+            boxShadow: '0 4px 20px rgba(255, 148, 77, 0.08), 0 2px 8px rgba(0, 0, 0, 0.3)',
+            border: '1px solid rgba(255, 148, 77, 0.15)'
+          }}>
+            <CardHeader className="rounded-t-xl" style={{
+              background: 'linear-gradient(135deg, rgba(90, 53, 30, 0.6) 0%, rgba(58, 35, 21, 0.7) 30%, rgba(30, 18, 11, 0.8) 60%, rgba(90, 53, 30, 0.5) 100%)'
+            }}>
               <CardTitle className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-30"></div>
-                    <div className="relative bg-gradient-card p-1.5 rounded-xl border border-focus/50">
-                      <Users className="w-4 h-4 text-intention" />
+                    <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
+                    <div className="relative bg-gradient-to-br from-[#5A351E]/90 to-[#3A2315]/90 p-1.5 rounded-xl border border-[#FF944D]/40">
+                      <Users className="w-4 h-4 text-[#FF944D]" />
                     </div>
                   </div>
                   <div>
-                    <span>Accountability Partner</span>
-                    <p className="text-xs text-muted-foreground -mt-0.5">Stay accountable together</p>
+                    <span className="text-[#F5E6D3]">Accountability Partner</span>
+                    <p className="text-xs text-[#D4C4A8] -mt-0.5">Stay accountable together</p>
                   </div>
                 </div>
                 <Switch 
@@ -255,7 +331,7 @@ const PersonalDashboard = () => {
                   onCheckedChange={(checked) => 
                     setAccountabilityPartner(prev => ({ ...prev, enabled: checked }))
                   }
-                  className="data-[state=checked]:bg-orange-600"
+                  className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#5A351E]/70"
                 />
               </CardTitle>
             </CardHeader>
@@ -264,7 +340,7 @@ const PersonalDashboard = () => {
               {accountabilityPartner.enabled && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Partner Email</label>
+                    <label className="text-sm font-medium text-[#F5E6D3]">Partner Email</label>
                     <Input
                       type="email"
                       placeholder="partner@example.com"
@@ -275,21 +351,21 @@ const PersonalDashboard = () => {
                         validateEmail(newEmail);
                       }}
                       onBlur={(e) => validateEmail(e.target.value)}
-                      className={`border-focus/50 focus:ring-2 focus:ring-orange-500/20 rounded-xl ${
+                      className={`bg-[#1E120B]/50 border-[#5A351E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl ${
                         emailError ? 'border-red-500 focus:ring-red-500/20' : ''
                       }`}
                     />
                     {emailError && (
-                      <p className="text-xs text-red-500 mt-1">{emailError}</p>
+                      <p className="text-xs text-red-400 mt-1">{emailError}</p>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-[#D4C4A8]">
                     Your accountability partner will be notified if the extension is removed from Chrome. Please note that once a partner is set up, this action can not be undone.
                   </p>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full rounded-xl"
+                    className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10"
                     onClick={() => {
                       if (validateEmail(accountabilityPartner.email)) {
                         // Save logic here
@@ -315,92 +391,89 @@ const PersonalDashboard = () => {
   }
 
   return (
-    <div className="w-[400px] h-[600px] bg-background border border-border rounded-xl shadow-lg overflow-hidden font-['Geist']">
+    <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
+      background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
+    }}>
       {/* Clean Header */}
-      <div className="relative p-6 border-b border-border/50 flex items-center justify-between bg-gradient-to-r from-orange-500/10 to-orange-600/5">
+      <div className="relative p-6 border-b border-[#7A4A1E]/20 flex items-center justify-between animate-in slide-in-from-bottom duration-300 ease-out" style={{
+        background: 'linear-gradient(135deg, #1A1108 0%, #3D2414 50%, #5A3518 100%)'
+      }}>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-40"></div>
-            <div className="relative bg-gradient-card p-2.5 rounded-xl border border-focus/50 shadow-card">
-              <Shield className="w-5 h-5 text-intention" />
-            </div>
-          </div>
+          <img src="/src/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           <div>
-            <h1 className="font-bold text-foreground text-lg tracking-tight">Focus Shield</h1>
-            <p className="text-xs text-muted-foreground -mt-0.5">Stay focused, stay intentional</p>
+            <h1 className="font-bold text-[#F5E6D3] text-lg tracking-tight">Focus Shield</h1>
+            <p className="text-xs text-[#D4C4A8] -mt-0.5">Stay focused, stay intentional</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setShowAccount(true)} className="hover:bg-orange-500/10 rounded-xl">
+        <Button variant="ghost" size="sm" onClick={() => {
+          setShowAccount(true);
+          setEnableScroll(false); // Reset scroll state when entering Account Settings
+        }} className="text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl">
           <Settings className="w-4 h-4" />
         </Button>
       </div>
 
       {/* Current Site - Clean & Modern */}
-      <div className="p-6 border-b border-border/30">
-        <div className="space-y-4">
+      <div className="p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out delay-75" style={{
+        background: 'radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)'
+      }}>
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-30"></div>
-              <div className="relative bg-gradient-card p-2.5 rounded-xl border border-focus/50 shadow-card">
-                <Globe className="w-5 h-5 text-intention" />
+              <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
+              <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-2.5 rounded-xl border border-[#FF944D]/30 shadow-lg">
+                <Globe className="w-5 h-5 text-[#FF944D]" />
               </div>
             </div>
             <div className="flex-1">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <label className="text-xs font-medium text-[#D4C4A8] uppercase tracking-wider">
                 Current Site
               </label>
-              <p className="text-sm text-foreground font-medium truncate">{currentUrl}</p>
+              <p className="text-sm text-[#F5E6D3] font-medium truncate">{currentUrl}</p>
             </div>
           </div>
           <Button 
             variant="outline" 
             size="sm" 
-            className="w-full group hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 transition-all duration-200 rounded-xl"
+            className="w-full group hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all duration-200 rounded-xl border-[#7A4A1E]/50 text-[#F5E6D3]"
             onClick={blockCurrentSite}
           >
-            <Shield className="w-4 h-4 mr-2 group-hover:animate-pulse" />
             Block This Site
           </Button>
         </div>
       </div>
 
       {/* Blocked Sites Management */}
-      <div className="flex-1 overflow-hidden">
-        <div className="p-6 border-b border-border/30 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-30"></div>
-              <div className="relative bg-gradient-card p-2 rounded-xl border border-focus/50 shadow-card">
-                <Target className="w-4 h-4 text-intention" />
-              </div>
-            </div>
-            <div>
-              <h3 className="font-bold text-foreground">Blocked Sites</h3>
-              <p className="text-xs text-muted-foreground -mt-0.5">Manage your focus zones</p>
-            </div>
+      <div className="flex-1 overflow-hidden" style={{
+        background: 'radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)'
+      }}>
+        <div className="p-4 border-b border-[#7A4A1E]/20 flex items-center justify-between animate-in slide-in-from-bottom duration-300 ease-out delay-150">
+          <div>
+            <h3 className="font-bold text-[#F5E6D3] text-sm">Blocked Sites</h3>
+            <p className="text-xs text-[#D4C4A8] -mt-0.5">Manage your focus zones</p>
           </div>
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => setShowAddSite(!showAddSite)}
-            className="hover:bg-orange-500/10 hover:text-orange-600 transition-colors rounded-xl"
+            className="text-[#F5E6D3] hover:bg-[#7A4A1E]/20 hover:text-[#FF944D] transition-colors rounded-xl"
           >
             <Plus className="w-4 h-4" />
           </Button>
         </div>
 
         {showAddSite && (
-          <div className="p-6 border-b border-border/30 space-y-4 bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5">
+          <div className="p-4 border-b border-[#7A4A1E]/20 space-y-3 animate-in slide-in-from-bottom duration-200 ease-out">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-30"></div>
-                <div className="relative bg-gradient-card p-2 rounded-xl border border-focus/50 shadow-card">
-                  <Plus className="w-4 h-4 text-intention" />
+                <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
+                <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-2 rounded-xl border border-[#FF944D]/30 shadow-lg">
+                  <Plus className="w-4 h-4 text-[#FF944D]" />
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold text-foreground text-sm">Add New Site</h4>
-                <p className="text-xs text-muted-foreground">Enter the website URL to block</p>
+                <h4 className="font-semibold text-[#F5E6D3] text-sm">Add New Site</h4>
+                <p className="text-xs text-[#D4C4A8]">Enter the website URL to block</p>
               </div>
             </div>
             <Input
@@ -408,62 +481,64 @@ const PersonalDashboard = () => {
               value={newSiteUrl}
               onChange={(e) => setNewSiteUrl(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addNewSite()}
-              className="border-focus/50 focus:ring-2 focus:ring-orange-500/20 rounded-xl"
+              className="bg-[#1A1108]/50 border-[#7A4A1E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl"
             />
             <div className="flex gap-2">
-              <Button size="sm" onClick={addNewSite} className="bg-orange-600 hover:bg-orange-700 rounded-xl">
+              <Button size="sm" onClick={addNewSite} className="bg-[#FF944D] hover:bg-[#FF944D]/80 text-white rounded-xl">
                 Add Site
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowAddSite(false)} className="rounded-xl">
+              <Button variant="ghost" size="sm" onClick={() => setShowAddSite(false)} className="border-[#7A4A1E]/50 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl">
                 Cancel
               </Button>
             </div>
           </div>
         )}
 
-        <div className="overflow-y-auto h-full">
-          {categories.map((category) => {
+        <div className={`h-full p-4 space-y-2 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+          {categories.map((category, index) => {
             const Icon = category.icon;
             return (
-              <div key={category.id} className="border-b border-border last:border-b-0">
+              <div key={category.id} className="border-b border-[#7A4A1E]/20 last:border-b-0 opacity-0" style={{
+                animation: `slideInUp 0.3s ease-out ${225 + (index * 120)}ms forwards, fadeIn 0.3s ease-out ${225 + (index * 120)}ms forwards`
+              }}>
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className="w-full p-4 flex items-center justify-between hover:bg-orange-500/5 transition-all duration-200 group rounded-xl mx-2 my-1"
+                  className="w-full p-3 flex items-center justify-between hover:bg-[#7A4A1E]/10 transition-all duration-200 group rounded-xl"
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-glow animate-glow-pulse rounded-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                      <div className="relative bg-gradient-card p-2 rounded-xl border border-focus/50 shadow-card group-hover:shadow-glow transition-shadow">
-                        <Icon className="w-4 h-4 text-intention" />
+                      <div className="absolute inset-0 bg-[#FF944D]/20 animate-pulse rounded-xl group-hover:bg-[#FF944D]/30 transition-all"></div>
+                      <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-1.5 rounded-xl border border-[#FF944D]/30 shadow-lg group-hover:shadow-xl transition-shadow">
+                        <Icon className="w-3.5 h-3.5 text-[#FF944D]" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground group-hover:text-orange-600 transition-colors">{category.name}</span>
-                      <Badge variant="secondary" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20 rounded-full">
+                      <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-sm">{category.name}</span>
+                      <Badge className="text-xs bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full px-2 py-0.5">
                         {category.sites.filter(site => site.enabled).length}
                       </Badge>
                     </div>
                   </div>
                   {category.expanded ? 
-                    <ChevronUp className="w-4 h-4 text-muted-foreground group-hover:text-orange-600 transition-colors" /> : 
-                    <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-orange-600 transition-colors" />
+                    <ChevronUp className="w-4 h-4 text-[#D4C4A8] group-hover:text-[#FF944D] transition-colors" /> : 
+                    <ChevronDown className="w-4 h-4 text-[#D4C4A8] group-hover:text-[#FF944D] transition-colors" />
                   }
                 </button>
                 
                 {category.expanded && (
-                  <div className="bg-gradient-to-br from-orange-500/5 via-transparent to-orange-600/5 border-t border-orange-500/10 mx-2 rounded-b-xl">
+                  <div className="border-t border-[#7A4A1E]/20">
                     {category.sites.map((site) => (
-                      <div key={site.url} className="px-4 py-3 flex items-center justify-between border-t border-orange-500/10 hover:bg-orange-500/10 transition-colors group last:rounded-b-xl">
+                      <div key={site.url} className="px-4 py-2 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
                         <div className="flex items-center gap-3 flex-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-orange-500/40 group-hover:bg-orange-500 transition-colors"></div>
-                          <span className="text-sm text-foreground truncate font-medium group-hover:text-orange-600 transition-colors">
+                          <div className="w-1 h-1 rounded-full bg-[#FF944D]/40 group-hover:bg-[#FF944D] transition-colors"></div>
+                          <span className="text-sm text-[#F5E6D3] truncate font-medium group-hover:text-[#FF944D] transition-colors">
                             {site.url}
                           </span>
                         </div>
                         <Switch
                           checked={site.enabled}
                           onCheckedChange={() => toggleSite(category.id, site.url)}
-                          className="data-[state=checked]:bg-orange-600"
+                          className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#7A4A1E]/70 scale-75"
                         />
                       </div>
                     ))}
