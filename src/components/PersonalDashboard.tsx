@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator'; 
 import Flame from './home/Flame';
+import quotes from '../utils/quotes';
 
 import { 
   Settings, 
@@ -52,7 +53,17 @@ const PersonalDashboard = () => {
   
   const [emailError, setEmailError] = useState('');
   const [enableScroll, setEnableScroll] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState('');
+
+  const getRandomQuote = (): string => {
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  };
   
+  // Set initial random quote
+  useEffect(() => {
+    setCurrentQuote(getRandomQuote());
+  }, []);
+
   // Enable scrolling after animations complete
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,9 +147,9 @@ const PersonalDashboard = () => {
       ]
     },
     {
-      id: 'others',
-      name: 'Others',
-      icon: Globe,
+      id: 'my-sites',
+      name: 'My Sites',
+      icon: Target,
       expanded: false,
       sites: [
         { url: 'example.com', enabled: false },
@@ -210,8 +221,9 @@ const PersonalDashboard = () => {
 
   const addNewSite = () => {
     if (newSiteUrl.trim()) {
+      // Add to the 'My Sites' category
       setCategories(prev => prev.map(cat => 
-        cat.id === 'others' 
+        cat.id === 'my-sites' 
           ? {
               ...cat,
               sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
@@ -225,12 +237,12 @@ const PersonalDashboard = () => {
 
   const blockCurrentSite = () => {
     const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
-    const othersCat = categories.find(cat => cat.id === 'others');
-    const siteExists = othersCat?.sites.some(site => site.url === domain);
+    const mySitesCat = categories.find(cat => cat.id === 'my-sites');
+    const siteExists = mySitesCat?.sites.some(site => site.url === domain);
     
     if (!siteExists) {
       setCategories(prev => prev.map(cat => 
-        cat.id === 'others' 
+        cat.id === 'my-sites' 
           ? {
               ...cat,
               sites: [...cat.sites, { url: domain, enabled: true }]
@@ -248,7 +260,7 @@ const PersonalDashboard = () => {
         <div className="p-4 border-b border-[#5A351E]/20 animate-in slide-in-from-top duration-300 ease-out" style={{
           background: 'linear-gradient(135deg, #1E120B 0%, #2D1B11 50%, #3E2718 100%)'
         }}>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setShowAccount(false)} className="text-[#F5E6D3] hover:bg-[#5A351E]/20">
                 ←
               </Button>
@@ -265,7 +277,7 @@ const PersonalDashboard = () => {
             </div>
         </div>
         
-        <div className={`p-4 space-y-4 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{
+        <div className={`p-4 space-y-3 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{
           background: 'radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)'
         }}>
           <Card className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-150" style={{
@@ -289,18 +301,18 @@ const PersonalDashboard = () => {
                 </div>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2 pt-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[#D4C4A8]">Plan</span>
-                <Badge className="bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full">Pro</Badge>
+                <span className="text-xs text-[#D4C4A8]">Plan</span>
+                <Badge className="bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full text-xs px-2">Pro</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[#D4C4A8]">Status</span>
-                <Badge className="bg-[#8FBC8F]/20 text-[#8FBC8F] border-[#8FBC8F]/30 rounded-full">Active</Badge>
+                <span className="text-xs text-[#D4C4A8]">Status</span>
+                <Badge className="bg-[#8FBC8F]/20 text-[#8FBC8F] border-[#8FBC8F]/30 rounded-full text-xs">Active</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-[#D4C4A8]">Next billing</span>
-                <span className="text-sm font-medium text-[#F5E6D3]">Dec 15, 2024</span>
+                <span className="text-xs text-[#D4C4A8]">Next billing</span>
+                <span className="text-xs font-medium text-[#F5E6D3]">Dec 15, 2024</span>
               </div>
             </CardContent>
           </Card>
@@ -331,11 +343,11 @@ const PersonalDashboard = () => {
                   onCheckedChange={(checked) => 
                     setAccountabilityPartner(prev => ({ ...prev, enabled: checked }))
                   }
-                  className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#5A351E]/70"
+                  className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#5A351E]/70 scale-75"
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className={accountabilityPartner.enabled ? "space-y-4" : "space-y-0"}>
               
               {accountabilityPartner.enabled && (
                 <>
@@ -395,21 +407,23 @@ const PersonalDashboard = () => {
       background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
     }}>
       {/* Clean Header */}
-      <div className="relative p-6 border-b border-[#7A4A1E]/20 flex items-center justify-between animate-in slide-in-from-bottom duration-300 ease-out" style={{
+      <div className="relative p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out" style={{
         background: 'linear-gradient(135deg, #1A1108 0%, #3D2414 50%, #5A3518 100%)'
       }}>
         <div className="flex items-center gap-3">
           <img src="/src/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
-          <div>
-            <h1 className="font-bold text-[#F5E6D3] text-lg tracking-tight">Focus Shield</h1>
-            <p className="text-xs text-[#D4C4A8] -mt-0.5">Stay focused, stay intentional</p>
-          </div>
+          <h1 className="font-bold text-[#F5E6D3] text-lg tracking-tight">Intent</h1>
+        </div>
+        <div className="mt-1" style={{ marginLeft: 0 }}>
+          <p className="text-base text-[#D4C4A8] italic text-left" style={{ fontStyle: 'italic', transform: 'skew(-10deg)' }}>
+            "{currentQuote}"
+          </p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => {
           setShowAccount(true);
           setEnableScroll(false); // Reset scroll state when entering Account Settings
-        }} className="text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl">
-          <Settings className="w-4 h-4" />
+        }} className="absolute top-2 right-2 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl p-2">
+          <Settings className="w-5 h-5" />
         </Button>
       </div>
 
@@ -421,8 +435,8 @@ const PersonalDashboard = () => {
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
-              <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-2.5 rounded-xl border border-[#FF944D]/30 shadow-lg">
-                <Globe className="w-5 h-5 text-[#FF944D]" />
+              <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-2 rounded-xl border border-[#FF944D]/30 shadow-lg">
+                <Globe className="w-4 h-4 text-[#FF944D]" />
               </div>
             </div>
             <div className="flex-1">
@@ -503,17 +517,17 @@ const PersonalDashboard = () => {
               }}>
                 <button
                   onClick={() => toggleCategory(category.id)}
-                  className="w-full p-3 flex items-center justify-between hover:bg-[#7A4A1E]/10 transition-all duration-200 group rounded-xl"
+                  className="w-full p-2 flex items-center justify-between hover:bg-[#7A4A1E]/10 transition-all duration-200 group rounded-xl"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div className="relative">
                       <div className="absolute inset-0 bg-[#FF944D]/20 animate-pulse rounded-xl group-hover:bg-[#FF944D]/30 transition-all"></div>
-                      <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-1.5 rounded-xl border border-[#FF944D]/30 shadow-lg group-hover:shadow-xl transition-shadow">
-                        <Icon className="w-3.5 h-3.5 text-[#FF944D]" />
+                      <div className="relative bg-gradient-to-br from-[#7A4A1E] to-[#5A3518] p-1 rounded-xl border border-[#FF944D]/30 shadow-lg group-hover:shadow-xl transition-shadow">
+                        <Icon className="w-3 h-3 text-[#FF944D]" />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-sm">{category.name}</span>
+                      <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-xs">{category.name}</span>
                       <Badge className="text-xs bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full px-2 py-0.5">
                         {category.sites.filter(site => site.enabled).length}
                       </Badge>
@@ -528,10 +542,10 @@ const PersonalDashboard = () => {
                 {category.expanded && (
                   <div className="border-t border-[#7A4A1E]/20">
                     {category.sites.map((site) => (
-                      <div key={site.url} className="px-4 py-2 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
-                        <div className="flex items-center gap-3 flex-1">
+                      <div key={site.url} className="px-4 py-1.5 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
+                        <div className="flex items-center gap-2 flex-1">
                           <div className="w-1 h-1 rounded-full bg-[#FF944D]/40 group-hover:bg-[#FF944D] transition-colors"></div>
-                          <span className="text-sm text-[#F5E6D3] truncate font-medium group-hover:text-[#FF944D] transition-colors">
+                          <span className="text-xs text-[#F5E6D3] truncate font-medium group-hover:text-[#FF944D] transition-colors">
                             {site.url}
                           </span>
                         </div>
