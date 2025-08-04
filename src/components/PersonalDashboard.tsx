@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator'; 
 import Flame from './home/Flame';
 import quotes from '../utils/quotes';
+import { saveBlockedSites } from '../utils/storage';
 
 import { 
   Settings, 
@@ -219,36 +220,81 @@ const PersonalDashboard = () => {
     ));
   };
 
-  const addNewSite = () => {
+  const addNewSite = async () => {
     if (newSiteUrl.trim()) {
-      // Add to the 'My Sites' category
-      setCategories(prev => prev.map(cat => 
-        cat.id === 'my-sites' 
-          ? {
-              ...cat,
-              sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
-            }
-          : cat
-      ));
-      setNewSiteUrl('');
-      setShowAddSite(false);
+      try {
+        // Save to Supabase database
+        const urlToSave = newSiteUrl.trim().startsWith('http') ? newSiteUrl.trim() : `https://${newSiteUrl.trim()}`;
+        await saveBlockedSites([urlToSave]);
+        
+        // Add to the 'My Sites' category
+        setCategories(prev => prev.map(cat => 
+          cat.id === 'my-sites' 
+            ? {
+                ...cat,
+                sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
+              }
+            : cat
+        ));
+        setNewSiteUrl('');
+        setShowAddSite(false);
+      } catch (error) {
+        console.error('Failed to save blocked site:', error);
+        // Still add to local state even if Supabase save fails
+        setCategories(prev => prev.map(cat => 
+          cat.id === 'my-sites' 
+            ? {
+                ...cat,
+                sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
+              }
+            : cat
+        ));
+        setNewSiteUrl('');
+        setShowAddSite(false);
+      }
     }
   };
 
-  const blockCurrentSite = () => {
-    const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
-    const mySitesCat = categories.find(cat => cat.id === 'my-sites');
-    const siteExists = mySitesCat?.sites.some(site => site.url === domain);
-    
-    if (!siteExists) {
-      setCategories(prev => prev.map(cat => 
-        cat.id === 'my-sites' 
-          ? {
-              ...cat,
-              sites: [...cat.sites, { url: domain, enabled: true }]
-            }
-          : cat
-      ));
+  const blockCurrentSite = async () => {
+    if (currentUrl && currentUrl !== 'Loading...' && currentUrl !== 'No active tab' && currentUrl !== 'Unknown site') {
+      try {
+        // Save to Supabase database
+        const urlToSave = currentUrl.startsWith('http') ? currentUrl : `https://${currentUrl}`;
+        await saveBlockedSites([urlToSave]);
+        
+        // Add to the 'My Sites' category
+        const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
+        const mySitesCat = categories.find(cat => cat.id === 'my-sites');
+        const siteExists = mySitesCat?.sites.some(site => site.url === domain);
+        
+        if (!siteExists) {
+          setCategories(prev => prev.map(cat => 
+            cat.id === 'my-sites' 
+              ? {
+                  ...cat,
+                  sites: [...cat.sites, { url: domain, enabled: true }]
+                }
+              : cat
+          ));
+        }
+      } catch (error) {
+        console.error('Failed to save blocked site:', error);
+        // Still add to local state even if Supabase save fails
+        const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
+        const mySitesCat = categories.find(cat => cat.id === 'my-sites');
+        const siteExists = mySitesCat?.sites.some(site => site.url === domain);
+        
+        if (!siteExists) {
+          setCategories(prev => prev.map(cat => 
+            cat.id === 'my-sites' 
+              ? {
+                  ...cat,
+                  sites: [...cat.sites, { url: domain, enabled: true }]
+                }
+              : cat
+          ));
+        }
+      }
     }
   };
 

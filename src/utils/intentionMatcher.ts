@@ -208,58 +208,77 @@ export const isIntentionMatchingAvailable = (): boolean => {
 
 // Validate an intention statement. Returns [isValid, reason].
 export const validateIntention = async (intentionText: string): Promise<[boolean, string]> => {
+  console.log('🔍 validateIntention called with:', intentionText);
+  console.log('🔑 API Key configured:', !!CONFIG.OPENROUTER.API_KEY);
+  
   if (!CONFIG.OPENROUTER.API_KEY) {
-    return [true, ''];
+    console.log('❌ No API key configured, returning invalid');
+    return [false, 'Validation service not configured. Please provide a more specific intention.'];
   }
 
   try {
+    console.log('🌐 Making API request to OpenRouter...');
+    const requestBody = {
+      model: CONFIG.OPENROUTER.DEFAULT_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content:
+            `You decide if a user intention is valid: specific, goal-driven, not vague. Only respond with a strict JSON object:\n` +
+            `{ "valid": true }\n` +
+            `or\n` +
+            `{ "valid": false, "reason": "short explanation" }`
+        },
+        {
+          role: 'user',
+          content: `Is this intention valid: "${intentionText}"`
+        }
+      ],
+      max_tokens: 60,
+      temperature: 0.0,
+    };
+    console.log('📤 Request body:', requestBody);
+    
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: getOpenRouterHeaders(),
-      body: JSON.stringify({
-        model: CONFIG.OPENROUTER.DEFAULT_MODEL,
-        messages: [
-          {
-            role: 'system',
-            content:
-              `You decide if a user intention is valid: specific, goal-driven, not vague. Only respond with a strict JSON object:\n` +
-              `{ "valid": true }\n` +
-              `or\n` +
-              `{ "valid": false, "reason": "short explanation" }`
-          },
-          {
-            role: 'user',
-            content: `Is this intention valid: "${intentionText}"`
-          }
-        ],
-        max_tokens: 60,
-        temperature: 0.0,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
+    console.log('📡 Response status:', response.status);
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('❌ API response error:', errorText);
       throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('📥 API response data:', data);
     const aiResponse = data.choices[0]?.message?.content?.trim() || '';
+    console.log('🤖 AI response:', aiResponse);
 
     // Parse the expected JSON response
+    console.log('🔍 Parsing AI response...');
     const match = aiResponse.match(/\{[\s\S]*\}/);
     if (match) {
+      console.log('📋 Found JSON match:', match[0]);
       const parsed = JSON.parse(match[0]);
+      console.log('📊 Parsed JSON:', parsed);
       if (parsed.valid === true) {
+        console.log('✅ AI determined intention is valid');
         return [true, ''];
       } else if (parsed.valid === false) {
+        console.log('❌ AI determined intention is invalid:', parsed.reason);
         return [false, parsed.reason || 'Your intention is not valid.'];
       }
     }
 
-    // Fallback: treat as valid if format is off
-    return [true, ''];
+    console.log('⚠️ No valid JSON found in AI response, treating as invalid');
+    // Fallback: treat as invalid if format is off
+    return [false, 'Invalid intention format. Please provide a more specific, goal-driven intention.'];
   } catch (error) {
-    console.error('Error validating intention:', error);
-    return [true, ''];
+    console.error('❌ Error validating intention:', error);
+    console.log('🔄 Returning invalid due to error');
+    return [false, 'Validation failed. Please provide a more specific intention.'];
   }
 };

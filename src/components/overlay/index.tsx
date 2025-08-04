@@ -40,23 +40,32 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
   }
 
   try {
+    console.log('🔍 Starting intention validation for:', intention);
     let validateIntention: (intention: string) => Promise<[boolean, string]>;
     
     try {
+      console.log('📦 Attempting to import intentionMatcher module...');
       const intentionModule = await import('../../utils/intentionMatcher');
       validateIntention = intentionModule.validateIntention;
+      console.log('✅ Successfully imported validateIntention function');
     } catch (importError) {
-      console.error('Failed to load intention validation module:', importError);
-      validateIntention = async () => [true, ''];
+      console.error('❌ Failed to load intention validation module:', importError);
+      validateIntention = async () => [false, 'Validation service unavailable. Please provide a more specific intention.'];
+      console.log('🔄 Using fallback validation function');
     }
     
+    console.log('🔍 Calling validateIntention with:', intention);
     const [isValid, reason] = await validateIntention(intention);
+    console.log('📊 Validation result:', { isValid, reason });
     
     if (!isValid) {
+      console.log('❌ Intention validation failed:', reason);
       return { error: reason || 'Please provide a more specific intention.', success: false };
     }
     
+    console.log('✅ Intention validation passed, saving intention...');
     await saveIntention(targetUrl, intention);
+    console.log('💾 Intention saved successfully');
     return { success: true, error: null, intention };
     
   } catch (error) {

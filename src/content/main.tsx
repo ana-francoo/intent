@@ -6,6 +6,21 @@ import { initializeRouteInterceptor } from '../utils/routeInterceptor'
 import { startIntentionMonitoring } from '../utils/intentionMonitor'
 import { hasExtensionAccess } from '../utils/subscription'
 
+// Extend Window interface to include our custom properties
+declare global {
+  interface Window {
+    __mainContentScriptLoaded?: boolean;
+  }
+}
+
+// Simple guard against multiple injections
+if (window.__mainContentScriptLoaded) {
+  console.log('🎯 Main content script already loaded, skipping...');
+  throw new Error('Main content script already loaded');
+}
+
+window.__mainContentScriptLoaded = true;
+
 // Clean up expired intentions on content script load
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
   cleanupExpiredIntentions().then(cleanedCount => {

@@ -39,6 +39,7 @@ export default defineConfig(({ mode }) => {
         host: 'localhost',
       },
     },
+
     // Define global constants for the extension
     define: {
       // Make environment variables available to the extension

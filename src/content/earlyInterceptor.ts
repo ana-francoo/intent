@@ -3,6 +3,20 @@
 
 import { initializeRouteInterceptor } from '../utils/routeInterceptor';
 
+// Extend Window interface to include our custom properties
+declare global {
+  interface Window {
+    __earlyInterceptorLoaded?: boolean;
+  }
+}
+
+// Simple guard against multiple injections
+if (window.__earlyInterceptorLoaded) {
+  console.log('🛡️ Early interceptor already loaded, skipping...');
+  throw new Error('Early interceptor already loaded');
+}
+
+window.__earlyInterceptorLoaded = true;
 console.log('🛡️ Early interceptor loaded for:', window.location.href);
 
 // Run interceptor immediately when script loads
