@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       'process.env.OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY || ''),
       'process.env.SITE_URL': JSON.stringify(env.SITE_URL || 'https://intent-extension.com'),
       'process.env.SITE_NAME': JSON.stringify(env.SITE_NAME || 'Intent Extension'),
-      'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'openai/gpt-4o'),
+      'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'mistralai/mistral-small-3.2-24b-instruct:free'),
       'process.env.INTENTION_CONFIDENCE_THRESHOLD': JSON.stringify(env.INTENTION_CONFIDENCE_THRESHOLD || '0.7'),
       'process.env.VITE_STRIPE_YEARLY_PRICE_ID': JSON.stringify(env.VITE_STRIPE_YEARLY_PRICE_ID || ''),
     },

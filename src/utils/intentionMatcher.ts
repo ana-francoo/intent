@@ -207,13 +207,13 @@ export const isIntentionMatchingAvailable = (): boolean => {
 /////////////////INTENTION VALIDITY CHECK///////////
 
 // Validate an intention statement. Returns [isValid, reason].
-export const validateIntention = async (intentionText: string): Promise<[boolean, string]> => {
+export const validateIntention = async (intentionText: string): Promise<(boolean)> => {
   console.log('🔍 validateIntention called with:', intentionText);
   console.log('🔑 API Key configured:', !!CONFIG.OPENROUTER.API_KEY);
   
   if (!CONFIG.OPENROUTER.API_KEY) {
     console.log('❌ No API key configured, returning invalid');
-    return [false, 'Validation service not configured. Please provide a more specific intention.'];
+    return (false);
   }
 
   try {
@@ -227,14 +227,14 @@ export const validateIntention = async (intentionText: string): Promise<[boolean
             `You decide if a user intention is valid: specific, goal-driven, not vague. Only respond with a strict JSON object:\n` +
             `{ "valid": true }\n` +
             `or\n` +
-            `{ "valid": false, "reason": "short explanation" }`
+            `{ "valid": false}`
         },
         {
           role: 'user',
           content: `Is this intention valid: "${intentionText}"`
         }
       ],
-      max_tokens: 60,
+      max_tokens: 12,
       temperature: 0.0,
     };
     console.log('📤 Request body:', requestBody);
@@ -266,19 +266,19 @@ export const validateIntention = async (intentionText: string): Promise<[boolean
       console.log('📊 Parsed JSON:', parsed);
       if (parsed.valid === true) {
         console.log('✅ AI determined intention is valid');
-        return [true, ''];
+        return true;
       } else if (parsed.valid === false) {
         console.log('❌ AI determined intention is invalid:', parsed.reason);
-        return [false, parsed.reason || 'Your intention is not valid.'];
+        return false;
       }
     }
 
     console.log('⚠️ No valid JSON found in AI response, treating as invalid');
     // Fallback: treat as invalid if format is off
-    return [false, 'Invalid intention format. Please provide a more specific, goal-driven intention.'];
+    return false;
   } catch (error) {
     console.error('❌ Error validating intention:', error);
     console.log('🔄 Returning invalid due to error');
-    return [false, 'Validation failed. Please provide a more specific intention.'];
+    return false;
   }
 };

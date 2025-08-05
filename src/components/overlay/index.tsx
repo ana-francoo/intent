@@ -7,16 +7,52 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { normalizeUrlToDomain, saveIntention } from "@/utils/storage";
 import { getWebsiteCategory } from "@/utils/domainCategories";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
+import { validateIntention } from '../../utils/intentionMatcher';
 
 interface FormState {
   success: boolean;
   error: string | null;
   intention?: string;
 }
+
+// Fast client-side validation for immediate feedback
+const validateIntentionClientSide = (intentionText: string): boolean => {
+  const trimmed = intentionText.trim();
+  
+  // Too short
+  if (trimmed.length < 10) return false;
+  
+  // Too long
+  if (trimmed.length > 200) return false;
+  
+  // Common vague phrases that should be rejected
+  const vaguePhrases = [
+    'just browsing', 'checking', 'looking around', 'nothing specific',
+    'idk', 'dunno', 'whatever', 'random', 'bored', 'killing time', 'wasting time'
+  ];
+  
+  const lowerText = trimmed.toLowerCase();
+  if (vaguePhrases.some(phrase => lowerText.includes(phrase))) {
+    return false;
+  }
+  
+  // Must contain action words
+  const actionWords = [
+    'find', 'learn', 'research', 'buy', 'compare', 'read', 'watch', 'study',
+    'understand', 'solve', 'create', 'write', 'design', 'plan', 'organize',
+    'check', 'verify', 'confirm', 'book', 'schedule', 'contact', 'email',
+    'call', 'message', 'download', 'install', 'setup', 'configure'
+  ];
+  
+  const hasActionWord = actionWords.some(word => lowerText.includes(word));
+  if (!hasActionWord) return false;
+  
+  return true;
+};
 
 async function submitIntention(_: FormState, formData: FormData): Promise<FormState> {
   const intention = formData.get('intention')?.toString()?.trim();
@@ -41,26 +77,20 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
 
   try {
     console.log('🔍 Starting intention validation for:', intention);
-    let validateIntention: (intention: string) => Promise<[boolean, string]>;
     
-    try {
-      console.log('📦 Attempting to import intentionMatcher module...');
-      const intentionModule = await import('../../utils/intentionMatcher');
-      validateIntention = intentionModule.validateIntention;
-      console.log('✅ Successfully imported validateIntention function');
-    } catch (importError) {
-      console.error('❌ Failed to load intention validation module:', importError);
-      validateIntention = async () => [false, 'Validation service unavailable. Please provide a more specific intention.'];
-      console.log('🔄 Using fallback validation function');
+    // Fast client-side validation first
+    const clientSideValid = validateIntentionClientSide(intention);
+    if (!clientSideValid) {
+      return { error: 'Please write a more targeted intention', success: false };
     }
     
     console.log('🔍 Calling validateIntention with:', intention);
-    const [isValid, reason] = await validateIntention(intention);
-    console.log('📊 Validation result:', { isValid, reason });
+    const isValid = await validateIntention(intention);
+    console.log('📊 Validation result:', { isValid });
     
     if (!isValid) {
-      console.log('❌ Intention validation failed:', reason);
-      return { error: reason || 'Please provide a more specific intention.', success: false };
+      console.log('❌ Intention validation failed');
+      return { error: 'Please write a more targeted intention', success: false };
     }
     
     console.log('✅ Intention validation passed, saving intention...');
@@ -94,16 +124,22 @@ function LoadingIcon() {
   );
 }
 
-function TextareaWithStatus({ domain }: { domain: string }) {
+function TextareaWithStatus({ domain, intentionText, setIntentionText }: { 
+  domain: string;
+  intentionText: string;
+  setIntentionText: (value: string) => void;
+}) {
   const { pending } = useFormStatus();
   
   return (
     <Textarea 
       name="intention"
+      value={intentionText}
+      onChange={(e) => setIntentionText(e.target.value)}
       className="p-4 text-lg focus-visible:ring-0 border-border focus-visible:border-border resize-none focus:outline-none rounded-xl shadow-lg pl-10 pr-10" 
       placeholder={`What is your intention for ${domain}?`}
       required
-      minLength={10}
+      // minLength={10}
       disabled={pending}
       aria-describedby="intention-help"
       onKeyDown={(e) => {
@@ -176,6 +212,8 @@ export default function IntentionOverlay() {
   });
   
   const [customMinutes, setCustomMinutes] = useState("");
+  const [shakeKey, setShakeKey] = useState(0);
+  const [intentionText, setIntentionText] = useState('');
 
   useEffect(() => {
     if (state.success && targetUrl) {
@@ -185,6 +223,18 @@ export default function IntentionOverlay() {
       return () => clearTimeout(timer);
     }
   }, [state.success, targetUrl]);
+
+  useEffect(() => {
+    if (state.error) {
+      setShakeKey(prev => prev + 1);
+    }
+  }, [state.error]);
+
+  // Custom form action that increments shake key on every submission
+  const handleFormAction = useCallback(async (formData: FormData) => {
+    setShakeKey(prev => prev + 1);
+    return formAction(formData);
+  }, [formAction]);
 
   return (
     <div className="min-h-screen w-full relative bg-background">
@@ -207,14 +257,20 @@ export default function IntentionOverlay() {
               ]
             )} />
           </div>
-          <form action={formAction} className="space-y-1 w-full">
+          <form action={handleFormAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             
             {!state.success ? (
-              <div className={cn(
-                'relative animate-slide-in-up delay-150 opacity-0 border-2 border-transparent rounded-xl',
-                state.error && "animate-shake"
-              )}>
+              <div 
+                key={shakeKey}
+                className={cn(
+                  'relative border-2 border-transparent rounded-xl',
+                  !state.error && 'animate-slide-in-up delay-150'
+                )}
+                style={{
+                  animation: state.error ? 'shake 0.6s ease-in-out' : undefined
+                }}
+              >
                 {!isTimeBasedCategory && (
                   <div className='absolute top-0 flex w-full justify-center'>
                     <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
@@ -231,7 +287,11 @@ export default function IntentionOverlay() {
                   <>
                     <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
                     <LoadingIcon />
-                    <TextareaWithStatus domain={domain} />
+                    <TextareaWithStatus 
+                      domain={domain} 
+                      intentionText={intentionText}
+                      setIntentionText={setIntentionText}
+                    />
                   </>
                 )}
               </div>
