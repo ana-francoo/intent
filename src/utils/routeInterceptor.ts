@@ -1,7 +1,7 @@
 import { getIntention, normalizeUrlToDomain, isUrlBlocked } from './storage';
 import { shouldCheckIntentionForUrl } from './urlHandlers';
 import { hasExtensionAccess } from './subscription';
-
+import { markNewIntentionSet } from './intentionMonitor';
 
 export const initializeRouteInterceptor = async (): Promise<void> => {
   try {
@@ -58,6 +58,8 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       
       // If we just set an intention for this domain and it's less than 10 seconds old
       if (intentionData.domain === domain && (Date.now() - intentionData.timestamp) < 10000) {
+        // Mark for immediate checking since this is a new intention
+        markNewIntentionSet();
         return;
       } else if ((Date.now() - intentionData.timestamp) >= 10000) {
         // Clean up expired flag

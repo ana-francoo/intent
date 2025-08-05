@@ -11,8 +11,9 @@ export type WebsiteCategory =
   | 'other';
 
 export const DOMAIN_CATEGORIES: Record<string, WebsiteCategory> = {
+  
+  
   // Entertainment
-  'youtube.com': 'entertainment',
   'netflix.com': 'entertainment',
   'spotify.com': 'entertainment',
   'twitch.tv': 'entertainment',

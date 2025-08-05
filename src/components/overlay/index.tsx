@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
 import { validateIntention } from '../../utils/intentionMatcher';
+import { markNewIntentionSet } from '../../utils/intentionMonitor';
 
 interface FormState {
   success: boolean;
@@ -219,10 +220,16 @@ export default function IntentionOverlay() {
     if (state.success && targetUrl) {
       const timer = setTimeout(() => {
         window.location.href = targetUrl;
-      }, 1250);
+      }, 9000); // Increased from 1250ms to 3000ms (3 seconds)
       return () => clearTimeout(timer);
     }
   }, [state.success, targetUrl]);
+
+  useEffect(() => {
+    if (state.success) {
+      markNewIntentionSet();
+    }
+  }, [state.success]);
 
   useEffect(() => {
     if (state.error) {

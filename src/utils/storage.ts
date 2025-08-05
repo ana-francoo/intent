@@ -80,6 +80,15 @@ export const saveIntention = async (url: string, intentionText: string) => {
       }
     };
     await chrome.storage.local.set(data);
+    
+    // Set flag to indicate intention was just set (for immediate checking)
+    const domain = normalizeUrlToDomain(url);
+    sessionStorage.setItem('intent_just_set', JSON.stringify({
+      domain: domain,
+      timestamp: now
+    }));
+    
+    console.log('💾 Intention saved and marked for immediate checking');
   } catch (error) {
     // Handle extension context invalidation specifically
     if (error instanceof Error && error.message.includes('Extension context invalidated')) {

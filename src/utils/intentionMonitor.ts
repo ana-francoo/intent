@@ -2,15 +2,13 @@
  * Monitors page changes for intention matching and blocks if it doesn't match
  */
 
-
-
 import { getWebsiteCategory } from './domainCategories';
-
 import { getIntention } from './storage';
 import { checkIntentionMatch } from './intentionMatcher'; // this actually has api call to check intent vs scraped content
 import { initializeRouteInterceptor } from './routeInterceptor';
 
 const MONITORING_FLAG_KEY = 'intent_monitoring_active';
+const NEW_INTENTION_FLAG_KEY = 'intent_new_intention_set';
 // Module-level variable (outside the class)
 let previousUrl: string | null = null;
 
@@ -36,6 +34,14 @@ export class IntentionMonitor {
     this.isMonitoring = true;
     sessionStorage.setItem(MONITORING_FLAG_KEY, 'true');
 
+    // Check if this is a new intention that needs immediate validation
+    const isNewIntention = sessionStorage.getItem(NEW_INTENTION_FLAG_KEY) === 'true';
+    if (isNewIntention) {
+      console.log('🆕 New intention detected - performing immediate check');
+      sessionStorage.removeItem(NEW_INTENTION_FLAG_KEY);
+      await this.performImmediateCheck();
+    }
+
     await this.checkCurrentActivity();
 
     this.checkInterval = window.setInterval(async () => {
@@ -52,9 +58,35 @@ export class IntentionMonitor {
     sessionStorage.removeItem(MONITORING_FLAG_KEY);
   }
 
+  // New method for immediate check after intention is set
+  private async performImmediateCheck(): Promise<void> {
+    try {
+      console.log('🔍 Performing immediate intention check...');
+      const currentUrl = window.location.href;
+      
+      // Get the intention that was just set
+      const intentionData = await getIntention(currentUrl);
+      if (!intentionData || !intentionData.intention) {
+        console.log('❌ No intention found for immediate check');
+        return;
+      }
 
-
-
+      // Determine which type of check to perform based on website category
+      const websiteCategory = await getWebsiteCategory(currentUrl);
+      
+      if (websiteCategory === 'social') {
+        // For social sites, we don't do immediate content check since content might not be loaded yet
+        console.log('📱 Social site detected - skipping immediate content check');
+        return;
+      } else {
+        // For non-social sites, perform immediate content check
+        await this.checkActivity(currentUrl);
+      }
+    } catch (error) {
+      console.error('❌ Error in immediate intention check:', error);
+      // Don't stop monitoring for immediate check errors
+    }
+  }
 
   //////////////////////////////
   private async checkCurrentActivity(): Promise<void> {
@@ -94,16 +126,12 @@ export class IntentionMonitor {
     }
   }
 
-
-
-
-
   ///
   private async checkActivity(currentUrl: string): Promise<void> {
     try {
       const result = await checkIntentionMatch(currentUrl);
       
-      if (result.matches == false){
+      if (result.match == false){
         // User is doing something different than intended
         console.log('Intention mismatch, stopping monitoring');
         this.stopMonitoring();
@@ -153,9 +181,6 @@ export class IntentionMonitor {
       this.stopMonitoring();
     }
   }
-
-
-
 
   private async checkDoomScrolling(): Promise<void> {
     try {
@@ -244,4 +269,10 @@ export const stopIntentionMonitoring = (): void => {
 
 export const isIntentionMonitoringActive = (): boolean => {
   return globalMonitor?.isActive() || false;
+};
+
+// New function to mark that a new intention was set
+export const markNewIntentionSet = (): void => {
+  sessionStorage.setItem(NEW_INTENTION_FLAG_KEY, 'true');
+  console.log('🏷️ Marked new intention as set - will perform immediate check');
 };
