@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import IntentOnboarding from '@/components/carousel/IntentOnboarding';
-import { Button } from '@/components/ui/button';
-import { Flame } from 'lucide-react';
 import PersonalDashboard from '@/components/PersonalDashboard';
 
 const Index = () => {

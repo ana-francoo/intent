@@ -271,7 +271,7 @@ export default function IntentionOverlay() {
               <div 
                 key={shakeKey}
                 className={cn(
-                  'relative border-2 border-transparent rounded-xl',
+                  'relative border-2 border-transparent rounded-xl animate-intention-glow',
                   !state.error && 'animate-slide-in-up delay-150'
                 )}
                 style={{

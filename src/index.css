@@ -141,6 +141,7 @@
   --animate-blink: blink 0.2s infinite 1s;
   --animate-shake: shake 0.5s ease-in-out;
   --animate-shake-input: shake-input 0.6s ease-in-out;
+  --animate-intention-glow: intention-glow 2s ease-in-out infinite;
 
   @keyframes slide-out-up {
     from {
@@ -235,6 +236,15 @@
     20%, 80% { transform: translateX(6px); }
     30%, 50%, 70% { transform: translateX(-8px); }
     40%, 60% { transform: translateX(8px); }
+  }
+
+  @keyframes intention-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 107, 53, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+    }
   }
 
   @keyframes flameIgnition {
@@ -375,6 +385,10 @@
   
   .animate-flame-flicker {
     animation: flame-flicker 2s ease-in-out infinite;
+  }
+  
+  .animate-intention-glow {
+    animation: intention-glow 2s ease-in-out infinite;
   }
   
   .get-started-btn {

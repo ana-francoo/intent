@@ -10,9 +10,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["src/*"]
     },
     "types": ["vite/client", "chrome"],
     "allowImportingTsExtensions": true,
@@ -26,5 +24,5 @@
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "postcss.config.js", "tailwind.config.ts"]
+  "include": ["src", "postcss.config.js", "tailwind.config.ts", "eslint.config.js"]
 }

@@ -154,7 +154,53 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
         overflow: hidden;
         animation: floating-popup-appear 0.3s ease-out;
         font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        cursor: move;
+        user-select: none;
       `;
+      
+      // Add drag functionality
+      let isDragging = false;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      
+      const handleMouseDown = (e: MouseEvent) => {
+        // Only allow dragging from the header area (top portion of the popup)
+        const rect = element.getBoundingClientRect();
+        const headerHeight = 60; // Height of the header area
+        
+        if (e.clientY - rect.top <= headerHeight) {
+          isDragging = true;
+          dragOffsetX = e.clientX - rect.left;
+          dragOffsetY = e.clientY - rect.top;
+          element.style.cursor = 'grabbing';
+          e.preventDefault();
+        }
+      };
+      
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isDragging) return;
+        
+        const newX = e.clientX - dragOffsetX;
+        const newY = e.clientY - dragOffsetY;
+        
+        // Keep popup within viewport bounds
+        const maxX = window.innerWidth - element.offsetWidth;
+        const maxY = window.innerHeight - element.offsetHeight;
+        
+        element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
+        element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
+      };
+      
+      const handleMouseUp = () => {
+        if (isDragging) {
+          isDragging = false;
+          element.style.cursor = 'move';
+        }
+      };
+      
+      element.addEventListener('mousedown', handleMouseDown);
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
       
       // Add close button
       const closeButton = document.createElement('button');
@@ -190,8 +236,19 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       };
       
       closeButton.onclick = () => {
-        element.remove();
-        style.remove();
+        // Remove drag event listeners
+        element.removeEventListener('mousedown', handleMouseDown);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        
+        // Add fade-out animation
+        element.style.animation = 'floating-popup-disappear 0.3s ease-in forwards';
+        
+        // Remove element after animation completes
+        setTimeout(() => {
+          element.remove();
+          style.remove();
+        }, 300);
       };
       
       element.appendChild(closeButton);
@@ -252,6 +309,11 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
     @keyframes floating-popup-appear {
       0% { opacity: 0; transform: scale(0.8) translateY(20px); }
       100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    
+    @keyframes floating-popup-disappear {
+      0% { opacity: 1; transform: scale(1) translateY(0); }
+      100% { opacity: 0; transform: scale(0.8) translateY(20px); }
     }
     
     @keyframes pulse {

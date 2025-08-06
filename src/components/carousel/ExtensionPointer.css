@@ -1,0 +1,143 @@
+.extension-pointer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.grainy-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  opacity: 0.95;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(0,0,0,0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(0,0,0,0.02) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0.01) 0%, transparent 50%);
+  background-size: 4px 4px, 6px 6px, 8px 8px;
+}
+
+.squiggly-arrow {
+  position: absolute;
+  top: 10px;
+  right: 120px;
+  z-index: 10000;
+  pointer-events: none;
+  animation: slideInFromRight 0.8s ease-out 0.3s both;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.arrow-svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.arrow-path {
+  animation: rock 2s ease-in-out infinite;
+  transform-origin: 65px 37.5px;
+  transform: rotate(-35deg);
+}
+
+@keyframes rock {
+  0%, 100% {
+    transform: rotate(-35deg) translateX(0);
+    opacity: 1;
+  }
+  25% {
+    transform: rotate(-32deg) translateX(-3px);
+    opacity: 0.9;
+  }
+  50% {
+    transform: rotate(-38deg) translateX(0);
+    opacity: 1;
+  }
+  75% {
+    transform: rotate(-32deg) translateX(3px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+.pointer-text {
+  position: absolute;
+  top: 140px;
+  right: 110px;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  animation: fadeInOut 3s ease-in-out infinite, slideInFromRight 0.8s ease-out 0.6s both;
+  pointer-events: none;
+}
+
+@keyframes fadeInOut {
+  0%, 100% {
+    opacity: 0.7;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 400px) {
+  .squiggly-arrow {
+    top: 15px;
+    right: 45px;
+  }
+  
+  .arrow-svg {
+    width: 120px;
+    height: 90px;
+  }
+  
+  .pointer-text {
+    top: 80px;
+    right: 55px;
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+} 

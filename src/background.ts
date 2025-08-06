@@ -60,6 +60,18 @@ chrome.action.onClicked?.addListener(async (tab) => {
       console.log('Could not send message to tab (might be a chrome:// page)');
     }
   }
+  
+  // Also send message to popup if it's open (for Tour component)
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'CREATE_VISUAL_ELEMENT',
+      elementType: 'floating-popup',
+      position: { x: 100, y: 100 }
+    });
+    console.log('✅ Extension icon clicked message sent to popup');
+  } catch (error) {
+    console.log('Could not send message to popup (popup might not be open)');
+  }
 });
 
 // Listen for messages from content scripts or popup

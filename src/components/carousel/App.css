@@ -87,4 +87,794 @@
     margin-left: 0.2em;
     display: inline-block;
   }
+
+  /* Enhanced Carousel Animations */
+  
+  /* Slide-in animations */
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Browser window animations */
+  @keyframes browser-glow {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 107, 53, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+    }
+  }
+
+  @keyframes tab-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes address-bar-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Logo animations */
+  @keyframes logo-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes logo-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 5px rgba(255, 107, 53, 0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 15px rgba(255, 107, 53, 0.8));
+    }
+  }
+
+  /* Textarea animations */
+  @keyframes textarea-focus {
+    0%, 100% {
+      border-color: hsl(var(--border));
+    }
+    50% {
+      border-color: hsl(var(--orange-500));
+    }
+  }
+
+  /* Progress bar animation */
+  @keyframes progress-fill {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  /* Icon animations */
+  @keyframes icon-breathing {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+  }
+
+  @keyframes icon-rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Typewriter effect */
+  @keyframes typewriter {
+    from {
+      width: 0;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  @keyframes blink-cursor {
+    0%, 50% {
+      border-right-color: transparent;
+    }
+    51%, 100% {
+      border-right-color: currentColor;
+    }
+  }
+
+  /* YouTube Homepage Animation Keyframes */
+  @keyframes youtube-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes youtube-item-appear {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes youtube-text-appear {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes overlay-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes overlay-fade-out {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes video-hover {
+    0% {
+      background-color: rgb(229 231 235); /* bg-gray-200 */
+    }
+    50% {
+      background-color: rgb(229 231 235); /* bg-gray-200 */
+    }
+    75% {
+      background-color: rgb(107 114 128); /* bg-gray-500 - dark on hover */
+    }
+    100% {
+      background-color: rgb(107 114 128); /* bg-gray-500 - stays dark */
+    }
+  }
+
+  @keyframes mouse-move {
+    0% {
+      opacity: 0;
+      transform: translate(0, 20px) scale(0.8);
+    }
+    25% {
+      opacity: 1;
+      transform: translate(0, 20px) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-8px, -4px) scale(1);
+    }
+    75% {
+      opacity: 1;
+      transform: translate(-8px, -4px) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-8px, -4px) scale(1);
+    }
+  }
+
+  @keyframes extension-demo-slide-in {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes tab-text-fade-out {
+    0%, 40% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes tab-text-fade-in {
+    0%, 50% {
+      opacity: 0;
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Window controls animation */
+  @keyframes window-controls-pulse {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* Gradient border animation */
+  @keyframes gradient-border {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* Apply animations to elements */
+  .animate-slide-in-up {
+    animation: slide-in-up 0.6s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.6s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.6s ease-out;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.8s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.5s ease-out;
+  }
+
+  .animate-browser-glow {
+    animation: browser-glow 2s ease-in-out infinite;
+  }
+
+  .animate-tab-pulse {
+    animation: tab-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-address-bar-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.2), transparent);
+    background-size: 200% 100%;
+    animation: address-bar-shimmer 3s ease-in-out infinite;
+  }
+
+  .animate-logo-float {
+    animation: logo-float 3s ease-in-out infinite;
+  }
+
+  .animate-logo-glow {
+    animation: logo-glow 2s ease-in-out infinite;
+  }
+
+  .animate-textarea-focus {
+    animation: textarea-focus 2s ease-in-out infinite;
+  }
+
+  .animate-progress-fill {
+    animation: progress-fill 1s ease-out;
+  }
+
+  .animate-icon-breathing {
+    animation: icon-breathing 3s ease-in-out infinite;
+  }
+
+  .animate-icon-rotate {
+    animation: icon-rotate 2s linear infinite;
+  }
+
+  .animate-window-controls-pulse {
+    animation: window-controls-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-gradient-border {
+    background: linear-gradient(45deg, #ff6b35, #f7931e, #ff4444, #ff6b35);
+    background-size: 400% 400%;
+    animation: gradient-border 3s ease infinite;
+  }
+
+  .animate-typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid currentColor;
+    animation: typewriter 2s steps(40, end), blink-cursor 0.75s step-end infinite;
+  }
+
+  /* YouTube Homepage Animations */
+  .animate-youtube-fade-in {
+    animation: youtube-fade-in 1.5s ease-out;
+  }
+
+  .animate-youtube-item-1 {
+    animation: youtube-item-appear 0.3s ease-out 0.2s both;
+  }
+
+  .animate-youtube-item-2 {
+    animation: youtube-item-appear 0.3s ease-out 0.4s both;
+  }
+
+  .animate-youtube-item-3 {
+    animation: youtube-item-appear 0.3s ease-out 0.6s both;
+  }
+
+  .animate-youtube-item-4 {
+    animation: youtube-item-appear 0.3s ease-out 0.8s both;
+  }
+
+  .animate-youtube-item-5 {
+    animation: youtube-item-appear 0.3s ease-out 1.0s both;
+  }
+
+  .animate-youtube-item-6 {
+    animation: youtube-item-appear 0.3s ease-out 1.2s both;
+  }
+
+  .animate-youtube-text-1 {
+    animation: youtube-text-appear 0.4s ease-out 1.0s both;
+  }
+
+  .animate-youtube-text-2 {
+    animation: youtube-text-appear 0.4s ease-out 1.2s both;
+  }
+
+  .animate-overlay-slide-in {
+    animation: overlay-slide-in 0.8s ease-out 2.5s both;
+  }
+
+  .animate-overlay-fade-out {
+    animation: overlay-fade-out 1.5s ease-out 0.5s both;
+  }
+
+  .animate-video-hover {
+    animation: video-hover 2s ease-out 2s both;
+  }
+
+  .animate-mouse-move {
+    animation: mouse-move 2s ease-out 2s both;
+  }
+
+  .animate-extension-demo-slide-in {
+    animation: extension-demo-slide-in 0.8s ease-out 4s both;
+  }
+
+  .animate-tab-text-fade-out {
+    animation: tab-text-fade-out 0.6s ease-out 4s both;
+  }
+
+  .animate-tab-text-fade-in {
+    animation: tab-text-fade-in 0.6s ease-out 4s both;
+  }
+
+  .animate-cursor-blink {
+    animation: cursor-blink 1s infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%, 50% {
+      opacity: 1;
+    }
+    51%, 100% {
+      opacity: 0;
+    }
+  }
+
+  /* Third slide mouse interaction animations */
+  @keyframes mouse-move-to-side-panel {
+    0% {
+      opacity: 0;
+      transform: translate(0, 0);
+    }
+    10% {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+    20% {
+      opacity: 1;
+      transform: translate(60px, -20px);
+    }
+    30% {
+      opacity: 1;
+      transform: translate(60px, -20px);
+    }
+    40% {
+      opacity: 1;
+      transform: translate(60px, -40px);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(60px, -40px);
+    }
+    60% {
+      opacity: 1;
+      transform: translate(60px, -60px);
+    }
+    70% {
+      opacity: 1;
+      transform: translate(60px, -60px);
+    }
+    80% {
+      opacity: 1;
+      transform: translate(60px, -100px);
+    }
+    90% {
+      opacity: 1;
+      transform: translate(60px, -100px);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(60px, -100px);
+    }
+  }
+
+  @keyframes recommended-video-hover {
+    0%, 30% {
+      /* Container stays the same */
+    }
+    50%, 100% {
+      /* Container stays the same, individual components will be targeted */
+    }
+  }
+
+  .animate-mouse-move-to-side-panel {
+  animation: mouse-move-to-side-panel 3s ease-out 3.5s both;
+}
+
+  .animate-recommended-video-hover {
+    animation: recommended-video-hover 3s ease-out 1s both;
+  }
+
+  /* Individual component hover animations for recommended videos */
+  @keyframes recommended-video-thumbnail-hover {
+    0%, 70% {
+      background-color: rgb(229 231 235); /* bg-gray-200 */
+    }
+    90%, 100% {
+      background-color: rgb(107 114 128); /* bg-gray-500 */
+    }
+  }
+
+  @keyframes recommended-video-text-hover {
+    0%, 70% {
+      background-color: rgb(229 231 235); /* bg-gray-200 */
+    }
+    90%, 100% {
+      background-color: rgb(107 114 128); /* bg-gray-500 */
+    }
+  }
+
+  .animate-recommended-video-thumbnail-hover {
+  animation: recommended-video-thumbnail-hover 3s ease-out 3.5s both;
+}
+
+.animate-recommended-video-text-hover {
+  animation: recommended-video-text-hover 3s ease-out 3.5s both;
+}
+
+/* AI Thinking and Decision Animations */
+@keyframes ai-thinking-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ai-decision-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ai-pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes ai-dot-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes ai-text {
+  0%, 80% {
+    content: "Analyzing activity...";
+  }
+  85%, 95% {
+    content: "Analyzing activity..";
+  }
+  100% {
+    content: "Analyzing activity...";
+  }
+}
+
+/* Focus Alignment Indicator Animations */
+@keyframes focus-alignment-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes focus-progress-fill {
+  0% {
+    width: 33.33%;
+  }
+  100% {
+    width: 85%;
+  }
+}
+
+@keyframes focus-percentage {
+  0% {
+    content: "33%";
+  }
+  25% {
+    content: "45%";
+  }
+  50% {
+    content: "60%";
+  }
+  75% {
+    content: "75%";
+  }
+  100% {
+    content: "85%";
+  }
+}
+
+@keyframes focus-dot-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-ai-thinking-slide-in {
+  animation: ai-thinking-slide-in 0.8s ease-out 5s both;
+}
+
+.animate-ai-decision-slide-in {
+  animation: ai-decision-slide-in 0.8s ease-out 6s both;
+}
+
+/* Third slide AI animations */
+.animate-ai-thinking-slide-in-third {
+  animation: ai-thinking-slide-in 0.8s ease-out 0.5s both;
+}
+
+.animate-ai-decision-slide-in-third {
+  animation: ai-decision-slide-in 0.8s ease-out 1.5s both;
+}
+
+/* Scrollbar animations for third slide */
+@keyframes mouse-click-scrollbar {
+  0% { 
+    opacity: 0; 
+    transform: translate(0, 0); 
+  }
+  20% { 
+    opacity: 1; 
+    transform: translate(calc(100vw * 0.15), 20px); 
+  }
+  40% { 
+    opacity: 1; 
+    transform: translate(calc(100vw * 0.15), 20px); 
+  }
+  60% { 
+    opacity: 0; 
+    transform: translate(calc(100vw * 0.15), 20px); 
+  }
+  100% { 
+    opacity: 0; 
+    transform: translate(calc(100vw * 0.15), 20px); 
+  }
+}
+
+@keyframes scrollbar-thumb-move {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(0); }
+  100% { transform: translateY(60px); }
+}
+
+@keyframes content-scroll {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(0); }
+  100% { transform: translateY(-40px); }
+}
+
+.animate-mouse-click-scrollbar {
+  animation: mouse-click-scrollbar 2s ease-out 1s both;
+}
+
+.animate-scrollbar-thumb-move {
+  animation: scrollbar-thumb-move 2s ease-out 1.5s both;
+}
+
+.animate-content-scroll {
+  animation: content-scroll 2s ease-out 1.5s both;
+}
+
+.animate-ai-pulse {
+  animation: ai-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-ai-dot-pulse {
+  animation: ai-dot-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-ai-text {
+  animation: ai-text 2s ease-in-out infinite;
+}
+
+.animate-focus-alignment-slide-in {
+  animation: focus-alignment-slide-in 0.8s ease-out 7s both;
+}
+
+.animate-focus-progress-fill {
+  animation: focus-progress-fill 2s ease-out 7.5s both;
+}
+
+.animate-focus-percentage {
+  animation: focus-percentage 2s ease-out 7.5s both;
+}
+
+.animate-focus-dot-pulse {
+  animation: focus-dot-pulse 1.5s ease-in-out infinite;
+}
+
+  /* Third slide overlay animations */
+  @keyframes third-slide-overlay-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes third-slide-back-arrow-slide-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes third-slide-text-slide-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-third-slide-overlay-fade-in {
+  animation: third-slide-overlay-fade-in 0.8s ease-out 6.5s both;
+}
+
+  .animate-third-slide-back-arrow-slide-in {
+  animation: third-slide-back-arrow-slide-in 0.6s ease-out 6.7s both;
+}
+
+  .animate-third-slide-text-slide-in {
+    animation: third-slide-text-slide-in 0.6s ease-out 5s both;
+  }
   

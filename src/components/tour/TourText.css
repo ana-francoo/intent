@@ -1,0 +1,30 @@
+.tour-text {
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10001;
+  animation: tour-text-appear 0.8s ease-out both;
+}
+
+@keyframes tour-text-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 400px) {
+  .tour-text {
+    font-size: 16px;
+    padding: 6px 10px;
+  }
+} 
