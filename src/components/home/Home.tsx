@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import logo from '@/assets/logo2.png';
 import Flame from './Flame';
-import { ArrowRightIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 
 // check for session and redirect to main dashbaord if exists
@@ -30,14 +29,30 @@ export default function Home() {
         </div>
         <div className="flex flex-col items-center gap-1">
           <div className="animate-slide-in-up delay-700">
-            <Button variant="secondary" onClick={() => navigate('/onboarding')} className="group rounded-lg bg-orange-600 hover:bg-orange-600/90">
-              I'm Ready
-              <ArrowRightIcon
-                className="-me-1 ml-1 stroke-3 opacity-60 transition-transform group-hover:translate-x-0.5"
-                size={16}
-                aria-hidden="true"
-              />
-            </Button>
+            <button
+              className="get-started-btn"
+              type="button"
+              onClick={() => navigate('/onboarding')}
+            >
+              <span className="btn-text">I'm Ready</span>
+              <span className="btn-arrow">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                >
+                  <path
+                    d="M8.14645 3.14645C8.34171 2.95118 8.65829 2.95118 8.85355 3.14645L12.8536 7.14645C13.0488 7.34171 13.0488 7.65829 12.8536 7.85355L8.85355 11.8536C8.65829 12.0488 8.34171 12.0488 8.14645 11.8536C7.95118 11.6583 7.95118 11.3417 8.14645 11.1464L11.2929 8H2.5C2.22386 8 2 7.77614 2 7.5C2 7.22386 2.22386 7 2.5 7H11.2929L8.14645 3.85355C7.95118 3.65829 7.95118 3.34171 8.14645 3.14645Z"
+                    fill="currentColor"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </span>
+            </button>
           </div>
 
         <div className="text-sm animate-slide-in-up delay-900">
