@@ -45,8 +45,50 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
+// Listen for when extension icon is clicked (only fires when no popup is defined in manifest)
+chrome.action.onClicked?.addListener(async (tab) => {
+  console.log('🎯 Extension icon clicked, creating floating popup...');
+  if (tab.id) {
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'CREATE_VISUAL_ELEMENT',
+        elementType: 'floating-popup',
+        position: { x: 100, y: 100 }
+      });
+      console.log('✅ Floating popup message sent successfully');
+    } catch (error) {
+      console.log('Could not send message to tab (might be a chrome:// page)');
+    }
+  }
+});
+
 // Listen for messages from content scripts or popup
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'POPUP_OPENED') {
+    console.log('🎯 Popup opened message received:', message);
+    // Popup has opened, trigger visual element on current tab
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      console.log('📋 Current tabs:', tabs);
+      if (tabs[0]?.id) {
+        try {
+          console.log('📤 Sending message to tab:', tabs[0].id);
+          await chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'CREATE_VISUAL_ELEMENT',
+            elementType: message.elementType || 'red-blob',
+            position: message.position || { x: 100, y: 100 }
+          });
+          console.log('✅ Message sent successfully to tab');
+        } catch (error) {
+          console.error('❌ Could not send message to tab:', error);
+        }
+      } else {
+        console.log('❌ No active tab found');
+      }
+    });
+    sendResponse({ success: true });
+    return true;
+  }
+
   if (message.type === 'CLEANUP_INTENTIONS') {
     cleanupExpiredIntentions().then(cleanedCount => {
       sendResponse({ cleanedCount });
@@ -94,6 +136,32 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }).catch((error) => {
           sendResponse({ success: false, error: String(error) });
         });
+      });
+    } catch (error) {
+      sendResponse({ success: false, error: String(error) });
+    }
+    return true;
+  }
+  
+  // Handle creating visual elements on current page
+  if (message.type === 'CREATE_VISUAL_ELEMENT') {
+    try {
+      // Get the current active tab
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          // Send message to content script to create the visual element
+          chrome.tabs.sendMessage(tabs[0].id, {
+            type: 'CREATE_VISUAL_ELEMENT',
+            elementType: message.elementType || 'red-blob',
+            position: message.position || { x: 100, y: 100 }
+          }).then(() => {
+            sendResponse({ success: true });
+          }).catch((error) => {
+            sendResponse({ success: false, error: String(error) });
+          });
+        } else {
+          sendResponse({ success: false, error: 'No active tab found' });
+        }
       });
     } catch (error) {
       sendResponse({ success: false, error: String(error) });

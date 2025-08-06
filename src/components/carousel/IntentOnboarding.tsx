@@ -379,7 +379,17 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onComplete();
+      // Open the Chrome extension popup when onboarding is complete
+      if (typeof chrome !== 'undefined' && chrome.action) {
+        chrome.action.openPopup().catch((error) => {
+          console.error('Failed to open popup:', error);
+          // Fallback to calling onComplete if popup fails to open
+          onComplete();
+        });
+      } else {
+        // Fallback for non-extension environments
+        onComplete();
+      }
     }
   };
 
@@ -392,7 +402,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className="h-full bg-background flex items-center justify-center p-4 overflow-y-auto">
+    <div className="h-full flex items-center justify-center p-4 overflow-y-auto">
       <Card className="w-full max-w-lg bg-gradient-card border-border shadow-card my-auto">
         <div className="p-8">
           {/* Progress Header */}
@@ -460,14 +470,16 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                 </span>
               </button>
             ) : (
-              <Button
-                variant="accent"
+              <button
+                className="get-started-btn"
+                type="button"
                 onClick={nextStep}
-                className="flex items-center space-x-1"
               >
-                <span>Next</span>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+                <span className="btn-text">Next</span>
+                <span className="btn-arrow">
+                  <ChevronRight className="w-4 h-4" />
+                </span>
+              </button>
             )}
           </div>
         </div>

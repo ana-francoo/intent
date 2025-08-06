@@ -13,7 +13,6 @@ export default defineManifest({
     default_icon: {
       48: 'public/logo.png',
     },
-    default_popup: 'src/popup/index.html',
   },
           web_accessible_resources: [{
           resources: ['src/assets/logo2.png', 'public/logo.png', 'src/landing.html', 'src/landing.js'],

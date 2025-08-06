@@ -65,6 +65,38 @@ const PersonalDashboard = () => {
     setCurrentQuote(getRandomQuote());
   }, []);
 
+  // Note: This useEffect is no longer needed since we removed the popup from manifest
+  // and now handle the icon click directly in the background script
+  // Keeping this code for reference in case we need it later
+  /*
+  useEffect(() => {
+    // Check if this is a floating popup to prevent infinite loop
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFloating = urlParams.get('floating') === 'true';
+    
+    if (isFloating) {
+      console.log('🔄 Floating popup detected, skipping POPUP_OPENED message');
+      return;
+    }
+    
+    console.log('🚀 Popup opened, sending message to background script...');
+    // Send message to background script that popup has opened
+    if (typeof chrome !== 'undefined' && chrome?.runtime) {
+      chrome.runtime.sendMessage({ 
+        type: 'POPUP_OPENED',
+        elementType: 'floating-popup',
+        position: { x: 100, y: 100 }
+      }).then(response => {
+        console.log('✅ Background script response:', response);
+      }).catch(error => {
+        console.error('❌ Error sending message to background script:', error);
+      });
+    } else {
+      console.log('❌ Chrome runtime not available');
+    }
+  }, []);
+  */
+
   // Enable scrolling after animations complete
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -298,6 +330,26 @@ const PersonalDashboard = () => {
     }
   };
 
+  const createVisualElement = async (elementType: string = 'red-blob') => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome?.runtime) {
+        const response = await chrome.runtime.sendMessage({
+          type: 'CREATE_VISUAL_ELEMENT',
+          elementType: elementType,
+          position: { x: 100, y: 100 }
+        });
+        
+        if (response?.success) {
+          console.log('Visual element created successfully');
+        } else {
+          console.error('Failed to create visual element:', response?.error);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to create visual element:', error);
+    }
+  };
+
   if (showAccount) {
     return (
       <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
@@ -500,6 +552,7 @@ const PersonalDashboard = () => {
           >
             Block This Site
           </Button>
+
         </div>
       </div>
 

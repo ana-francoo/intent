@@ -93,7 +93,184 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     if (msg && msg.type === 'SHOW_OVERLAY') {
       initializeInterceptor();
     }
+    
+    if (msg && msg.type === 'CREATE_VISUAL_ELEMENT') {
+      console.log('🎯 Creating visual element:', msg.elementType, msg.position);
+      createVisualElement(msg.elementType, msg.position);
+    }
   });
+}
+
+// Function to create visual elements on the page
+function createVisualElement(elementType: string, position: { x: number, y: number }) {
+  const element = document.createElement('div');
+  
+  switch (elementType) {
+    case 'red-blob':
+      element.style.cssText = `
+        position: fixed;
+        top: ${position.y}px;
+        left: ${position.x}px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, #ff4444, #cc0000);
+        border-radius: 50%;
+        z-index: 2147483646;
+        pointer-events: none;
+        animation: blob-pulse 2s ease-in-out infinite;
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+      `;
+      break;
+      
+    case 'flame':
+      element.style.cssText = `
+        position: fixed;
+        top: ${position.y}px;
+        left: ${position.x}px;
+        width: 60px;
+        height: 80px;
+        background: linear-gradient(135deg, #ff6b35, #f7931e, #ff4444);
+        border-radius: 50% 50% 20% 20%;
+        z-index: 2147483646;
+        pointer-events: none;
+        animation: flame-flicker 1.5s ease-in-out infinite;
+        box-shadow: 0 0 30px rgba(255, 107, 53, 0.8);
+      `;
+      break;
+      
+    case 'floating-popup':
+      element.style.cssText = `
+        position: fixed;
+        top: ${position.y}px;
+        left: ${position.x}px;
+        width: 400px;
+        height: 600px;
+        background: radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%);
+        border-radius: 16px;
+        z-index: 2147483646;
+        pointer-events: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 148, 77, 0.2);
+        border: 1px solid rgba(255, 148, 77, 0.2);
+        overflow: hidden;
+        animation: floating-popup-appear 0.3s ease-out;
+        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+      `;
+      
+      // Add close button
+      const closeButton = document.createElement('button');
+      closeButton.innerHTML = '×';
+      closeButton.style.cssText = `
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 24px;
+        height: 24px;
+        background: rgba(255, 148, 77, 0.2);
+        border: 1px solid rgba(255, 148, 77, 0.3);
+        border-radius: 50%;
+        color: #F5E6D3;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2147483647;
+        transition: all 0.2s ease;
+      `;
+      
+      closeButton.onmouseover = () => {
+        closeButton.style.background = 'rgba(255, 148, 77, 0.4)';
+        closeButton.style.borderColor = 'rgba(255, 148, 77, 0.5)';
+      };
+      
+      closeButton.onmouseout = () => {
+        closeButton.style.background = 'rgba(255, 148, 77, 0.2)';
+        closeButton.style.borderColor = 'rgba(255, 148, 77, 0.3)';
+      };
+      
+      closeButton.onclick = () => {
+        element.remove();
+        style.remove();
+      };
+      
+      element.appendChild(closeButton);
+      
+      // Create iframe to load the actual popup
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 16px;
+        background: transparent;
+      `;
+      
+      // Add a parameter to prevent infinite loop
+      iframe.src = chrome.runtime.getURL('src/popup/index.html') + '?floating=true';
+      
+      element.appendChild(iframe);
+      break;
+      
+    default:
+      element.style.cssText = `
+        position: fixed;
+        top: ${position.y}px;
+        left: ${position.x}px;
+        width: 50px;
+        height: 50px;
+        background: #f26419;
+        border-radius: 8px;
+        z-index: 2147483646;
+        pointer-events: none;
+        animation: fade-in-out 3s ease-in-out;
+      `;
+  }
+  
+  // Add CSS animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes blob-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    @keyframes flame-flicker {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.1) rotate(2deg); }
+      50% { transform: scale(0.9) rotate(-1deg); }
+      75% { transform: scale(1.05) rotate(1deg); }
+    }
+    
+    @keyframes fade-in-out {
+      0% { opacity: 0; transform: scale(0.5); }
+      20% { opacity: 1; transform: scale(1); }
+      80% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.5); }
+    }
+    
+    @keyframes floating-popup-appear {
+      0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+  `;
+  
+  document.head.appendChild(style);
+  document.body.appendChild(element);
+  
+  // Only auto-remove for non-floating-popup elements
+  if (elementType !== 'floating-popup') {
+    setTimeout(() => {
+      if (element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
+    }, 5000);
+  }
 }
 
 // Add global test function for debugging
