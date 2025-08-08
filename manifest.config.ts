@@ -15,7 +15,13 @@ export default defineManifest({
     },
   },
           web_accessible_resources: [{
-          resources: ['src/assets/logo2.png', 'public/logo.png', 'src/landing.html', 'src/landing.js'],
+          resources: [
+            'src/assets/logo2.png',
+            'public/logo.png',
+            'src/landing.html',
+            'src/landing.js',
+            'vendor/*'
+          ],
           matches: ['https://*/*']
         }],
   background: {

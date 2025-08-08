@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +23,8 @@ export default function IntentionTest() {
 
     try {
       const { validateIntention } = await import('../../utils/intentionMatcher');
-      const [isValid, reason] = await validateIntention(intentionText);
+      const isValid = await validateIntention(intentionText);
+      const reason = '';
       
       setValidationResult({
         isValid,

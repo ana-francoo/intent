@@ -74,6 +74,10 @@ export const setActiveIntention = async (domain: string, intention: string): Pro
     
     // Verify the save worked
     const verification = await chrome.storage.local.get(['active_intention', 'accessible_sites']);
+    console.log('💾 setActiveIntention saved', {
+      activeIntention: verification.active_intention,
+      accessibleSites: verification.accessible_sites
+    });
     
   } catch (error) {
     console.error('Error setting active intention:', error);
@@ -149,6 +153,7 @@ export const checkIntentionStatus = async (url: string): Promise<{
 }> => {
   const domain = normalizeUrlToDomain(url);
   const activeIntention = await getActiveIntention();
+  console.log('🧮 checkIntentionStatus', { url, domain, hasActive: !!activeIntention });
   
   // No active intention - show overlay to set one
   if (!activeIntention) {

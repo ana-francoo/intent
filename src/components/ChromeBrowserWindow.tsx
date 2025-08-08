@@ -15,7 +15,7 @@ const ChromeBrowserWindow = ({ title, url, children, trigger }: ChromeBrowserWin
     <Dialog>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="gentle" size="sm" className="w-full flex items-center space-x-2">
+          <Button variant="ghost" size="sm" className="w-full flex items-center space-x-2">
             <Monitor className="w-4 h-4" />
             <span>See in Browser</span>
           </Button>

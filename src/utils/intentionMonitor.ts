@@ -33,6 +33,11 @@ export class IntentionMonitor {
 
     this.isMonitoring = true;
     sessionStorage.setItem(MONITORING_FLAG_KEY, 'true');
+    console.log('🛰️ IntentionMonitor.startMonitoring', {
+      url: window.location.href,
+      intervalMs: this.CHECK_INTERVAL_MS,
+      time: new Date().toISOString()
+    });
 
     // Check if this is a new intention that needs immediate validation
     const isNewIntention = sessionStorage.getItem(NEW_INTENTION_FLAG_KEY) === 'true';
@@ -56,6 +61,10 @@ export class IntentionMonitor {
     }
     this.isMonitoring = false;
     sessionStorage.removeItem(MONITORING_FLAG_KEY);
+    console.log('🛑 IntentionMonitor.stopMonitoring', {
+      url: window.location.href,
+      time: new Date().toISOString()
+    });
   }
 
   // New method for immediate check after intention is set
@@ -99,11 +108,16 @@ export class IntentionMonitor {
       //if there isnt an intention set for this url, stop monitoring
       if (!intentionData || !intentionData.intention) {
         previousUrl = null;
+        console.log('ℹ️ No intention found for URL, stopping monitoring', { currentUrl });
         this.stopMonitoring();
         return;
       }
 
       if (currentUrl === previousUrl){
+        console.warn('⏸️ URL unchanged since last check; stopping monitoring to avoid duplicate work', {
+          currentUrl,
+          previousUrl
+        });
         this.stopMonitoring();
         return;
       }
@@ -115,9 +129,16 @@ export class IntentionMonitor {
       //call either checkIntentionmatch or checkDoomScrolling depending on website
       //
       const websiteCategory = await getWebsiteCategory(currentUrl);
+      console.log('🧭 IntentionMonitor.checkCurrentActivity', {
+        currentUrl,
+        websiteCategory,
+        intentionPreview: intentionData.intention.slice(0, 160)
+      });
       if (websiteCategory === 'social'){
+        console.log('📱 Social category detected — running doom scrolling check');
         await this.checkDoomScrolling();
       }else{
+        console.log('🧪 Non-social category detected — running content match check');
         await this.checkActivity(currentUrl);
       }
     } catch (error) {
@@ -129,16 +150,22 @@ export class IntentionMonitor {
   ///
   private async checkActivity(currentUrl: string): Promise<void> {
     try {
+      console.log('🔎 checkActivity -> invoking checkIntentionMatch', { currentUrl });
       const result = await checkIntentionMatch(currentUrl);
+      console.log('📊 checkActivity <- result from checkIntentionMatch', {
+        currentUrl,
+        match: result?.match
+      });
       
       if (result.match == false){
         // User is doing something different than intended
-        console.log('Intention mismatch, stopping monitoring');
+        console.warn('🚫 Intention mismatch detected — stopping monitoring and triggering interceptor');
         this.stopMonitoring();
         await initializeRouteInterceptor();  // Redirect to overlay to set new intention
+        console.log('🔁 Route interceptor initialized');
       }else{
         // User is still on track, keep monitoring
-        console.log('🔍 Intention matches, continuing monitoring');
+        console.log('✅ Intention matches — continuing monitoring');
       }
       console.log('🔍 checkCurrentActivity completed successfully');
     } catch (error) {
@@ -212,9 +239,15 @@ export class IntentionMonitor {
       const timeSpentMinutes = this.doomScrollingData.timeSpent / (1000 * 60);
       const scrollDistanceThreshold = 5000; // 5 screens worth of scrolling
       const timeThreshold = 10; // 10 minutes
+      console.log('🧪 DoomScrolling metrics', {
+        timeSpentMinutes: Number(timeSpentMinutes.toFixed(2)),
+        scrollDistance,
+        thresholds: { scrollDistanceThreshold, timeThreshold }
+      });
       
       if (scrollDistance > scrollDistanceThreshold && timeSpentMinutes > timeThreshold) {
 
+        console.warn('🛑 DoomScrolling threshold exceeded — triggering interceptor');
         await initializeRouteInterceptor();
         
         // Reset tracking data
@@ -227,12 +260,11 @@ export class IntentionMonitor {
     }
   }
   
-  private async triggerDoomScrollingIntervention(): Promise<void> { //use if you make custom overlay for doom scroling
-    // Redirect to intention overlay with doom scrolling message
-    const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
-      `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
-    window.location.href = overlayUrl;
-  }
+  // private async triggerDoomScrollingIntervention(): Promise<void> { // unused helper kept for future
+  //   const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
+  //     `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
+  //   window.location.href = overlayUrl;
+  // }
 
   isActive(): boolean {
     return this.isMonitoring;

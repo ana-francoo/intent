@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Tour.css';
 import TourText from './TourText';
 
@@ -6,36 +6,42 @@ const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
   const [arrowPosition, setArrowPosition] = useState({ top: 10, right: 180, size: 180 });
   const [firstTextPosition, setFirstTextPosition] = useState({ top: 140, right: 110, fontSize: 18 });
+  const resizeRafRef = useRef<number | null>(null);
 
   // Calculate dynamic positions based on viewport
   const calculateDynamicPositions = () => {
+    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    
+
     // Arrow positioning (viewport-relative)
     const arrowTopPercent = 0.02;      // 2% from top
     const arrowRightPercent = 0.15;    // 15% from right
-    
+
     // First text positioning (viewport-relative)
     const textTopPercent = 0.15;       // 15% from top
     const textRightPercent = 0.12;     // 12% from right
-    
-    // Arrow sizing (viewport-relative)
-    const arrowSizePercent = 0.2;    // 20% of viewport width for arrow size
-    
-    // Text sizing (viewport-relative)
-    const textSizePercent = 0.015;   // 1.5% of viewport width for font size
-    
+
+    // Arrow sizing (viewport-relative with clamping)
+    const arrowSizePercent = 0.20;     // 20% of viewport width
+    const computedArrowSize = Math.round(viewportWidth * arrowSizePercent);
+    const arrowSize = clamp(computedArrowSize, 120, 260);
+
+    // Text sizing (viewport-relative with clamping)
+    const textSizePercent = 0.015;     // 1.5% of viewport width
+    const computedFontSize = Math.round(viewportWidth * textSizePercent);
+    const fontSize = clamp(computedFontSize, 12, 22);
+
     setArrowPosition({
-      top: Math.round(viewportHeight * arrowTopPercent),
-      right: Math.round(viewportWidth * arrowRightPercent),
-      size: Math.round(viewportWidth * arrowSizePercent)
+      top: Math.max(0, Math.round(viewportHeight * arrowTopPercent)),
+      right: Math.max(0, Math.round(viewportWidth * arrowRightPercent)),
+      size: arrowSize,
     });
-    
+
     setFirstTextPosition({
-      top: Math.round(viewportHeight * textTopPercent),
-      right: Math.round(viewportWidth * textRightPercent),
-      fontSize: Math.round(viewportWidth * textSizePercent)
+      top: Math.max(0, Math.round(viewportHeight * textTopPercent)),
+      right: Math.max(0, Math.round(viewportWidth * textRightPercent)),
+      fontSize,
     });
   };
 
@@ -43,8 +49,14 @@ const Tour = () => {
     // Calculate initial positions
     calculateDynamicPositions();
     
-    // Add resize listener for dynamic positioning
-    window.addEventListener('resize', calculateDynamicPositions);
+    // Add resize listener for dynamic positioning (raf to avoid thrash)
+    const handleResize = () => {
+      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+      resizeRafRef.current = requestAnimationFrame(() => {
+        calculateDynamicPositions();
+      });
+    };
+    window.addEventListener('resize', handleResize);
     
     // Listen for when the extension icon is clicked
     const handleExtensionClick = (message: any) => {
@@ -64,7 +76,8 @@ const Tour = () => {
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', calculateDynamicPositions);
+      window.removeEventListener('resize', handleResize);
+      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(handleExtensionClick);
       }

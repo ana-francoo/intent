@@ -91,20 +91,27 @@ export const scrapeCurrentPage = (): PageContent => { //certain categories will 
   }  else if (category === 'news') { // update to categorize a news site
     content = extractNewsTitle();
   } else if (category === 'social') {
-    content = extractSocialContent();//no scraping, will just doom scrolling function - search bar and roll
+    content = extractRelevantContentFromPage(); // Fallback to generic extraction; doomscrolling handled elsewhere
 
   } else if (category === 'shopping') {
-    content = extractShoppingContent();
+    content = extractRelevantContentFromPage();
 
   } else if (category === 'entertainment') { // no scraping, will just ask for a time limit - 
 
-    content = extractEntertainmentContent();//netflix, hbo, automatically block for now
+    content = extractRelevantContentFromPage();
   } else {
     content = extractRelevantContentFromPage();
 
   }
   // Get relevant text content using the improved extraction method
   const relevantText = extractRelevantContentFromPage();
+  console.log('🧲 scrapeCurrentPage', {
+    url,
+    category,
+    contentLength: content?.length || 0,
+    contentPreview: (content || '').slice(0, 300),
+    relevantTextLen: relevantText.length
+  });
   
   return { content };
 };
@@ -271,16 +278,13 @@ export function extractNewsTitle(): string {
 
 export function extractPinterestSearchQuery(): string {
   // If user is on the Pinterest homepage with no path, check for doomscrolling
-  if (window.location.hostname.includes('pinterest.com') && window.location.pathname === '/') {
-    if (doomscrolling()) {
-      return 'blocked';
-    }
-  }
+  // Note: doomscrolling detection handled by IntentionMonitor
 
   // Try to extract from the search input field
-  const inputValue = document.querySelector('input[placeholder*="Search"]').value?.trim();
+  const searchInputEl = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement | null;
+  const inputValue = searchInputEl?.value?.trim() || '';
 
-  if(inputValue==''){
+  if(inputValue === ''){
     return 'blank';
   }
 

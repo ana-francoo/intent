@@ -2,7 +2,7 @@
  * This is the page responsible for the intention matching logic
  */
 
-import { PageContent } from './scraper';
+// Removed unused PageContent import
 import { getIntention } from './storage';
 import { CONFIG, getOpenRouterHeaders } from './config';
 
@@ -42,8 +42,10 @@ export const checkIntentionMatch = async ( //FYI - logic of only processing cont
     // is this neccesary? checkIntentionmatch should not be called if intention is not set for this url
 
 
+    console.log('🧩 checkIntentionMatch.start', { currentUrl });
     const intentionData = await getIntention(currentUrl);
     if (!intentionData?.intention) { //return false immediately if no associated saved intention to this url
+      console.warn('⚠️ No intention found for URL in checkIntentionMatch', { currentUrl });
       return {
         match: false
       };
@@ -56,23 +58,35 @@ export const checkIntentionMatch = async ( //FYI - logic of only processing cont
 //     if (currentUrl )
     const { scrapeCurrentPage } = await import('./scraper');
     const contentForAnalysis = scrapeCurrentPage(); //dynamically returns content depending on w
+    const contentPreview = contentForAnalysis?.content?.slice(0, 300) || '';
+    console.log('📝 Scraped content (preview, len):', {
+      length: contentForAnalysis?.content?.length || 0,
+      preview: contentPreview
+    });
     
     // Merge options with defaults
     const finalOptions = { ...DEFAULT_OPTIONS, ...options };
     
     // Call AI to analyze intention match
+    console.log('🤖 Invoking AI analysis', {
+      model: finalOptions.model,
+      maxTokens: finalOptions.maxTokens,
+      temperature: finalOptions.temperature,
+      intentionPreview: intentionData.intention.slice(0, 160)
+    });
     const aiResult = await analyzeIntentionWithAI(
       intentionData.intention,
       contentForAnalysis.content,
       finalOptions
     );
+    console.log('📥 AI analysis result', aiResult);
     
     return {
       match: aiResult.match
     };
     
   } catch (error) {
-    console.error('Error checking intention match:', error);
+    console.error('❌ Error checking intention match:', error);
     return {
       match: true //CURRENTLY HAVE ERROR DEFAULTING TO TRUE 
     };
@@ -93,6 +107,7 @@ const analyzeIntentionWithAI = async (
   }
 
   const prompt = createAnalysisPrompt(userIntention, pageContent);
+  console.log('🧠 AI prompt length', { promptLength: prompt.length });
   
   // Create abort controller for timeout
   const controller = new AbortController();
@@ -136,6 +151,7 @@ Reply only with:
 
     const data = await response.json();
     const aiResponse = data.choices[0]?.message?.content;
+    console.log('🧾 Raw AI response:', aiResponse);
     
     if (!aiResponse) {
       throw new Error('No response from AI model');
@@ -167,11 +183,13 @@ const parseAIResponse = (aiResponse: string): { match: boolean } => {
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+      console.log('📦 Parsed AI JSON:', parsed);
       return { match: Boolean(parsed.match) };
     }
     // Fallback: attempt loose check
     if (/true/i.test(aiResponse)) return { match: true };
     if (/false/i.test(aiResponse)) return { match: false };
+    console.warn('⚠️ Could not parse AI response, defaulting to match=false');
     return { match: false };
   } catch (error) {
     console.error('Error parsing AI response:', error);

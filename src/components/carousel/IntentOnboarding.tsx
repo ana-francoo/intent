@@ -195,7 +195,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                           </div>
                           
                           {/* Intention Text - exactly like real overlay */}
-                          <div className="animate-slide-in-up text-center mt-4 max-w-prose px-4">
+                          <div className="animate-slide-in-up text-center mt-4 max-w-prose px-4 mx-auto">
                             <p className="text-sm leading-relaxed break-words overflow-hidden font-medium text-white">
                               {fullText}
                             </p>
@@ -357,11 +357,11 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                          </div>
                        </div>
                        
-                       {/* Video Title */}
-                       <div className="space-y-1 mb-2">
-                         <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                         <div className="h-2 bg-gray-200 rounded w-1/2"></div>
-                       </div>
+                        {/* Video Title (AI scans these before decision) */}
+                        <div className="space-y-1 mb-2 relative rounded animate-ai-scan-outline">
+                          <div className="h-3 bg-gray-200 rounded w-3/4 animate-ai-scan-title"></div>
+                          <div className="h-2 bg-gray-200 rounded w-1/2 animate-ai-scan-description"></div>
+                        </div>
                        
                        {/* Video Actions */}
                        <div className="flex items-center space-x-2 mb-2">
@@ -519,6 +519,31 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                     <div className="w-3 h-3 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center ml-auto">
                       <div className="w-1 h-1 text-muted-foreground text-xs">×</div>
                     </div>
+
+                    {/* AI Status Widget - top-right corner of the page content */}
+                    <div className="absolute top-2 right-2 z-20">
+                      <div className="flex items-center px-2 py-1 rounded-full border border-blue-200 bg-white/80 shadow-sm backdrop-blur-sm space-x-1 animate-ai-pill-appear animate-ai-pill-glow">
+                        {/* Icon: rotating ring with wave bars while thinking */}
+                        <div className="relative w-4 h-4">
+                          <div className="absolute inset-0 rounded-full border border-blue-300/70"></div>
+                          <div className="absolute inset-0 rounded-full border-t-2 border-blue-400/70 animate-ai-rotate"></div>
+                          <div className="absolute inset-0 flex items-end justify-center gap-[1px] px-[2px]">
+                            <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0s' }}></span>
+                            <span className="w-[2px] bg-blue-500/80 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.15s' }}></span>
+                            <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.3s' }}></span>
+                          </div>
+                        </div>
+                        {/* Thinking label (fades out) */}
+                        <span className="text-[10px] leading-none text-blue-800 animate-ai-thinking-visible">Analyzing</span>
+                        {/* On Track state (fades in) */}
+                        <div className="flex items-center space-x-1 text-[10px] leading-none text-green-800 opacity-0 animate-ai-ontrack-visible">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                          <span>On Track</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   {/* Plus Button */}
                   <div className="w-6 h-6 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center animate-icon-breathing">
@@ -607,26 +632,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                       </div>
                     </div>
 
-                    {/* AI Decision Animation */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-2 mb-2 animate-ai-decision-slide-in-third">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="relative">
-                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full"></div>
-                            </div>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-                          </div>
-                          <p className="text-xs font-medium text-green-800">✓ On Track</p>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-8 h-2 bg-green-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-green-500 rounded-full animate-focus-progress-fill"></div>
-                          </div>
-                          <span className="text-xs font-bold text-green-600 animate-focus-percentage">0%</span>
-                        </div>
-                      </div>
-                    </div>
+                    
                   </div>
                   
                                     {/* Recommended Videos Panel - Right Side */}
@@ -718,6 +724,40 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                           <div className="h-2 bg-gray-200 rounded w-2/3 animate-recommended-video-text-hover"></div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* AI Status Widget - top-right corner of the page content */}
+                  <div className="absolute top-2 right-2 z-20">
+                    <div className="flex items-center px-2 py-1 rounded-full border border-blue-200 bg-white/80 shadow-sm backdrop-blur-sm space-x-1 animate-ai-pill-appear animate-ai-pill-glow">
+                      {/* Icon: rotating ring with wave bars while thinking */}
+                      <div className="relative w-4 h-4">
+                        <div className="absolute inset-0 rounded-full border border-blue-300/70"></div>
+                        <div className="absolute inset-0 rounded-full border-t-2 border-blue-400/70 animate-ai-rotate"></div>
+                        <div className="absolute inset-0 flex items-end justify-center gap-[1px] px-[2px]">
+                          <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0s' }}></span>
+                          <span className="w-[2px] bg-blue-500/80 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.15s' }}></span>
+                          <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.3s' }}></span>
+                        </div>
+                      </div>
+                      {/* Thinking label (fades out) */}
+                      <span className="text-[10px] leading-none text-blue-800 animate-ai-thinking-visible">Analyzing</span>
+                      {/* On Track state (fades in) */}
+                      <div className="flex items-center space-x-1 text-[10px] leading-none text-green-800 opacity-0 animate-ai-ontrack-visible">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                        <span>On Track</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom-center scan confirmation check (appears after scan) */}
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-2 pointer-events-none animate-ai-scan-check-pop">
+                    <div className="w-6 h-6 rounded-full border-2 border-blue-400/80 bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm">
+                      <svg className="w-3.5 h-3.5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -922,7 +962,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
            <div className="mb-8">
              <Progress 
                value={progress} 
-               className={`h-2 ${currentStep === 0 ? '' : 'animate-progress-fill'}`} 
+               className="h-2" 
              />
            </div>
 

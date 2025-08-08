@@ -4,14 +4,12 @@ import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Separator } from './ui/separator'; 
-import Flame from './home/Flame';
+// Removed unused imports to fix build warnings
 import quotes from '../utils/quotes';
 import { saveBlockedSites } from '../utils/storage';
 
 import { 
   Settings, 
-  Shield, 
   Plus, 
   ChevronDown, 
   ChevronUp, 
@@ -24,9 +22,7 @@ import {
   ShoppingBag,
   Newspaper,
   Target,
-  Eye,
-  RefreshCw,
-  TrendingUp
+  
 } from 'lucide-react';
 
 interface Site {
@@ -330,25 +326,7 @@ const PersonalDashboard = () => {
     }
   };
 
-  const createVisualElement = async (elementType: string = 'red-blob') => {
-    try {
-      if (typeof chrome !== 'undefined' && chrome?.runtime) {
-        const response = await chrome.runtime.sendMessage({
-          type: 'CREATE_VISUAL_ELEMENT',
-          elementType: elementType,
-          position: { x: 100, y: 100 }
-        });
-        
-        if (response?.success) {
-          console.log('Visual element created successfully');
-        } else {
-          console.error('Failed to create visual element:', response?.error);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to create visual element:', error);
-    }
-  };
+  // Removed unused createVisualElement helper (not invoked)
 
   if (showAccount) {
     return (

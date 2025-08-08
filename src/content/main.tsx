@@ -544,12 +544,8 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
     const pageContent = scrapeCurrentPage();
     
     console.log('📄 Raw page title:', document.title);
-    console.log('📄 Filtered page title:', pageContent.title);
-    console.log('📄 Page description:', pageContent.description);
-    console.log('📄 Domain:', pageContent.domain);
-    console.log('📄 Relevant text length:', pageContent.relevantText.length);
-    console.log('📄 First 500 chars of relevant text:', pageContent.relevantText.substring(0, 500));
-    console.log('📄 Full relevant text:', pageContent.relevantText);
+    console.log('📄 Scraped content length:', pageContent.content.length);
+    console.log('📄 First 500 chars of content:', pageContent.content.substring(0, 500));
     
     return pageContent;
   } catch (error) {

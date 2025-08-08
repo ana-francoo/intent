@@ -303,7 +303,7 @@ export default function IntentionOverlay() {
                 )}
               </div>
             ) : (
-              <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4">
+              <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
                 <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
                   {state.intention?.startsWith('block:') 
                     ? `Blocked for ${state.intention.replace('block:', '')} minutes`

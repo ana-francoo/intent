@@ -830,6 +830,81 @@
   animation: ai-decision-slide-in 0.8s ease-out 1.5s both;
 }
 
+/* Second slide AI indicator animations (within player) */
+@keyframes ai-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes ai-wave-bar {
+  0%, 100% { height: 20%; opacity: 0.7; }
+  50% { height: 80%; opacity: 1; }
+}
+
+@keyframes ai-pill-appear {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes ai-pill-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.0); }
+  50% { box-shadow: 0 0 10px 0 rgba(59,130,246,0.25); }
+}
+
+@keyframes ai-thinking-visible {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes ai-ontrack-visible {
+  0%, 70% { opacity: 0; transform: translateY(-2px) scale(0.96); }
+  85% { opacity: 1; transform: translateY(0) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-ai-rotate { animation: ai-rotate 1.6s linear 0.4s 2; }
+.animate-ai-wave-bar { animation: ai-wave-bar 1.2s ease-in-out 0.4s 2; }
+.animate-ai-pill-appear { animation: ai-pill-appear 0.5s ease-out 4s both; }
+.animate-ai-pill-glow { animation: ai-pill-glow 2.2s ease-in-out 4s 2; }
+.animate-ai-thinking-visible { animation: ai-thinking-visible 2.2s ease-in 4.2s both; }
+.animate-ai-ontrack-visible { animation: ai-ontrack-visible 1s ease-out 6.2s both; }
+
+/* Second slide content scanning animations */
+@keyframes ai-scan-title {
+  0%, 40% { background-image: linear-gradient(90deg, rgba(59,130,246,0) 0%, rgba(59,130,246,0) 100%); background-size: 200% 100%; background-position: -150% 0; }
+  55% { background-image: linear-gradient(90deg, rgba(59,130,246,0) 0%, rgba(59,130,246,0.15) 50%, rgba(59,130,246,0) 100%); background-position: 150% 0; }
+  100% { background-image: none; }
+}
+
+@keyframes ai-scan-description {
+  0%, 55% { background-image: linear-gradient(90deg, rgba(59,130,246,0) 0%, rgba(59,130,246,0) 100%); background-size: 200% 100%; background-position: -150% 0; }
+  70% { background-image: linear-gradient(90deg, rgba(59,130,246,0) 0%, rgba(59,130,246,0.15) 50%, rgba(59,130,246,0) 100%); background-position: 150% 0; }
+  100% { background-image: none; }
+}
+
+@keyframes ai-scan-outline {
+  0%, 30% { box-shadow: inset 0 0 0 0 rgba(59,130,246,0); }
+  40% { box-shadow: inset 0 0 0 1px rgba(59,130,246,0.25); }
+  80% { box-shadow: inset 0 0 0 1px rgba(59,130,246,0.25); }
+  100% { box-shadow: inset 0 0 0 0 rgba(59,130,246,0); }
+}
+
+.animate-ai-scan-title { animation: ai-scan-title 1.4s ease-in-out 4.2s both; }
+.animate-ai-scan-description { animation: ai-scan-description 1.4s ease-in-out 4.6s both; }
+.animate-ai-scan-outline { animation: ai-scan-outline 1.6s ease-in-out 4.2s both; }
+
+/* Delay On Track label to after scan completes */
+.animate-ai-decision-slide-in { animation: ai-decision-slide-in 0.8s ease-out 6.4s both; }
+
+/* Bottom-center scan confirmation check */
+@keyframes ai-scan-check-pop {
+  0%, 88% { opacity: 0; transform: translate(-50%, 6px) scale(0.9); }
+  94% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.animate-ai-scan-check-pop { animation: ai-scan-check-pop 1.2s ease-out 6.0s both; }
+
 /* Scrollbar animations for third slide */
 @keyframes mouse-click-scrollbar {
   0% { 
