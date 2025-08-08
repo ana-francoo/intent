@@ -650,6 +650,62 @@
   animation: recommended-video-text-hover 3s ease-out 3.5s both;
 }
 
+/* Title reveal and click animations for third slide recommended video */
+@keyframes recommended-title-reveal {
+  0%, 78% {
+    opacity: 0;
+    transform: translateY(4px);
+    max-width: 0;
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0);
+    max-width: 40%;
+  }
+  92% {
+    opacity: 1;
+    max-width: 100%;
+  }
+  100% {
+    opacity: 1;
+    max-width: 100%;
+  }
+}
+
+@keyframes click-on-video {
+  0%, 90% { transform: scale(1); }
+  92% { transform: scale(0.96); }
+  96% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mouse-click-on-video {
+  0%, 90% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  92% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+.animate-recommended-title-reveal {
+  animation: recommended-title-reveal 3s ease-out 3.5s both;
+}
+
+.animate-click-on-video {
+  animation: click-on-video 3s ease-out 3.5s both;
+}
+
+.animate-mouse-click-on-video {
+  animation: mouse-click-on-video 3s ease-out 3.5s both;
+}
+
 /* AI Thinking and Decision Animations */
 @keyframes ai-thinking-slide-in {
   0% {

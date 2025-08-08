@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ChevronLeft, ChevronRight, Target, Eye, RefreshCw, TrendingUp, PenLine, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Target, Eye, TrendingUp, PenLine } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -697,13 +697,24 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                       
                       {/* Recommended Video 6 - Target for mouse interaction (bottom video after scrolling) */}
                       <div className="flex space-x-2 relative">
-                        {/* Grey semi-transparent circle that moves and hovers */}
+                        {/* Grey semi-transparent circle that moves and hovers to the target video */}
                         <div className="absolute w-4 h-4 bg-gray-400/60 rounded-full animate-mouse-move-to-side-panel opacity-0"></div>
-                        <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center animate-recommended-video-thumbnail-hover">
+
+                        {/* Click ripple indicator */}
+                        <div className="absolute left-3 top-3 w-4 h-4 rounded-full border-2 border-gray-500/70 animate-mouse-click-on-video opacity-0"></div>
+
+                        {/* Video thumbnail */}
+                        <div className="w-12 h-8 bg-gray-200 rounded flex items-center justify-center animate-recommended-video-thumbnail-hover animate-click-on-video">
                           <div className="w-2 h-2 text-gray-400 rounded-sm flex items-center justify-center">▶</div>
                         </div>
                         <div className="flex-1 space-y-1">
-                          <div className="h-2 bg-gray-200 rounded w-full animate-recommended-video-text-hover"></div>
+                          {/* Title line with reveal animation */}
+                          <div className="relative h-3 overflow-hidden">
+                            <div className="absolute inset-0 h-2 bg-gray-200 rounded w-full animate-recommended-video-text-hover"></div>
+                            <div className="absolute left-0 top-0 text-[10px] leading-3 text-gray-900 whitespace-nowrap overflow-hidden animate-recommended-title-reveal">
+                              Keeping up with the Kardashians ep 7: Scot...
+                            </div>
+                          </div>
                           <div className="h-2 bg-gray-200 rounded w-2/3 animate-recommended-video-text-hover"></div>
                         </div>
                       </div>
