@@ -141,14 +141,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'OPEN_POPUP_WITH_ROUTE') {
     const route = message.route || '/';
     try {
-      // Store the desired route in storage
-      chrome.storage.local.set({ pendingRoute: route }, () => {
-        chrome.action.openPopup().then(() => {
-          sendResponse({ success: true });
-        }).catch((error) => {
+      const normalizedRoute = String(route).startsWith('/') ? route : `/${route}`;
+      const url = chrome.runtime.getURL(`src/popup/index.html#${normalizedRoute}`);
+      chrome.tabs
+        .create({ url })
+        .then((tab) => {
+          sendResponse({ success: true, fallback: 'tab', tabId: tab.id });
+        })
+        .catch((error) => {
           sendResponse({ success: false, error: String(error) });
         });
-      });
     } catch (error) {
       sendResponse({ success: false, error: String(error) });
     }
