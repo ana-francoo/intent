@@ -1,7 +1,5 @@
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../supabaseClient';
-import { useEffect, useState } from 'react';
 import logo from '@/assets/logo2.png';
 import './Auth.css';
 
@@ -11,384 +9,242 @@ interface AuthProps {
   onGoBack?: () => void;
 }
 
+type AuthMode = 'login' | 'signup';
+
+const WEB_REDIRECT_URL = 'https://useintent.app';
+
 export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, onGoBack }: AuthProps) {
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [mode, setMode] = useState<AuthMode>(defaultToLogin ? 'login' : 'signup');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const canSubmit = useMemo(() => {
+    if (!email || !password) return false;
+    if (mode === 'signup' && password !== confirmPassword) return false;
+    return true;
+  }, [email, password, confirmPassword, mode]);
 
   useEffect(() => {
-    // Listen for auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state change:', event, session ? 'Session exists' : 'No session');
-      
-      if (event === 'SIGNED_IN' && session) {
-        console.log('✅ User signed in successfully');
-        // For login, call the success callback
-        onAuthSuccess();
-      } else if (event === 'SIGNED_OUT') {
-        console.log('🚪 User signed out');
-        setShowSuccess(false);
-        setAuthError(null);
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log('🔄 Token refreshed');
-      } else if (event === 'USER_UPDATED') {
-        console.log('👤 User updated');
-      }
+    const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
+      if (evt === 'SIGNED_IN' && session) onAuthSuccess();
     });
-
-    // Simple observer to detect signup confirmation message and errors
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            const element = node as Element;
-            const content = element.textContent || '';
-            
-            if (content.includes('Check your email for the confirmation link')) {
-              console.log('✅ Signup confirmation detected');
-              setShowSuccess(true);
-            }
-            
-            // Check for error messages
-            if (element.getAttribute('data-supabase-auth-ui') === 'message' || 
-                element.getAttribute('role') === 'alert') {
-              if (content.includes('Invalid login credentials') || 
-                  content.includes('Email not confirmed') ||
-                  content.includes('Invalid email or password')) {
-                console.log('❌ Auth error detected:', content);
-                setAuthError(content);
-              }
-            }
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
     return () => {
-      subscription.unsubscribe();
-      observer.disconnect();
+      listener.subscription.unsubscribe();
     };
   }, [onAuthSuccess]);
 
-  // Show success state for signup
-  if (showSuccess) {
-    return (
-      <div className="auth-container">
-        {/* Logo */}
-        <div style={{
-          position: 'relative',
-          marginBottom: '2rem',
-          width: '120px',
-          height: '120px',
-          overflow: 'hidden',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          border: '2px solid rgba(255, 255, 255, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          animation: 'fadeInScale 0.6s ease-out forwards'
-        }}>
-          <img src={logo} alt="Logo" style={{ 
-            width: '80%', 
-            height: '80%', 
-            objectFit: 'contain' 
-          }} />
-        </div>
+  const handleEmailPassword = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    setIsLoading(true);
+    try {
+      if (mode === 'login') {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
+        onAuthSuccess();
+      } else {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: WEB_REDIRECT_URL },
+        });
+        if (signUpError) throw signUpError;
+        setInfo('Check your email for the confirmation link.');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password, mode, onAuthSuccess]);
 
-        {/* Confirmation message */}
-        <div style={{
-          background: 'rgba(34, 197, 94, 0.1)',
-          border: '1px solid rgba(34, 197, 94, 0.3)',
-          borderRadius: '8px',
-          padding: '16px 20px',
-          color: '#22c55e',
-          fontSize: '14px',
-          fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px',
-          animation: 'fadeInUp 0.6s ease-out 0.3s forwards',
-          opacity: 0
-        }}>
-          <span style={{ fontSize: '16px', fontWeight: 'bold' }}>✓</span>
-          Check your email for the confirmation link
-        </div>
+  const handleGoogle = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: WEB_REDIRECT_URL },
+      });
+      if (oauthError) throw oauthError;
+      // For OAuth we rely on redirect; no further action here
+    } catch (err: unknown) {
+      setIsLoading(false);
+      setError(err instanceof Error ? err.message : 'Failed to start Google sign-in');
+    }
+  }, []);
 
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            @keyframes fadeInScale {
-              from {
-                opacity: 0;
-                transform: scale(0.8);
-              }
-              to {
-                opacity: 1;
-                transform: scale(1);
-              }
-            }
-            
-            @keyframes fadeInUp {
-              from {
-                opacity: 0;
-                transform: translateY(20px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-          `
-        }} />
-      </div>
-    );
-  }
+  const handleForgotPassword = useCallback(async () => {
+    if (!email) {
+      setError('Enter your email to reset your password');
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    setIsLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: WEB_REDIRECT_URL,
+      });
+      if (resetError) throw resetError;
+      setInfo('Password reset email sent. Check your inbox.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email]);
 
   return (
-    <div className="auth-form-container">
-      {/* Back arrow for sign in page */}
-      {defaultToLogin && onGoBack && (
+    <div className="auth-form-container relative w-full">
+      {onGoBack && (
         <button
           onClick={onGoBack}
-          style={{
-            position: 'absolute',
-            top: '1rem',
-            left: '1rem',
-            background: 'none',
-            border: 'none',
-            color: 'rgba(255, 255, 255, 0.6)',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '6px',
-            transition: 'all 0.2s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '14px',
-            fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
-            e.currentTarget.style.background = 'none';
-          }}
+          className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-md p-2 text-white/60 transition hover:bg-white/5 hover:text-white/90"
         >
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="m12 19-7-7 7-7"/>
-            <path d="M19 12H5"/>
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
           </svg>
           Back
         </button>
       )}
 
-      {/* Custom title for create account page */}
-      {!defaultToLogin && (
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '2rem'
-        }}>
-          <h2 style={{
-            color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: '500',
-            margin: 0,
-            fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-            letterSpacing: '-0.02em',
-            whiteSpace: 'nowrap'
-          }}>
-            Let's make this space yours...
-          </h2>
+      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4">
+        <div className="h-24 w-24 overflow-hidden rounded-full opacity-90">
+          <img src={logo} alt="Logo" className="h-full w-full object-contain" />
         </div>
-      )}
 
-      {/* Show auth error if any */}
-      {authError && (
-        <div style={{
-          background: 'rgba(255, 107, 107, 0.1)',
-          border: '1px solid rgba(255, 107, 107, 0.3)',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          color: '#ff6b6b',
-          fontSize: '14px',
-          textAlign: 'center',
-          marginBottom: '16px',
-          fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-        }}>
-          {authError}
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setMode('login')}
+            className={`rounded-md border px-3 py-2 text-sm transition ${
+              mode === 'login'
+                ? 'border-transparent bg-[var(--primary)] text-white'
+                : 'border-white/20 text-white/85 hover:bg-white/5'
+            }`}
+          >
+            Log in
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('signup')}
+            className={`rounded-md border px-3 py-2 text-sm transition ${
+              mode === 'signup'
+                ? 'border-transparent bg-[var(--primary)] text-white'
+                : 'border-white/20 text-white/85 hover:bg-white/5'
+            }`}
+          >
+            Sign up
+          </button>
         </div>
-      )}
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          /* Error messages - red styling */
-          .supabase-auth-ui_ui div[data-supabase-auth-ui="message"],
-          .supabase-auth-ui_ui div[role="alert"] {
-            background: rgba(255, 107, 107, 0.1) !important;
-            border: 1px solid rgba(255, 107, 107, 0.3) !important;
-            color: #ff6b6b !important;
-            font-size: 14px !important;
-            text-align: center !important;
-            padding: 12px 16px !important;
-            border-radius: 6px !important;
-            margin-top: 16px !important;
-          }
+        {error && (
+          <div className="w-full max-w-md rounded-md border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-400">
+            {error}
+          </div>
+        )}
+        {info && (
+          <div className="w-full max-w-md rounded-md border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-400">
+            {info}
+          </div>
+        )}
 
-          /* Hide the "already have an account" link on sign in page */
-          ${defaultToLogin ? `
-          .supabase-auth-ui_ui a[href*="sign_up"] {
-            display: none !important;
-          }
-          ` : ''}
-        `
-      }} />
-      <Auth
-        key={defaultToLogin ? 'signin' : 'signup'}
-        supabaseClient={supabase}
-        appearance={{
-          theme: ThemeSupa,
-          variables: {
-            default: {
-              colors: {
-                brand: '#f26419',
-                brandAccent: '#e55a00',
-                brandButtonText: 'white',
-                defaultButtonBackground: 'transparent',
-                defaultButtonBackgroundHover: 'rgba(255, 255, 255, 0.1)',
-                defaultButtonBorder: 'rgba(255, 255, 255, 0.2)',
-                defaultButtonText: 'rgba(255, 255, 255, 0.8)',
-                dividerBackground: 'rgba(255, 255, 255, 0.1)',
-                inputBackground: 'rgba(255, 255, 255, 0.05)',
-                inputBorder: 'rgba(255, 255, 255, 0.1)',
-                inputBorderHover: 'rgba(255, 255, 255, 0.2)',
-                inputBorderFocus: '#f26419',
-                inputText: 'white',
-                inputLabelText: 'rgba(255, 255, 255, 0.8)',
-                inputPlaceholder: 'rgba(255, 255, 255, 0.4)',
-                messageText: 'rgba(255, 255, 255, 0.9)',
-                messageTextDanger: '#ff6b6b',
-                messageBackground: 'transparent',
-                messageBackgroundDanger: 'rgba(255, 107, 107, 0.1)',
-                messageBorder: 'transparent',
-                messageBorderDanger: 'rgba(255, 107, 107, 0.3)',
-                anchorTextColor: '#f26419',
-                anchorTextHoverColor: '#e55a00',
-              },
-              space: {
-                spaceSmall: '4px',
-                spaceMedium: '8px',
-                spaceLarge: '16px',
-                labelBottomMargin: '8px',
-                anchorBottomMargin: '4px',
-                emailInputSpacing: '4px',
-                socialAuthSpacing: '4px',
-                buttonPadding: '10px 15px',
-                inputPadding: '10px 15px',
-              },
-              fontSizes: {
-                baseBodySize: '14px',
-                baseInputSize: '16px',
-                baseLabelSize: '14px',
-                baseButtonSize: '16px',
-              },
-              fonts: {
-                bodyFontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-                buttonFontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-                inputFontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-                labelFontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-              },
-              borderWidths: {
-                buttonBorderWidth: '1px',
-                inputBorderWidth: '1px',
-              },
-              radii: {
-                borderRadiusButton: '8px',
-                buttonBorderRadius: '8px',
-                inputBorderRadius: '8px',
-              },
-            },
-          },
-          style: {
-            button: {
-              background: '#f26419',
-              color: 'white',
-              borderRadius: '8px',
-              border: 'none',
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontFamily: `'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`,
-            },
-            anchor: {
-              color: '#f26419',
-              textDecoration: 'none',
-              fontWeight: '500',
-            },
-            container: {
-              background: 'transparent',
-            },
-            divider: {
-              background: 'rgba(255, 255, 255, 0.1)',
-              margin: '24px 0',
-            },
-            label: {
-              color: 'rgba(255, 255, 255, 0.8)',
-              fontSize: '14px',
-              fontWeight: '500',
-              marginBottom: '6px',
-            },
-            input: {
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '16px',
-              padding: '12px 16px',
-              transition: 'all 0.2s ease',
-            },
-            message: {
-              fontSize: '14px',
-              textAlign: 'center' as const,
-              padding: '12px 16px',
-              borderRadius: '6px',
-              marginTop: '16px',
-              border: '1px solid transparent',
-              background: 'transparent',
-              color: 'rgba(255, 255, 255, 0.9)',
-            },
-          },
-          className: {
-            message: 'auth-message',
-          },
-        }}
-        theme="default"
-        view={defaultToLogin ? "sign_in" : "sign_up"}
-        providers={[]}
-        redirectTo={window.location.origin}
-        onlyThirdPartyProviders={false}
-        magicLink={false}
-        showLinks={true} // Show links on both pages
-      />
+        <form onSubmit={handleEmailPassword} className="mx-auto flex w-full max-w-md flex-col gap-3">
+          <div className="grid gap-1.5">
+            <label htmlFor="email" className="text-sm text-white/85">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="rounded-md border border-white/15 bg-white/5 px-3 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="password" className="text-sm text-white/85">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder={mode === 'signup' ? 'Create a password' : 'Enter your password'}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="rounded-md border border-white/15 bg-white/5 px-3 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+            />
+          </div>
+
+          {mode === 'signup' && (
+            <div className="grid gap-1.5">
+              <label htmlFor="confirm" className="text-sm text-white/85">Confirm password</label>
+              <input
+                id="confirm"
+                type="password"
+                placeholder="Re-enter your password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="rounded-md border border-white/15 bg-white/5 px-3 py-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={!canSubmit || isLoading}
+            className="mt-1 rounded-md bg-[var(--primary)] px-4 py-3 text-white transition hover:bg-[#e55a15] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? (mode === 'login' ? 'Logging in…' : 'Signing up…') : mode === 'login' ? 'Log in' : 'Create account'}
+          </button>
+
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="mt-2 w-fit text-left text-sm text-[var(--primary)] hover:underline"
+            >
+              Forgot your password?
+            </button>
+          )}
+        </form>
+
+        <div className="mt-3 flex w-full max-w-md items-center gap-3">
+          <div className="h-px flex-1 bg-white/15" />
+          <span className="text-xs text-white/70">or</span>
+          <div className="h-px flex-1 bg-white/15" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={isLoading}
+          className="w-full max-w-md rounded-md border border-white/25 px-4 py-2 text-white/90 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          Continue with Google
+        </button>
+
+        <div className="mt-2 text-sm text-white/80">
+          {mode === 'login' ? (
+            <>
+              Don't have an account?{' '}
+              <button onClick={() => setMode('signup')} className="text-[var(--primary)] hover:underline">Sign up</button>
+            </>
+          ) : (
+            <>
+              Already have an account?{' '}
+              <button onClick={() => setMode('login')} className="text-[var(--primary)] hover:underline">Log in</button>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
