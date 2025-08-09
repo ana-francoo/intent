@@ -1,0 +1,42 @@
+/* Counter-clockwise border glow around the intention input container when pending */
+@keyframes intent-border-rotate-ccw {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+@keyframes intent-border-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.intent-border-spinner {
+  position: absolute;
+  inset: -3px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.intent-border-spinner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(59,130,246,0) 0deg,
+    rgba(59,130,246,0.15) 90deg,
+    rgba(59,130,246,0.35) 180deg,
+    rgba(59,130,246,0.15) 270deg,
+    rgba(59,130,246,0) 360deg
+  );
+  -webkit-mask: 
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: intent-border-rotate-ccw 1.6s linear infinite, intent-border-pulse 2s ease-in-out infinite;
+}
+
+
+

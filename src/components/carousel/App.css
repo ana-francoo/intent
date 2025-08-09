@@ -1,3 +1,19 @@
+/* Darken the clicked recommended video after the click bounce */
+@keyframes recommended-video-thumbnail-click-darken {
+  0%, 85% { background-color: rgb(229 231 235); }
+  90%, 100% { background-color: rgb(107 114 128); }
+}
+.animate-recommended-video-thumbnail-click-darken {
+  animation: recommended-video-thumbnail-click-darken 3.2s ease-out 3.5s both;
+}
+
+@keyframes recommended-video-text-click-darken {
+  0%, 85% { background-color: rgb(229 231 235); }
+  90%, 100% { background-color: rgb(107 114 128); }
+}
+.animate-recommended-video-text-click-darken {
+  animation: recommended-video-text-click-darken 3.2s ease-out 3.5s both;
+}
 /* Removed conflicting #root styles - these are handled by popup App.css */
   
   .logo {
@@ -904,6 +920,26 @@
 }
 
 .animate-ai-scan-check-pop { animation: ai-scan-check-pop 1.2s ease-out 6.0s both; }
+
+/* Second slide AI scan completion checkmark - appears after AI scanning finishes */
+@keyframes ai-scan-complete-check {
+  0%, 85% { 
+    opacity: 0; 
+    transform: scale(0.8) rotate(-180deg); 
+  }
+  92% { 
+    opacity: 1; 
+    transform: scale(1.1) rotate(0deg); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1) rotate(0deg); 
+  }
+}
+
+.animate-ai-scan-complete-check { 
+  animation: ai-scan-complete-check 1.0s ease-out 6.0s both; 
+}
 
 /* Scrollbar animations for third slide */
 @keyframes mouse-click-scrollbar {

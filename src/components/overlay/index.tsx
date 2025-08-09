@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
 import { validateIntention } from '../../utils/intentionMatcher';
+import './overlay.css';
 import { markNewIntentionSet } from '../../utils/intentionMonitor';
 
 interface FormState {
@@ -115,13 +116,11 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
   }
 }
 
-function LoadingIcon() {
+function PendingBorderGlow() {
   const { pending } = useFormStatus();
-  
   if (!pending) return null;
-  
   return (
-    <Loader2 className="absolute right-4 top-4.5 size-4 text-muted-foreground z-10 animate-spin" />
+    <div className="intent-border-spinner rounded-xl" />
   );
 }
 
@@ -293,7 +292,7 @@ export default function IntentionOverlay() {
                 ) : (
                   <>
                     <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
-                    <LoadingIcon />
+                    <PendingBorderGlow />
                     <TextareaWithStatus 
                       domain={domain} 
                       intentionText={intentionText}
