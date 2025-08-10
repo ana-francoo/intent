@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import Home from '@/components/home/Home'
 import Auth from '@/components/auth/Auth'
 import WebsiteBlocking from '@/components/website-blocking/WebsiteBlocking'
 import PopoverDashboard from '@/components/main-dashboard/PopoverDashboard'
@@ -8,6 +7,7 @@ import Smoke from '@/components/smoke-test/Smoke'
 import IntentionOverlay from '@/components/overlay'
 import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
+import Home from '@/components/home/Home'
 
 export default function App() {
   const AuthRoute = () => {

@@ -880,8 +880,8 @@
 
 .animate-ai-rotate { animation: ai-rotate 1.6s linear 0.4s 2; }
 .animate-ai-wave-bar { animation: ai-wave-bar 1.2s ease-in-out 0.4s 2; }
-.animate-ai-pill-appear { animation: ai-pill-appear 0.5s ease-out 4s both; }
-.animate-ai-pill-glow { animation: ai-pill-glow 2.2s ease-in-out 4s 2; }
+.animate-ai-pill-appear { animation: ai-pill-appear 0.5s ease-out 6.4s both; }
+.animate-ai-pill-glow { animation: ai-pill-glow 2.2s ease-in-out 6.4s 2; }
 .animate-ai-thinking-visible { animation: ai-thinking-visible 2.2s ease-in 4.2s both; }
 .animate-ai-ontrack-visible { animation: ai-ontrack-visible 1s ease-out 6.2s both; }
 

@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@property --angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0turn;
+}
+
 @font-face {
   font-family: 'Geist';
   src: url('./fonts/geist.ttf') format('truetype');
@@ -442,6 +448,13 @@
     margin-left: 0.2em;
     display: inline-block;
   }
+}
+
+/* Custom property for conic gradient animation */
+@property --angle {
+  syntax: "<angle>";
+  inherits: true;
+  initial-value: 0deg;
 }
 
 body {

@@ -520,30 +520,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                       <div className="w-1 h-1 text-muted-foreground text-xs">×</div>
                     </div>
 
-                    {/* AI Status Widget - top-right corner of the page content */}
-                    <div className="absolute top-2 right-2 z-20">
-                      <div className="flex items-center px-2 py-1 rounded-full border border-blue-200 bg-white/80 shadow-sm backdrop-blur-sm space-x-1 animate-ai-pill-appear animate-ai-pill-glow">
-                        {/* Icon: rotating ring with wave bars while thinking */}
-                        <div className="relative w-4 h-4">
-                          <div className="absolute inset-0 rounded-full border border-blue-300/70"></div>
-                          <div className="absolute inset-0 rounded-full border-t-2 border-blue-400/70 animate-ai-rotate"></div>
-                          <div className="absolute inset-0 flex items-end justify-center gap-[1px] px-[2px]">
-                            <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0s' }}></span>
-                            <span className="w-[2px] bg-blue-500/80 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.15s' }}></span>
-                            <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.3s' }}></span>
-                          </div>
-                        </div>
-                        {/* Thinking label (fades out) */}
-                        <span className="text-[10px] leading-none text-blue-800 animate-ai-thinking-visible">Analyzing</span>
-                        {/* On Track state (fades in) */}
-                        <div className="flex items-center space-x-1 text-[10px] leading-none text-green-800 opacity-0 animate-ai-ontrack-visible">
-                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 6L9 17l-5-5" />
-                          </svg>
-                          <span>On Track</span>
-                        </div>
-                      </div>
-                    </div>
+                    {/* AI Status Widget removed on third slide */}
                   </div>
                   {/* Plus Button */}
                   <div className="w-6 h-6 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center animate-icon-breathing">
@@ -610,27 +587,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                       <p className="text-xs text-gray-700 mt-1">"I want to learn how to use Intent to gain my time back and achieve my goals"</p>
                     </div>
 
-                    {/* AI Thinking Animation */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2 animate-ai-thinking-slide-in-third">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <div className="relative">
-                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                              <div className="w-2 h-2 bg-white rounded-full animate-ai-pulse"></div>
-                            </div>
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-ping"></div>
-                          </div>
-                          <p className="text-xs font-medium text-blue-800 animate-ai-text">Analyzing activity...</p>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="flex space-x-0.5">
-                            {[...Array(3)].map((_, i) => (
-                              <div key={i} className="w-1 h-1 bg-blue-300 rounded-full animate-ai-dot-pulse" style={{ animationDelay: `${i * 0.3}s` }}></div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    {/* Removed AI Thinking banner on third slide */}
 
                     
                   </div>
@@ -727,30 +684,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                     </div>
                   </div>
 
-                  {/* AI Status Widget - top-right corner of the page content */}
-                  <div className="absolute top-2 right-2 z-20">
-                    <div className="flex items-center px-2 py-1 rounded-full border border-blue-200 bg-white/80 shadow-sm backdrop-blur-sm space-x-1 animate-ai-pill-appear animate-ai-pill-glow">
-                      {/* Icon: rotating ring with wave bars while thinking */}
-                      <div className="relative w-4 h-4">
-                        <div className="absolute inset-0 rounded-full border border-blue-300/70"></div>
-                        <div className="absolute inset-0 rounded-full border-t-2 border-blue-400/70 animate-ai-rotate"></div>
-                        <div className="absolute inset-0 flex items-end justify-center gap-[1px] px-[2px]">
-                          <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0s' }}></span>
-                          <span className="w-[2px] bg-blue-500/80 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.15s' }}></span>
-                          <span className="w-[2px] bg-blue-500 rounded-sm animate-ai-wave-bar" style={{ animationDelay: '0.3s' }}></span>
-                        </div>
-                      </div>
-                      {/* Thinking label (fades out) */}
-                      <span className="text-[10px] leading-none text-blue-800 animate-ai-thinking-visible">Analyzing</span>
-                      {/* On Track state (fades in) */}
-                      <div className="flex items-center space-x-1 text-[10px] leading-none text-green-800 opacity-0 animate-ai-ontrack-visible">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                        <span>On Track</span>
-                      </div>
-                    </div>
-                  </div>
+                  {/* AI Status Widget removed on third slide sequence */}
 
                   {/* Bottom-center scan confirmation check (appears after scan) */}
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-2 pointer-events-none animate-ai-scan-check-pop">

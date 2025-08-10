@@ -101,15 +101,11 @@ const Tour = () => {
     const secondSvgWidthPercent = 0.6;        // 60% of viewport width
     const secondSvgHeightPercent = 0.6;       // 60% of viewport height
     
-    // Text positioning (viewport-relative)
-    const secondTextOffsetLeftPercent = -0.4;  // 40% of viewport width left of SVG
-    
     // Calculate actual pixel values based on viewport
     const secondSvgOffsetTop = Math.round(viewportHeight * secondSvgOffsetTopPercent);
     const secondSvgOffsetLeft = Math.round(viewportWidth * secondSvgOffsetLeftPercent);
     const secondSvgWidth = Math.round(viewportWidth * secondSvgWidthPercent);
     const secondSvgHeight = Math.round(viewportHeight * secondSvgHeightPercent);
-    const secondTextOffsetLeft = Math.round(viewportWidth * secondTextOffsetLeftPercent);
     // ===========================================
     
     const element = document.createElement('div');
@@ -147,25 +143,22 @@ const Tour = () => {
       const newSecondSvgOffsetLeft = Math.round(newViewportWidth * secondSvgOffsetLeftPercent);
       const newSecondSvgWidth = Math.round(newViewportWidth * secondSvgWidthPercent);
       const newSecondSvgHeight = Math.round(newViewportHeight * secondSvgHeightPercent);
-      const newSecondTextOffsetLeft = Math.round(newViewportWidth * secondTextOffsetLeftPercent);
-      
-      // Update SVG position
+      // Update the right-side container (keeps arrow location constant)
+      const rightContainer = document.getElementById('tour-right-container');
+      if (rightContainer) {
+        rightContainer.setAttribute(
+          'style',
+          `position: fixed; top: ${newCenterY + newSecondSvgOffsetTop}px; left: ${newCenterX + popupWidth + newSecondSvgOffsetLeft}px; z-index: 2147483645; pointer-events: none; display: inline-flex; align-items: flex-start; gap: 2vw; animation: additional-svg-appear 0.5s ease-out;`
+        );
+      }
+
+      // Update arrow size responsively (position comes from container)
       const additionalSvg = document.getElementById('additional-svg');
       if (additionalSvg) {
-        additionalSvg.style.top = `${newCenterY + newSecondSvgOffsetTop}px`;
-        additionalSvg.style.left = `${newCenterX + popupWidth + newSecondSvgOffsetLeft}px`;
-        additionalSvg.style.width = `${newSecondSvgWidth}px`;
-        additionalSvg.style.height = `${newSecondSvgHeight}px`;
-      }
-      
-      // Update text position
-      const secondText = document.getElementById('second-tour-text');
-      if (secondText) {
-        const newSecondTextFontSize = Math.round(newViewportWidth * 0.015);
-        secondText.style.top = `${newCenterY + newSecondSvgOffsetTop - 100}px`;
-        secondText.style.left = `${newCenterX + popupWidth + newSecondSvgOffsetLeft + newSecondSvgWidth + newSecondTextOffsetLeft}px`;
-        secondText.style.fontSize = `${newSecondTextFontSize}px`;
-        secondText.style.maxWidth = `${Math.round(newViewportWidth * 0.25)}px`;
+        additionalSvg.setAttribute(
+          'style',
+          `width: ${newSecondSvgWidth}px; height: ${newSecondSvgHeight}px; pointer-events: none;`
+        );
       }
     };
     
@@ -213,16 +206,10 @@ const Tour = () => {
         window.removeEventListener('resize', (element as any)._resizeHandler);
       }
       
-      // Remove the additional SVG if it exists
-      const additionalSvg = document.getElementById('additional-svg');
-      if (additionalSvg) {
-        additionalSvg.remove();
-      }
-      
-      // Remove the second text if it exists
-      const secondText = document.getElementById('second-tour-text');
-      if (secondText) {
-        secondText.remove();
+      // Remove the right-side container (arrow + text) if it exists
+      const rightContainer = document.getElementById('tour-right-container');
+      if (rightContainer) {
+        rightContainer.remove();
       }
       
       // Add fade-out animation
@@ -274,55 +261,58 @@ const Tour = () => {
     document.head.appendChild(style);
     document.body.appendChild(element);
     
-    // Create additional SVG that appears 0.4 seconds later
+    // Create additional SVG and text that appear 0.4 seconds later
     setTimeout(() => {
-      const additionalSvg = document.createElement('div');
-      additionalSvg.id = 'additional-svg';
-      additionalSvg.style.cssText = `
+      // Right-side container to align arrow and text horizontally
+      const rightContainer = document.createElement('div');
+      rightContainer.id = 'tour-right-container';
+      rightContainer.style.cssText = `
         position: fixed;
         top: ${centerY + secondSvgOffsetTop}px;
         left: ${centerX + popupWidth + secondSvgOffsetLeft}px;
-        width: ${secondSvgWidth}px;
-        height: ${secondSvgHeight}px;
         z-index: 2147483645;
         pointer-events: none;
+        display: inline-flex;
+        align-items: flex-start;
+        gap: 2vw; /* responsive spacing between arrow and text */
         animation: additional-svg-appear 0.5s ease-out;
       `;
-      
+
+      // The second (squiggly) arrow
+      const additionalSvg = document.createElement('div');
+      additionalSvg.id = 'additional-svg';
+      additionalSvg.style.cssText = `
+        width: ${secondSvgWidth}px;
+        height: ${secondSvgHeight}px;
+        pointer-events: none;
+      `;
       additionalSvg.innerHTML = `
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" style="width: 100%; height: 100%;">
           <path d="M168.97138,43.22749c12.64149,0,12.90694,18.62863,12.90694,28.16059c0,14.17547-8.24082,31.42365-2.73783,43.80536.26999.60748.72094,1.37841.39112,1.9556-1.41257,2.47199-4.67465,2.15888-5.08455,6.25791-1.13699,11.36992,5.7975,26.79941,6.64903,38.72081.56991,7.97879.51404,29.72506-11.34246,29.72506" transform="translate(-18.97138 21.120441)" fill="none" stroke="#ff6b35" stroke-width="2"/>
         </svg>
       `;
-      
-      document.body.appendChild(additionalSvg);
-      
-      // Create second text that appears next to the second SVG
+
+      // The explanatory text to the right of the arrow
       const secondText = document.createElement('div');
       secondText.id = 'second-tour-text';
-      
-      // Calculate dynamic text size for second text
-      const secondTextFontSize = Math.round(viewportWidth * 0.015); // Same as first text: 1.5% of viewport width
-      
       secondText.style.cssText = `
-        position: fixed;
-        top: ${centerY + secondSvgOffsetTop + 40}px;
-        left: ${centerX + popupWidth + secondSvgOffsetLeft + secondSvgWidth + secondTextOffsetLeft}px;
-        max-width: ${Math.round(viewportWidth * 0.25)}px;
-        z-index: 2147483645;
+        position: relative; /* positioned by flex container, not absolute */
+        max-width: 25vw; /* responsive width cap */
         pointer-events: none;
         animation: tour-text-appear 0.5s ease-out;
         color: black;
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: ${secondTextFontSize}px;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: clamp(0.95rem, 1.5vw, 1.25rem); /* responsive font, no px */
         font-weight: 500;
+        line-height: 1.4;
         font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
       `;
-      
       secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
-      
-      document.body.appendChild(secondText);
+
+      rightContainer.appendChild(additionalSvg);
+      rightContainer.appendChild(secondText);
+      document.body.appendChild(rightContainer);
     }, 400);
   };
 

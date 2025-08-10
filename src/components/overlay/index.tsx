@@ -22,38 +22,16 @@ interface FormState {
 }
 
 // Fast client-side validation for immediate feedback
-const validateIntentionClientSide = (intentionText: string): boolean => {
+const validateIntentionClientSide = async (
+  intentionText: string
+): Promise<boolean> => {
   const trimmed = intentionText.trim();
   
   // Too short
   if (trimmed.length < 10) return false;
-  
-  // Too long
-  if (trimmed.length > 200) return false;
-  
-  // Common vague phrases that should be rejected
-  const vaguePhrases = [
-    'just browsing', 'checking', 'looking around', 'nothing specific',
-    'idk', 'dunno', 'whatever', 'random', 'bored', 'killing time', 'wasting time'
-  ];
-  
-  const lowerText = trimmed.toLowerCase();
-  if (vaguePhrases.some(phrase => lowerText.includes(phrase))) {
-    return false;
-  }
-  
-  // Must contain action words
-  const actionWords = [
-    'find', 'learn', 'research', 'buy', 'compare', 'read', 'watch', 'study',
-    'understand', 'solve', 'create', 'write', 'design', 'plan', 'organize',
-    'check', 'verify', 'confirm', 'book', 'schedule', 'contact', 'email',
-    'call', 'message', 'download', 'install', 'setup', 'configure'
-  ];
-  
-  const hasActionWord = actionWords.some(word => lowerText.includes(word));
-  if (!hasActionWord) return false;
-  
-  return true;
+
+  // Lightweight server-side check
+  return validateIntention(trimmed);
 };
 
 async function submitIntention(_: FormState, formData: FormData): Promise<FormState> {
@@ -81,7 +59,7 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
     console.log('🔍 Starting intention validation for:', intention);
     
     // Fast client-side validation first
-    const clientSideValid = validateIntentionClientSide(intention);
+    const clientSideValid = await validateIntentionClientSide(intention);
     if (!clientSideValid) {
       return { error: 'Please write a more targeted intention', success: false };
     }
@@ -116,13 +94,62 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
   }
 }
 
-function PendingBorderGlow() {
+
+function InputContainer({
+  children,
+  shakeKey,
+  state,
+}: {
+  children: React.ReactNode;
+  shakeKey: number;
+  state: { error: string | null };
+}) {
   const { pending } = useFormStatus();
-  if (!pending) return null;
+
   return (
-    <div className="intent-border-spinner rounded-xl" />
+    <div
+      key={shakeKey}
+      className={cn(
+        "relative isolate rounded-xl border-2 border-transparent",
+        pending && "conic-pending-border",                     // animated border when pending
+        !state.error && "animate-slide-in-up delay-150"
+      )}
+      style={{
+        animation: state.error ? "shake 0.6s ease-in-out" : undefined,
+      }}
+    >
+      {children}
+    </div>
   );
 }
+
+
+
+
+// Input container with orange border when pending
+// function InputContainer({ children, shakeKey, state }: {
+//   children: React.ReactNode;
+//   shakeKey: number;
+//   state: { error: string | null };
+// }) {
+//   const { pending } = useFormStatus();
+  
+//   return (
+//     <div 
+//       key={shakeKey}
+//       className={cn(
+//         'relative border-2 rounded-xl',
+//         pending ? 'border-orange-500' : 'border-transparent',
+//         !state.error && 'animate-slide-in-up delay-150'
+//       )}
+//       style={{
+//         animation: state.error ? 'shake 0.6s ease-in-out' : undefined
+//       }}
+//     >
+//       {children}
+//     </div>
+//   );
+// }
 
 function TextareaWithStatus({ domain, intentionText, setIntentionText }: { 
   domain: string;
@@ -269,16 +296,7 @@ export default function IntentionOverlay() {
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             
             {!state.success ? (
-              <div 
-                key={shakeKey}
-                className={cn(
-                  'relative border-2 border-transparent rounded-xl animate-intention-glow',
-                  !state.error && 'animate-slide-in-up delay-150'
-                )}
-                style={{
-                  animation: state.error ? 'shake 0.6s ease-in-out' : undefined
-                }}
-              >
+              <InputContainer shakeKey={shakeKey} state={state}>
                 {!isTimeBasedCategory && (
                   <div className='absolute top-0 flex w-full justify-center'>
                     <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
@@ -294,7 +312,6 @@ export default function IntentionOverlay() {
                 ) : (
                   <>
                     <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
-                    <PendingBorderGlow />
                     <TextareaWithStatus 
                       domain={domain} 
                       intentionText={intentionText}
@@ -302,7 +319,7 @@ export default function IntentionOverlay() {
                     />
                   </>
                 )}
-              </div>
+              </InputContainer>
             ) : (
               <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
                 <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
