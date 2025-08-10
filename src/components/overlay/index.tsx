@@ -215,11 +215,12 @@ export default function IntentionOverlay() {
   const [shakeKey, setShakeKey] = useState(0);
   const [intentionText, setIntentionText] = useState('');
 
+  //! ADJUST TIMEOUT BEFORE REDIRECT
   useEffect(() => {
     if (state.success && targetUrl) {
       const timer = setTimeout(() => {
         window.location.href = targetUrl;
-      }, 9000); // Increased from 1250ms to 3000ms (3 seconds)
+      }, 1750); // Increased from 1250ms to 3000ms (3 seconds)
       return () => clearTimeout(timer);
     }
   }, [state.success, targetUrl]);
@@ -245,7 +246,8 @@ export default function IntentionOverlay() {
   return (
     <div className="min-h-screen w-full relative bg-background">
       <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-orange-900/20")} />
-        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1000")}>
+      {/* ! ADJUST DELAY FOR HOW LONG INTENTION SHOWS BEFORE SLIDING UP */}
+        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1500")}>
           <div className="flex justify-center relative animate-slide-in-up">
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
               <Flame className={cn(
