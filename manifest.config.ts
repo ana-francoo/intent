@@ -3,7 +3,8 @@ import pkg from './package.json'
 
 export default defineManifest({
   manifest_version: 3,
-  name: pkg.name,
+  name: 'Intent',
+  short_name: 'Intent',
   version: pkg.version,
   permissions: ['storage', 'activeTab', 'tabs'],
   optional_host_permissions: ['https://*/src/popup/index#/tour'],
@@ -14,6 +15,7 @@ export default defineManifest({
     default_icon: {
       48: 'public/logo.png',
     },
+    default_title: 'Intent',
   },
           web_accessible_resources: [{
           resources: [

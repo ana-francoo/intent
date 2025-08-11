@@ -36,7 +36,7 @@
 }
 
 .tour-arrow {
-  position: absolute;
+  position: fixed;
   z-index: 10000;
   pointer-events: none;
   animation: slideInFromRight 0.8s ease-out 0.3s both;
@@ -57,4 +57,43 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   transform-origin: center;
   /* Removed animation to make it static */
+}
+
+/* Pin press hint animation shown on top of the guide image */
+.pin-press {
+  position: absolute;
+  /* Size relative to the guide image container so it scales with the image */
+  width: 7.5%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px solid #ff6b35;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: none;
+  z-index: 1;
+  animation: pin-press-pulse 2.2s ease-in-out infinite;
+}
+
+.pin-press::after {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: rgba(255, 107, 53, 0.18);
+  transform: scale(0.75); /* scale inner ripple up to match outer size increase */
+  animation: pin-press-ripple 2.2s ease-out infinite;
+}
+
+@keyframes pin-press-pulse {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  12% { transform: translate(-50%, -50%) scale(0.9); }
+  25% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes pin-press-ripple {
+  0% { opacity: 0.35; transform: scale(0.55); }
+  60% { opacity: 0; transform: scale(2.2); }
+  100% { opacity: 0; transform: scale(2.6); }
 }

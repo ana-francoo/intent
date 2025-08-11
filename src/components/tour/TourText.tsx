@@ -25,7 +25,7 @@ const TourText: React.FC<TourTextProps> = ({
     <div 
       className={`tour-text ${className}`}
       style={{
-        position: 'absolute',
+        position: 'fixed',
         ...position,
         fontSize: `${fontSize}px`,
         animationDelay: `${delay}s`

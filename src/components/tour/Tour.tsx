@@ -1,16 +1,50 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import './Tour.css';
 import TourText from './TourText';
 
 const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
-  const [arrowPosition, setArrowPosition] = useState({ top: 10, right: 180, size: 180 });
-  const [firstTextPosition, setFirstTextPosition] = useState({ top: 140, right: 110, fontSize: 18 });
-  const resizeRafRef = useRef<number | null>(null);
-
-  // Calculate dynamic positions based on viewport
-  const calculateDynamicPositions = () => {
+  const [isPinned, setIsPinned] = useState(false);
+  // Guide image absolute position (image first; text placed below image)
+  const getInitialGuideImage = () => {
+    if (typeof window === 'undefined') return { top: 220, right: 110, width: 320 };
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+    const imageTopPercent = 0.22; // keep in sync with calculateDynamicPositions
+    return {
+      top: Math.max(0, Math.round(viewportHeight * imageTopPercent)),
+      right: Math.max(0, Math.round(viewportWidth * 0.12)), // align with text right offset
+      width: clamp(Math.round(viewportWidth * 0.4 * 1.3), 220, 650),
+    };
+  };
+  const getInitialArrow = () => {
+    if (typeof window === 'undefined') return { top: 10, right: 180, size: 180 };
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+    return {
+      top: Math.max(0, Math.round(viewportHeight * 0.02)),
+      right: Math.max(0, Math.round(viewportWidth * 0.15)),
+      size: clamp(Math.round(viewportWidth * 0.2), 120, 260),
+    };
+  };
+  const getInitialFirstText = () => {
+    if (typeof window === 'undefined') return { top: 140, right: 110, fontSize: 18 };
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    return {
+      top: Math.max(0, Math.round(viewportHeight * 0.5)), // moved up a bit above previous placement
+      right: Math.max(0, Math.round(viewportWidth * 0.12)),
+      fontSize: 24,
+    };
+  };
+  const [arrowPosition, setArrowPosition] = useState(getInitialArrow);
+  const [firstTextPosition, setFirstTextPosition] = useState(getInitialFirstText);
+  const [guideImagePosition, setGuideImagePosition] = useState(getInitialGuideImage);
+
+  // Calculate dynamic positions based on viewport (sizes remain fixed)
+  const calculateDynamicPositions = () => {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
@@ -18,45 +52,62 @@ const Tour = () => {
     const arrowTopPercent = 0.02;      // 2% from top
     const arrowRightPercent = 0.15;    // 15% from right
 
-    // First text positioning (viewport-relative)
-    const textTopPercent = 0.15;       // 15% from top
+    // Image and text positioning (viewport-relative)
+    const imageTopPercent = 0.22;      // image anchor from top
+    const textTopPercent = 0.5;        // moved text up relative to image
     const textRightPercent = 0.12;     // 12% from right
 
-    // Arrow sizing (viewport-relative with clamping)
-    const arrowSizePercent = 0.20;     // 20% of viewport width
-    const computedArrowSize = Math.round(viewportWidth * arrowSizePercent);
-    const arrowSize = clamp(computedArrowSize, 120, 260);
-
-    // Text sizing (viewport-relative with clamping)
-    const textSizePercent = 0.015;     // 1.5% of viewport width
-    const computedFontSize = Math.round(viewportWidth * textSizePercent);
-    const fontSize = clamp(computedFontSize, 12, 22);
-
-    setArrowPosition({
+    // Preserve sizes; only update positions
+    setArrowPosition(prev => ({
+      ...prev,
       top: Math.max(0, Math.round(viewportHeight * arrowTopPercent)),
       right: Math.max(0, Math.round(viewportWidth * arrowRightPercent)),
-      size: arrowSize,
-    });
+    }));
 
-    setFirstTextPosition({
+    setFirstTextPosition(prev => ({
+      ...prev,
       top: Math.max(0, Math.round(viewportHeight * textTopPercent)),
       right: Math.max(0, Math.round(viewportWidth * textRightPercent)),
-      fontSize,
-    });
+      fontSize: prev.fontSize ?? 22,
+    }));
+
+    // Guide image: align to the right with the text
+    const guideTop = Math.max(0, Math.round(viewportHeight * imageTopPercent));
+    const guideRight = Math.max(0, Math.round(viewportWidth * textRightPercent));
+    setGuideImagePosition(prev => ({ ...prev, top: guideTop, right: guideRight }));
   };
 
   useEffect(() => {
+    // Set tab title while on the Tour page
+    const previousTitle = document.title;
+    document.title = 'Intent';
+
     // Calculate initial positions
     calculateDynamicPositions();
     
-    // Add resize listener for dynamic positioning (raf to avoid thrash)
-    const handleResize = () => {
-      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
-      resizeRafRef.current = requestAnimationFrame(() => {
-        calculateDynamicPositions();
-      });
+    // Start polling for toolbar pin state once per second
+    let pollTimer: number | null = null;
+    const pollPinState = async () => {
+      try {
+        // Guard if chrome.action is unavailable in the environment
+        if (typeof chrome === 'undefined' || !chrome.action || !chrome.action.getUserSettings) return;
+        const settings = await chrome.action.getUserSettings();
+        if (settings?.isOnToolbar) {
+          setIsPinned(true);
+          if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+          }
+        }
+      } catch {
+        // ignore
+      }
     };
-    window.addEventListener('resize', handleResize);
+    // immediate check, then every second until true
+    pollPinState();
+    pollTimer = window.setInterval(pollPinState, 1000);
+
+    // Intentionally no resize/orientation listeners: positions are frozen
     
     // Listen for when the extension icon is clicked
     const handleExtensionClick = (message: any) => {
@@ -76,8 +127,10 @@ const Tour = () => {
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
-      if (resizeRafRef.current) cancelAnimationFrame(resizeRafRef.current);
+      document.title = previousTitle;
+      // Stop polling if still running
+      if (pollTimer) clearInterval(pollTimer);
+      // No resize/orientation listeners: layout is frozen after initial calculation
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(handleExtensionClick);
       }
@@ -85,14 +138,19 @@ const Tour = () => {
   }, []);
 
   const createFloatingPopup = (position: { x: number, y: number }) => {
-    // Calculate center position based on viewport
+    // Calculate center position and dimensions based on viewport
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const popupWidth = 400;
-    const popupHeight = 600;
-    
-    const centerX = Math.max(0, (viewportWidth - popupWidth) / 2);
-    const centerY = Math.max(0, (viewportHeight - popupHeight) / 2);
+    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+    const getPopupDimensions = (vw: number, vh: number) => {
+      const width = clamp(Math.round(vw * 0.6), 320, Math.min(700, vw - 32));
+      const height = clamp(Math.round(vh * 0.75), 420, Math.min(840, vh - 32));
+      return { width, height };
+    };
+    const { width: popupWidth, height: popupHeight } = getPopupDimensions(viewportWidth, viewportHeight);
+    const centerX = Math.max(0, Math.round((viewportWidth - popupWidth) / 2));
+    const centerY = Math.max(0, Math.round((viewportHeight - popupHeight) / 2));
     
     // ===== EASILY MODIFIABLE SVG POSITIONS (Viewport-Relative) =====
     // Adjust these values to change SVG positions (percentages of viewport)
@@ -131,10 +189,13 @@ const Tour = () => {
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       const newViewportHeight = window.innerHeight;
-      
-      const newCenterX = Math.max(0, (newViewportWidth - popupWidth) / 2);
-      const newCenterY = Math.max(0, (newViewportHeight - popupHeight) / 2);
-      
+      const { width: newPopupWidth, height: newPopupHeight } = getPopupDimensions(newViewportWidth, newViewportHeight);
+
+      // Update popup size and center position
+      element.style.width = `${newPopupWidth}px`;
+      element.style.height = `${newPopupHeight}px`;
+      const newCenterX = Math.max(0, Math.round((newViewportWidth - newPopupWidth) / 2));
+      const newCenterY = Math.max(0, Math.round((newViewportHeight - newPopupHeight) / 2));
       element.style.left = `${newCenterX}px`;
       element.style.top = `${newCenterY}px`;
       
@@ -148,7 +209,7 @@ const Tour = () => {
       if (rightContainer) {
         rightContainer.setAttribute(
           'style',
-          `position: fixed; top: ${newCenterY + newSecondSvgOffsetTop}px; left: ${newCenterX + popupWidth + newSecondSvgOffsetLeft}px; z-index: 2147483645; pointer-events: none; display: inline-flex; align-items: flex-start; gap: 2vw; animation: additional-svg-appear 0.5s ease-out;`
+          `position: fixed; top: ${newCenterY + newSecondSvgOffsetTop}px; left: ${newCenterX + newPopupWidth + newSecondSvgOffsetLeft}px; z-index: 2147483645; pointer-events: none; display: inline-flex; align-items: flex-start; gap: 2vw; animation: additional-svg-appear 0.5s ease-out;`
         );
       }
 
@@ -318,6 +379,7 @@ const Tour = () => {
 
   return (
     <div className="tour-container">
+      {/* Instruction text changes based on pin state */}
       {/* White background */}
       <div className="tour-background"></div>
       
@@ -347,10 +409,10 @@ const Tour = () => {
         </div>
       )}
       
-      {/* First text - appears with the arrow */}
-      {!extensionClicked && (
+      {/* First text - appears with the arrow until pinned */}
+      {!extensionClicked && !isPinned && (
         <TourText
-          text="Click on the chrome extension icon to open Intent"
+          text="1. Let's start by pinning the Intent extension"
           position={{
             top: firstTextPosition.top,
             right: firstTextPosition.right
@@ -358,6 +420,56 @@ const Tour = () => {
           fontSize={firstTextPosition.fontSize}
           delay={0.6}
         />
+      )}
+
+      {/* After pinning, replace with step 2 instruction */}
+      {!extensionClicked && isPinned && (
+        <TourText
+          text="2. Now open the extension by clicking on it"
+          position={{
+            top: firstTextPosition.top,
+            right: firstTextPosition.right
+          }}
+          fontSize={firstTextPosition.fontSize}
+          delay={0.1}
+        />
+      )}
+
+      {/* Guide image positioned below the text, aligned to the right */}
+      {!extensionClicked && (
+        <div
+          style={{
+            position: 'fixed',
+            top: `${guideImagePosition.top}px`,
+            right: `${guideImagePosition.right}px`,
+            width: `${guideImagePosition.width}px`,
+            zIndex: 10000,
+            borderRadius: 14,
+            overflow: 'hidden',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+            background: '#fff',
+          }}
+        >
+          {/* Animated "press" hint over the pin icon area (hidden once pinned). */}
+          {!isPinned && (
+            <div
+              className="pin-press"
+              style={{
+                top: '58%',   // % of image height
+                right: '22.5%', // % of image width from right
+              }}
+            />
+          )}
+          <img
+            src={
+              typeof chrome !== 'undefined' && chrome.runtime
+                ? chrome.runtime.getURL('src/assets/pin-open.png')
+                : 'src/assets/pin-open.png'
+            }
+            alt="Step 1: Pin the Intent extension, Step 2: Click it to open"
+            style={{ display: 'block', width: '100%', height: 'auto' }}
+          />
+        </div>
       )}
      </div>
    );

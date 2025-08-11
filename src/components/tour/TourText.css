@@ -4,7 +4,9 @@
   border-radius: 8px;
   font-size: 18px;
   font-weight: 500;
-  white-space: nowrap;
+  white-space: nowrap; /* keep text on one line */
+  word-break: normal;
+  max-width: none; /* allow full single-line length */
   pointer-events: none;
   z-index: 10001;
   animation: tour-text-appear 0.8s ease-out both;
@@ -21,10 +23,4 @@
   }
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 400px) {
-  .tour-text {
-    font-size: 16px;
-    padding: 6px 10px;
-  }
-} 
+/* Removed responsive overrides so size stays fixed */
