@@ -24,5 +24,5 @@
     "skipLibCheck": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "postcss.config.js", "tailwind.config.ts", "eslint.config.js"]
+  "include": ["src", "postcss.config.js", "tailwind.config.ts", "eslint.config.js", "global.d.ts"]
 }

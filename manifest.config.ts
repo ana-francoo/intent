@@ -6,6 +6,7 @@ export default defineManifest({
   name: pkg.name,
   version: pkg.version,
   permissions: ['storage', 'activeTab', 'tabs'],
+  optional_host_permissions: ['https://*/src/popup/index#/tour'],
   icons: {
     48: 'public/logo.png',
   },
