@@ -9,8 +9,9 @@ const Tour = () => {
   const getInitialGuideImage = () => {
     if (typeof window === 'undefined') return { top: 220, right: 110, width: 320 };
     const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
     const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+    
+    const viewportHeight = window.innerHeight;
     const imageTopPercent = 0.22; // keep in sync with calculateDynamicPositions
     return {
       top: Math.max(0, Math.round(viewportHeight * imageTopPercent)),
@@ -103,9 +104,9 @@ const Tour = () => {
         // ignore
       }
     };
-    // immediate check, then every second until true
+    // immediate check, then every 500ms until true
     pollPinState();
-    pollTimer = window.setInterval(pollPinState, 1000);
+    pollTimer = window.setInterval(pollPinState, 500);
 
     // Intentionally no resize/orientation listeners: positions are frozen
     
@@ -143,19 +144,16 @@ const Tour = () => {
     const viewportHeight = window.innerHeight;
     const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-    const getPopupDimensions = (vw: number, vh: number) => {
-      const width = clamp(Math.round(vw * 0.6), 320, Math.min(700, vw - 32));
-      const height = clamp(Math.round(vh * 0.75), 420, Math.min(840, vh - 32));
-      return { width, height };
-    };
-    const { width: popupWidth, height: popupHeight } = getPopupDimensions(viewportWidth, viewportHeight);
+    // Use fixed popup dimensions to match the inner iframe's layout (400x600)
+    const getPopupDimensions = () => ({ width: 400, height: 600 });
+    const { width: popupWidth, height: popupHeight } = getPopupDimensions();
     const centerX = Math.max(0, Math.round((viewportWidth - popupWidth) / 2));
     const centerY = Math.max(0, Math.round((viewportHeight - popupHeight) / 2));
     
     // ===== EASILY MODIFIABLE SVG POSITIONS (Viewport-Relative) =====
     // Adjust these values to change SVG positions (percentages of viewport)
     const secondSvgOffsetTopPercent = 0.15;    // 15% of viewport height below popup center
-    const secondSvgOffsetLeftPercent = -0.25;   // 25% of viewport width left of popup
+    const secondSvgOffsetLeftPercent = -0.2;   // 25% of viewport width left of popup
     const secondSvgWidthPercent = 0.6;        // 60% of viewport width
     const secondSvgHeightPercent = 0.6;       // 60% of viewport height
     
@@ -189,7 +187,7 @@ const Tour = () => {
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       const newViewportHeight = window.innerHeight;
-      const { width: newPopupWidth, height: newPopupHeight } = getPopupDimensions(newViewportWidth, newViewportHeight);
+      const { width: newPopupWidth, height: newPopupHeight } = getPopupDimensions();
 
       // Update popup size and center position
       element.style.width = `${newPopupWidth}px`;
@@ -335,7 +333,7 @@ const Tour = () => {
         pointer-events: none;
         display: inline-flex;
         align-items: flex-start;
-        gap: 2vw; /* responsive spacing between arrow and text */
+        gap: 1vw; /* responsive spacing between arrow and text */
         animation: additional-svg-appear 0.5s ease-out;
       `;
 
@@ -368,7 +366,9 @@ const Tour = () => {
         font-weight: 500;
         line-height: 1.4;
         font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-      `;
+
+      
+        `;
       secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
 
       rightContainer.appendChild(additionalSvg);
@@ -459,6 +459,42 @@ const Tour = () => {
                 right: '22.5%', // % of image width from right
               }}
             />
+          )}
+
+          {/* After pinned, show a click animation targetting the extension icon area */}
+          {isPinned && (
+            <>
+              {/* Hover rectangle relative to the image container */}
+              <div
+                className="hover-rect"
+                style={{
+                  top: '50.5%',
+                  left: '34.5%',
+                }}
+              />
+              {/* Mouse click group (pointer + ring) */}
+              <div
+                className="mouse-click"
+                style={{ top: '55%', right: '52%' }}
+              >
+                {/* Cursor pointer */}
+                <svg
+                  className="mouse-pointer-svg"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="#1f2937"
+                  style={{
+                    // Fine-tune where the pointer tip sits relative to the ring center
+                    ['--pointer-offset-x' as any]: '55%',
+                    ['--pointer-offset-y' as any]: '45%',
+                  }}
+                >
+                  <path d="M4 2l14 8-6 2 2 6-3 1-2-6-5 3z" />
+                </svg>
+                {/* Click ring */}
+                <div className="mouse-click-ring" />
+              </div>
+            </>
           )}
           <img
             src={

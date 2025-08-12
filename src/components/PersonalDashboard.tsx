@@ -24,6 +24,7 @@ import {
   Target,
   
 } from 'lucide-react';
+import { ENTERTAINMENT_SITES, SOCIAL_SITES, SHOPPING_SITES, NEWS_SITES } from '@/utils/categoryPresets';
 
 interface Site {
   url: string;
@@ -130,50 +131,32 @@ const PersonalDashboard = () => {
   
   const [categories, setCategories] = useState<SiteCategory[]>([
     {
-      id: 'entertainment',
-      name: 'Entertainment',
-      icon: Gamepad2,
-      expanded: false,
-      sites: [
-        { url: 'youtube.com', enabled: true },
-        { url: 'netflix.com', enabled: false },
-        { url: 'twitch.tv', enabled: true },
-        { url: 'hulu.com', enabled: false }
-      ]
-    },
-    {
       id: 'social',
       name: 'Social',
       icon: Users,
       expanded: false,
-      sites: [
-        { url: 'facebook.com', enabled: true },
-        { url: 'instagram.com', enabled: true },
-        { url: 'twitter.com', enabled: false },
-        { url: 'tiktok.com', enabled: true }
-      ]
+      sites: SOCIAL_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
+    },
+    {
+      id: 'entertainment',
+      name: 'Entertainment',
+      icon: Gamepad2,
+      expanded: false,
+      sites: ENTERTAINMENT_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
     },
     {
       id: 'shopping',
       name: 'Shopping',
       icon: ShoppingBag,
       expanded: false,
-      sites: [
-        { url: 'amazon.com', enabled: false },
-        { url: 'ebay.com', enabled: true },
-        { url: 'shopify.com', enabled: false }
-      ]
+      sites: SHOPPING_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
     },
     {
       id: 'news',
       name: 'News',
       icon: Newspaper,
       expanded: false,
-      sites: [
-        { url: 'cnn.com', enabled: true },
-        { url: 'bbc.com', enabled: false },
-        { url: 'reddit.com', enabled: true }
-      ]
+      sites: NEWS_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
     },
     {
       id: 'my-sites',
@@ -606,7 +589,7 @@ const PersonalDashboard = () => {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-xs">{category.name}</span>
                       <Badge className="text-xs bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full px-2 py-0.5">
-                        {category.sites.filter(site => site.enabled).length}
+                        {category.sites.reduce((count, site) => count + (site.enabled ? 1 : 0), 0)}
                       </Badge>
                     </div>
                   </div>

@@ -97,3 +97,85 @@
   60% { opacity: 0; transform: scale(2.2); }
   100% { opacity: 0; transform: scale(2.6); }
 }
+
+/* Mouse click animation (used after pinning) */
+.mouse-click {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  animation: mouse-fade-in-right 0.7s ease-out forwards;
+}
+
+.mouse-pointer-svg {
+  position: absolute;
+  width: 3.5%;
+  min-width: 14px;
+  height: auto;
+  /* Set the click center to the middle of the .mouse-click container */
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+  /* Default offsets so the pointer tip sits at the center. Adjust via CSS vars
+     --pointer-offset-x and --pointer-offset-y on the element if needed. */
+  --pointer-offset-x: -85%;
+  --pointer-offset-y: -15%;
+  animation: mouse-pointer-click 1.2s ease-out infinite;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+}
+
+.mouse-click-ring {
+  position: absolute;
+  width: 7%;
+  min-width: 28px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 2px solid #ff6b35;
+  opacity: 0;
+  /* Center ring on the click center */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: mouse-ring-pop 1.2s ease-out infinite;
+}
+
+@keyframes mouse-pointer-click {
+  0%   { transform: translate(var(--pointer-offset-x), var(--pointer-offset-y)) scale(1); }
+  15%  { transform: translate(calc(var(--pointer-offset-x) + 2px), calc(var(--pointer-offset-y) + 2px)) scale(0.95); }
+  30%  { transform: translate(var(--pointer-offset-x), var(--pointer-offset-y)) scale(1); }
+  100% { transform: translate(var(--pointer-offset-x), var(--pointer-offset-y)) scale(1); }
+}
+
+@keyframes mouse-ring-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  15% { opacity: 0.5; transform: scale(0.35); }
+  45% { opacity: 0; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@keyframes mouse-fade-in-right {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateX(80px); }
+  100% { opacity: 1; transform: translate(-50%, -50%) translateX(0); }
+}
+
+/* Semi-transparent hover rectangle near the click target */
+.hover-rect {
+  position: absolute;
+  transform: none;
+  min-width: 160px;
+  min-height: 40px;
+  border-radius: 2px;
+  background: rgba(167, 167, 167, 0.18);
+  border: none;
+  outline: none;
+  opacity: 0;
+  /* Appear instantly after 0.3s delay (no fade) */
+  animation: hover-instant 1ms steps(1, end) 0.3s forwards;
+  pointer-events: none;
+}
+
+@keyframes hover-instant {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
