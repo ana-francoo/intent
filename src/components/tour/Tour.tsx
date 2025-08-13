@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './Tour.css';
 import TourText from './TourText';
+import { createFloatingPopup } from '@/utils/floatingPopup';
 
 const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
@@ -115,323 +116,220 @@ const Tour = () => {
         setExtensionClicked(true);
         
         // Create the floating popup iframe
-        createFloatingPopup(message.position || { x: 100, y: 100 });
+        const popupResult = createFloatingPopup({ route: '/' });
+        const element = popupResult.element;
+        
+        // Get viewport and popup dimensions for Tour-specific elements
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const popupWidth = 400;
+        const popupHeight = 600;
+        const centerX = Math.max(0, Math.round((viewportWidth - popupWidth) / 2));
+        const centerY = Math.max(0, Math.round((viewportHeight - popupHeight) / 2));
+        
+        // ===== EASILY MODIFIABLE SVG POSITIONS (Viewport-Relative) =====
+        const secondSvgOffsetTopPercent = 0.15;
+        const secondSvgOffsetLeftPercent = -0.2;
+        const secondSvgWidthPercent = 0.6;
+        const secondSvgHeightPercent = 0.6;
+        
+        const secondSvgOffsetTop = Math.round(viewportHeight * secondSvgOffsetTopPercent);
+        const secondSvgOffsetLeft = Math.round(viewportWidth * secondSvgOffsetLeftPercent);
+        const secondSvgWidth = Math.round(viewportWidth * secondSvgWidthPercent);
+        const secondSvgHeight = Math.round(viewportHeight * secondSvgHeightPercent);
+        
+        // Helper: position second text relative to the second SVG
+        const positionSecondTextRelativeToSvg = () => {
+          const svgEl = document.getElementById('additional-svg');
+          const textEl = document.getElementById('second-tour-text');
+          if (!svgEl || !textEl) return;
+          const rect = svgEl.getBoundingClientRect();
+          const svgWidth = rect.width;
+          const svgHeight = rect.height;
+          const textOffsetXPercent = -0.38;
+          const textOffsetYPercent = 0.1;
+          const leftPx = Math.round(rect.right + svgWidth * textOffsetXPercent);
+          const topPx = Math.round(rect.top + svgHeight * textOffsetYPercent);
+          textEl.setAttribute(
+            'style',
+            `position: fixed; top: ${topPx}px; left: ${leftPx}px; z-index: 2147483646; max-width: 25vw; pointer-events: none; animation: tour-text-appear 0.5s ease-out; color: black; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: clamp(0.95rem, 1.5vw, 1.25rem); font-weight: 500; line-height: 1.4; font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;`
+          );
+        };
+        
+        // Add resize event listener for Tour-specific elements
+        const handleTourResize = () => {
+          const newViewportWidth = window.innerWidth;
+          const newViewportHeight = window.innerHeight;
+          const newPopupWidth = 400;
+          const newPopupHeight = 600;
+          const newCenterX = Math.max(0, Math.round((newViewportWidth - newPopupWidth) / 2));
+          const newCenterY = Math.max(0, Math.round((newViewportHeight - newPopupHeight) / 2));
+          
+          const newSecondSvgOffsetTop = Math.round(newViewportHeight * secondSvgOffsetTopPercent);
+          const newSecondSvgOffsetLeft = Math.round(newViewportWidth * secondSvgOffsetLeftPercent);
+          const newSecondSvgWidth = Math.round(newViewportWidth * secondSvgWidthPercent);
+          const newSecondSvgHeight = Math.round(newViewportHeight * secondSvgHeightPercent);
+          
+          const rightContainer = document.getElementById('tour-right-container');
+          if (rightContainer) {
+            rightContainer.setAttribute(
+              'style',
+              `position: fixed; top: ${newCenterY + newSecondSvgOffsetTop}px; left: ${newCenterX + newPopupWidth + newSecondSvgOffsetLeft}px; z-index: 2147483645; pointer-events: none; display: inline-flex; align-items: flex-start; gap: 2vw; animation: additional-svg-appear 0.5s ease-out;`
+            );
+          }
+          
+          const additionalSvg = document.getElementById('additional-svg');
+          if (additionalSvg) {
+            additionalSvg.setAttribute(
+              'style',
+              `width: ${newSecondSvgWidth}px; height: ${newSecondSvgHeight}px; pointer-events: none;`
+            );
+          }
+          
+          const continueBtnRepos = document.getElementById('tour-continue-button');
+          if (continueBtnRepos) {
+            continueBtnRepos.setAttribute(
+              'style',
+              `position: fixed; top: ${newCenterY + newPopupHeight + Math.round(newPopupHeight * 0.04)}px; left: ${newCenterX + Math.round(newPopupWidth / 2)}px; transform: translateX(-50%); z-index: 2147483646; pointer-events: auto; padding: 10px 16px; border-radius: 10px; background: rgba(0,0,0,0.12); color: #1a1a1a; border: 1px solid rgba(0,0,0,0.15); backdrop-filter: blur(2px); font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); transition: background 0.2s ease, border-color 0.2s ease; animation: additional-svg-appear 0.5s ease-out;`
+            );
+          }
+          positionSecondTextRelativeToSvg();
+        };
+        
+        window.addEventListener('resize', handleTourResize);
+        (element as any)._tourResizeHandler = handleTourResize;
+        
+        // Override the close button behavior to clean up Tour-specific elements
+        const closeButton = element.querySelector('button');
+        if (closeButton) {
+          const originalOnclick = closeButton.onclick;
+          closeButton.onclick = () => {
+            if ((element as any)._tourResizeHandler) {
+              window.removeEventListener('resize', (element as any)._tourResizeHandler);
+            }
+            
+            const rightContainer = document.getElementById('tour-right-container');
+            if (rightContainer) rightContainer.remove();
+            
+            const continueBtnCleanup = document.getElementById('tour-continue-button');
+            if (continueBtnCleanup) continueBtnCleanup.remove();
+            
+            if (originalOnclick && typeof originalOnclick === 'function') {
+              (originalOnclick as any)();
+            }
+          };
+        }
+        
+        // Add Tour-specific CSS animations if not already present
+        if (!document.getElementById('tour-animations')) {
+          const style = document.createElement('style');
+          style.id = 'tour-animations';
+          style.textContent = `
+            @keyframes additional-svg-appear {
+              0% { opacity: 0; transform: scale(0.8) translateX(20px); }
+              100% { opacity: 1; transform: scale(1) translateX(0); }
+            }
+            @keyframes tour-text-appear {
+              0% { opacity: 0; transform: translateY(10px); }
+              100% { opacity: 1; transform: translateY(0); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+        
+        // Create additional SVG and text that appear 0.4 seconds later
+        setTimeout(() => {
+          const rightContainer = document.createElement('div');
+          rightContainer.id = 'tour-right-container';
+          rightContainer.style.cssText = `
+            position: fixed;
+            top: ${centerY + secondSvgOffsetTop}px;
+            left: ${centerX + popupWidth + secondSvgOffsetLeft}px;
+            z-index: 2147483645;
+            pointer-events: none;
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 1vw;
+            animation: additional-svg-appear 0.5s ease-out;
+          `;
+          
+          const additionalSvg = document.createElement('div');
+          additionalSvg.id = 'additional-svg';
+          additionalSvg.style.cssText = `
+            width: ${secondSvgWidth}px;
+            height: ${secondSvgHeight}px;
+            pointer-events: none;
+          `;
+          additionalSvg.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" style="width: 100%; height: 100%;">
+              <path d="M168.97138,43.22749c12.64149,0,12.90694,18.62863,12.90694,28.16059c0,14.17547-8.24082,31.42365-2.73783,43.80536.26999.60748.72094,1.37841.39112,1.9556-1.41257,2.47199-4.67465,2.15888-5.08455,6.25791-1.13699,11.36992,5.7975,26.79941,6.64903,38.72081.56991,7.97879.51404,29.72506-11.34246,29.72506" transform="translate(-18.97138 21.120441)" fill="none" stroke="#ff6b35" stroke-width="2"/>
+            </svg>
+          `;
+          
+          const secondText = document.createElement('div');
+          secondText.id = 'second-tour-text';
+          secondText.style.cssText = `position: fixed; top: 0; left: 0; opacity: 0;`;
+          secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
+          
+          rightContainer.appendChild(additionalSvg);
+          document.body.appendChild(rightContainer);
+          document.body.appendChild(secondText);
+          
+          const continueBtn = document.createElement('button');
+          continueBtn.id = 'tour-continue-button';
+          continueBtn.textContent = 'Continue';
+          continueBtn.style.cssText = `
+            position: fixed;
+            top: ${centerY + popupHeight + Math.round(popupHeight * 0.04)}px;
+            left: ${centerX + Math.round(popupWidth / 2)}px;
+            transform: translateX(-50%);
+            z-index: 2147483646;
+            pointer-events: auto;
+            padding: 10px 16px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.12);
+            color: #1a1a1a;
+            border: 1px solid rgba(0,0,0,0.15);
+            backdrop-filter: blur(2px);
+            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            transition: background 0.2s ease, border-color 0.2s ease;
+            animation: additional-svg-appear 0.5s ease-out;
+          `;
+          continueBtn.onmouseenter = () => {
+            continueBtn.style.background = 'rgba(0,0,0,0.18)';
+            continueBtn.style.borderColor = 'rgba(0,0,0,0.22)';
+          };
+          continueBtn.onmouseleave = () => {
+            continueBtn.style.background = 'rgba(0,0,0,0.12)';
+            continueBtn.style.borderColor = 'rgba(0,0,0,0.15)';
+          };
+          document.body.appendChild(continueBtn);
+          
+          requestAnimationFrame(() => {
+            positionSecondTextRelativeToSvg();
+            const textEl = document.getElementById('second-tour-text');
+            if (textEl) textEl.style.opacity = '1';
+          });
+        }, 400);
       }
     };
 
-    // Listen for messages from background script
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
       chrome.runtime.onMessage.addListener(handleExtensionClick);
     }
     
-    // Cleanup
     return () => {
       document.title = previousTitle;
-      // Stop polling if still running
       if (pollTimer) clearInterval(pollTimer);
-      // No resize/orientation listeners: layout is frozen after initial calculation
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(handleExtensionClick);
       }
     };
   }, []);
-
-  const createFloatingPopup = (position: { x: number, y: number }) => {
-    // Calculate center position and dimensions based on viewport
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    // Use fixed popup dimensions to match the inner iframe's layout (400x600)
-    const getPopupDimensions = () => ({ width: 400, height: 600 });
-    const { width: popupWidth, height: popupHeight } = getPopupDimensions();
-    const centerX = Math.max(0, Math.round((viewportWidth - popupWidth) / 2));
-    const centerY = Math.max(0, Math.round((viewportHeight - popupHeight) / 2));
-    
-    // ===== EASILY MODIFIABLE SVG POSITIONS (Viewport-Relative) =====
-    // Adjust these values to change SVG positions (percentages of viewport)
-    const secondSvgOffsetTopPercent = 0.15;    // 15% of viewport height below popup center
-    const secondSvgOffsetLeftPercent = -0.2;   // 25% of viewport width left of popup
-    const secondSvgWidthPercent = 0.6;        // 60% of viewport width
-    const secondSvgHeightPercent = 0.6;       // 60% of viewport height
-    
-    // Calculate actual pixel values based on viewport
-    const secondSvgOffsetTop = Math.round(viewportHeight * secondSvgOffsetTopPercent);
-    const secondSvgOffsetLeft = Math.round(viewportWidth * secondSvgOffsetLeftPercent);
-    const secondSvgWidth = Math.round(viewportWidth * secondSvgWidthPercent);
-    const secondSvgHeight = Math.round(viewportHeight * secondSvgHeightPercent);
-    // ===========================================
-    
-    // Helper: position second text relative to the second SVG (maintains gap)
-    const positionSecondTextRelativeToSvg = () => {
-      const svgEl = document.getElementById('additional-svg');
-      const textEl = document.getElementById('second-tour-text');
-      if (!svgEl || !textEl) return;
-      const rect = svgEl.getBoundingClientRect();
-      const svgWidth = rect.width;
-      const svgHeight = rect.height;
-      // Tweakable gap definitions relative to SVG size
-      const textOffsetXPercent = -0.38; // horizontal gap: 6% of svg width to the right of svg
-      const textOffsetYPercent = 0.1; // vertical offset: 20% of svg height from svg top
-      const leftPx = Math.round(rect.right + svgWidth * textOffsetXPercent);
-      const topPx = Math.round(rect.top + svgHeight * textOffsetYPercent);
-      textEl.setAttribute(
-        'style',
-        `position: fixed; top: ${topPx}px; left: ${leftPx}px; z-index: 2147483646; max-width: 25vw; pointer-events: none; animation: tour-text-appear 0.5s ease-out; color: black; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: clamp(0.95rem, 1.5vw, 1.25rem); font-weight: 500; line-height: 1.4; font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;`
-      );
-    };
-    
-    const element = document.createElement('div');
-    
-    element.style.cssText = `
-      position: fixed;
-      top: ${centerY}px;
-      left: ${centerX}px;
-      width: ${popupWidth}px;
-      height: ${popupHeight}px;
-      background: radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%);
-      border-radius: 16px;
-      z-index: 2147483646;
-      pointer-events: auto;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 148, 77, 0.2);
-      border: 1px solid rgba(255, 148, 77, 0.2);
-      overflow: hidden;
-      animation: floating-popup-appear 0.3s ease-out;
-      font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-    `;
-    
-    // Add resize event listener to keep popup centered
-    const handleResize = () => {
-      const newViewportWidth = window.innerWidth;
-      const newViewportHeight = window.innerHeight;
-      const { width: newPopupWidth, height: newPopupHeight } = getPopupDimensions();
-
-      // Update popup size and center position
-      element.style.width = `${newPopupWidth}px`;
-      element.style.height = `${newPopupHeight}px`;
-      const newCenterX = Math.max(0, Math.round((newViewportWidth - newPopupWidth) / 2));
-      const newCenterY = Math.max(0, Math.round((newViewportHeight - newPopupHeight) / 2));
-      element.style.left = `${newCenterX}px`;
-      element.style.top = `${newCenterY}px`;
-      
-      // Update SVG and text positions dynamically
-      const newSecondSvgOffsetTop = Math.round(newViewportHeight * secondSvgOffsetTopPercent);
-      const newSecondSvgOffsetLeft = Math.round(newViewportWidth * secondSvgOffsetLeftPercent);
-      const newSecondSvgWidth = Math.round(newViewportWidth * secondSvgWidthPercent);
-      const newSecondSvgHeight = Math.round(newViewportHeight * secondSvgHeightPercent);
-      // Update the right-side container (keeps arrow location constant)
-      const rightContainer = document.getElementById('tour-right-container');
-      if (rightContainer) {
-        rightContainer.setAttribute(
-          'style',
-          `position: fixed; top: ${newCenterY + newSecondSvgOffsetTop}px; left: ${newCenterX + newPopupWidth + newSecondSvgOffsetLeft}px; z-index: 2147483645; pointer-events: none; display: inline-flex; align-items: flex-start; gap: 2vw; animation: additional-svg-appear 0.5s ease-out;`
-        );
-      }
-
-      // Update arrow size responsively (position comes from container)
-      const additionalSvg = document.getElementById('additional-svg');
-      if (additionalSvg) {
-        additionalSvg.setAttribute(
-          'style',
-          `width: ${newSecondSvgWidth}px; height: ${newSecondSvgHeight}px; pointer-events: none;`
-        );
-      }
-      const continueBtnRepos = document.getElementById('tour-continue-button');
-      if (continueBtnRepos) {
-        continueBtnRepos.setAttribute(
-          'style',
-          `position: fixed; top: ${newCenterY + newPopupHeight + Math.round(newPopupHeight * 0.04)}px; left: ${newCenterX + Math.round(newPopupWidth / 2)}px; transform: translateX(-50%); z-index: 2147483646; pointer-events: auto; padding: 10px 16px; border-radius: 10px; background: rgba(0,0,0,0.12); color: #1a1a1a; border: 1px solid rgba(0,0,0,0.15); backdrop-filter: blur(2px); font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); transition: background 0.2s ease, border-color 0.2s ease; animation: additional-svg-appear 0.5s ease-out;`
-        );
-      }
-      // After resizing/repositioning, re-place the text to maintain the gap
-      positionSecondTextRelativeToSvg();
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Store the resize handler on the element for cleanup
-    (element as any)._resizeHandler = handleResize;
-    
-    // Add close button
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = '×';
-    closeButton.style.cssText = `
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 24px;
-      height: 24px;
-      background: rgba(255, 148, 77, 0.2);
-      border: 1px solid rgba(255, 148, 77, 0.3);
-      border-radius: 50%;
-      color: #F5E6D3;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2147483647;
-      transition: all 0.2s ease;
-    `;
-    
-    closeButton.onmouseover = () => {
-      closeButton.style.background = 'rgba(255, 148, 77, 0.4)';
-      closeButton.style.borderColor = 'rgba(255, 148, 77, 0.5)';
-    };
-    
-    closeButton.onmouseout = () => {
-      closeButton.style.background = 'rgba(255, 148, 77, 0.2)';
-      closeButton.style.borderColor = 'rgba(255, 148, 77, 0.3)';
-    };
-    
-    closeButton.onclick = () => {
-      // Remove resize event listener
-      if ((element as any)._resizeHandler) {
-        window.removeEventListener('resize', (element as any)._resizeHandler);
-      }
-      
-      // Remove the right-side container (arrow + text) if it exists
-      const rightContainer = document.getElementById('tour-right-container');
-      if (rightContainer) {
-        rightContainer.remove();
-      }
-      const continueBtnCleanup = document.getElementById('tour-continue-button');
-      if (continueBtnCleanup) {
-        continueBtnCleanup.remove();
-      }
-      
-      // Add fade-out animation
-      element.style.animation = 'floating-popup-disappear 0.3s ease-in forwards';
-      
-      // Remove element after animation completes
-      setTimeout(() => {
-        element.remove();
-        style.remove();
-      }, 300);
-    };
-    
-    element.appendChild(closeButton);
-    
-    // Create iframe to load the actual popup
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = `
-      width: 100%;
-      height: 100%;
-      border: none;
-      border-radius: 16px;
-      background: transparent;
-    `;
-    
-    // Add a parameter to prevent infinite loop
-    iframe.src = chrome.runtime.getURL('src/popup/index.html') + '?floating=true';
-    
-    element.appendChild(iframe);
-    
-    // Add CSS animations
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes floating-popup-appear {
-        0% { opacity: 0; transform: scale(0.8) translateY(20px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      
-      @keyframes floating-popup-disappear {
-        0% { opacity: 1; transform: scale(1) translateY(0); }
-        100% { opacity: 0; transform: scale(0.8) translateY(20px); }
-      }
-      
-      @keyframes additional-svg-appear {
-        0% { opacity: 0; transform: scale(0.8) translateX(20px); }
-        100% { opacity: 1; transform: scale(1) translateX(0); }
-      }
-    `;
-    
-    document.head.appendChild(style);
-    document.body.appendChild(element);
-    
-    // Create additional SVG and text that appear 0.4 seconds later
-    setTimeout(() => {
-      // Right-side container to align arrow and text horizontally
-      const rightContainer = document.createElement('div');
-      rightContainer.id = 'tour-right-container';
-      rightContainer.style.cssText = `
-        position: fixed;
-        top: ${centerY + secondSvgOffsetTop}px;
-        left: ${centerX + popupWidth + secondSvgOffsetLeft}px;
-        z-index: 2147483645;
-        pointer-events: none;
-        display: inline-flex;
-        align-items: flex-start;
-        gap: 1vw; /* responsive spacing between arrow and text */
-        animation: additional-svg-appear 0.5s ease-out;
-      `;
-
-      // The second (squiggly) arrow
-      const additionalSvg = document.createElement('div');
-      additionalSvg.id = 'additional-svg';
-      additionalSvg.style.cssText = `
-        width: ${secondSvgWidth}px;
-        height: ${secondSvgHeight}px;
-        pointer-events: none;
-      `;
-      additionalSvg.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" style="width: 100%; height: 100%;">
-          <path d="M168.97138,43.22749c12.64149,0,12.90694,18.62863,12.90694,28.16059c0,14.17547-8.24082,31.42365-2.73783,43.80536.26999.60748.72094,1.37841.39112,1.9556-1.41257,2.47199-4.67465,2.15888-5.08455,6.25791-1.13699,11.36992,5.7975,26.79941,6.64903,38.72081.56991,7.97879.51404,29.72506-11.34246,29.72506" transform="translate(-18.97138 21.120441)" fill="none" stroke="#ff6b35" stroke-width="2"/>
-        </svg>
-      `;
-
-      // The explanatory text to the right of the arrow (positioned relative to the SVG)
-      const secondText = document.createElement('div');
-      secondText.id = 'second-tour-text';
-      // Temporary style; real position will be applied next frame based on SVG bounds
-      secondText.style.cssText = `position: fixed; top: 0; left: 0; opacity: 0;`;
-      secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
-
-      rightContainer.appendChild(additionalSvg);
-      document.body.appendChild(rightContainer);
-      document.body.appendChild(secondText);
-      // Create Continue button under the popup, centered with a small gap
-      const continueBtn = document.createElement('button');
-      continueBtn.id = 'tour-continue-button';
-      continueBtn.textContent = 'Continue';
-      continueBtn.style.cssText = `
-        position: fixed;
-        top: ${centerY + popupHeight + Math.round(popupHeight * 0.04)}px;
-        left: ${centerX + Math.round(popupWidth / 2)}px;
-        transform: translateX(-50%);
-        z-index: 2147483646;
-        pointer-events: auto;
-        padding: 10px 16px;
-        border-radius: 10px;
-        background: rgba(0,0,0,0.12);
-        color: #1a1a1a;
-        border: 1px solid rgba(0,0,0,0.15);
-        backdrop-filter: blur(2px);
-        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 0.2px;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-        transition: background 0.2s ease, border-color 0.2s ease;
-        animation: additional-svg-appear 0.5s ease-out;
-      `;
-      continueBtn.onmouseenter = () => {
-        continueBtn.style.background = 'rgba(0,0,0,0.18)';
-        continueBtn.style.borderColor = 'rgba(0,0,0,0.22)';
-      };
-      continueBtn.onmouseleave = () => {
-        continueBtn.style.background = 'rgba(0,0,0,0.12)';
-        continueBtn.style.borderColor = 'rgba(0,0,0,0.15)';
-      };
-      document.body.appendChild(continueBtn);
-      // Position relative to SVG on next frame and reveal
-      requestAnimationFrame(() => {
-        positionSecondTextRelativeToSvg();
-        const textEl = document.getElementById('second-tour-text');
-        if (textEl) textEl.style.opacity = '1';
-      });
-    }, 400);
-  };
 
   return (
     <div className="tour-container">
