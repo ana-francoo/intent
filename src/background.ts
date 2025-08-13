@@ -230,22 +230,8 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
         });
       }
       
-      // Try to open popup first, then fallback to tab
-      chrome.action.openPopup().then(() => {
-        console.log('[Background] Extension popup opened after auth');
-        sendResponse({ success: true, method: 'popup' });
-      }).catch(() => {
-        console.log('[Background] Popup failed, opening in new tab');
-        chrome.tabs.create({
-          url: chrome.runtime.getURL('src/popup/index.html#/')
-        }).then(() => {
-          console.log('[Background] Extension opened in new tab after auth');
-          sendResponse({ success: true, method: 'tab' });
-        }).catch((error) => {
-          console.error('[Background] Failed to open extension:', error);
-          sendResponse({ success: false, error: String(error) });
-        });
-      });
+      console.log('[Background] Auth successful, auth page will handle popup creation');
+      sendResponse({ success: true, method: 'floating_popup' });
     });
     
     return true;

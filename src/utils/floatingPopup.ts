@@ -1,10 +1,20 @@
 export interface FloatingPopupOptions {
   onClose?: () => void;
   route?: string;
+  draggable?: boolean;
 }
 
 export function createFloatingPopup(options: FloatingPopupOptions = {}) {
-  const { onClose, route = '' } = options;
+  const { onClose, route = '', draggable = false } = options;
+  
+  const existingPopup = document.getElementById('floating-popup-container');
+  if (existingPopup) {
+    console.log('[FloatingPopup] Popup already exists, not creating duplicate');
+    return {
+      element: existingPopup,
+      cleanup: () => {} 
+    };
+  }
   
   // Calculate center position and dimensions based on viewport
   const viewportWidth = window.innerWidth;
@@ -81,6 +91,16 @@ export function createFloatingPopup(options: FloatingPopupOptions = {}) {
       window.removeEventListener('resize', (element as any)._resizeHandler);
     }
     
+    // Remove drag event listeners if present
+    if ((element as any)._dragHandlers) {
+      const { handleMouseMove, handleMouseUp, dragOverlay } = (element as any)._dragHandlers;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      if (dragOverlay && dragOverlay.parentNode) {
+        dragOverlay.removeEventListener('mousedown', (element as any)._dragHandlers.handleMouseDown);
+      }
+    }
+    
     // Add fade-out animation
     element.style.animation = 'floating-popup-disappear 0.3s ease-in forwards';
     
@@ -129,6 +149,73 @@ export function createFloatingPopup(options: FloatingPopupOptions = {}) {
   
   element.appendChild(closeButton);
   
+  if (draggable) {
+    let isDragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      const rect = element.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+      element.style.cursor = 'grabbing';
+      e.preventDefault();
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      
+      const newX = e.clientX - dragOffsetX;
+      const newY = e.clientY - dragOffsetY;
+      
+      const maxX = window.innerWidth - element.offsetWidth;
+      const maxY = window.innerHeight - element.offsetHeight;
+      
+      element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
+      element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
+    };
+    
+    const handleMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        element.style.cursor = 'move';
+      }
+    };
+    
+    const headerHeight = 96;
+    const dragOverlay = document.createElement('div');
+    dragOverlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36%;
+      height: ${headerHeight}px;
+      cursor: move;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: auto;
+      z-index: 3;
+      background: transparent;
+    `;
+    
+    dragOverlay.addEventListener('mousedown', handleMouseDown);
+    element.appendChild(dragOverlay);
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    (element as any)._dragHandlers = {
+      handleMouseDown,
+      handleMouseMove,
+      handleMouseUp,
+      dragOverlay
+    };
+    
+    element.style.cursor = 'move';
+  }
+  
   // Create iframe to load the actual popup
   const iframe = document.createElement('iframe');
   iframe.style.cssText = `
@@ -139,11 +226,8 @@ export function createFloatingPopup(options: FloatingPopupOptions = {}) {
     background: transparent;
   `;
   
-  // Add a parameter to prevent infinite loop and include the route
   const url = chrome.runtime.getURL('src/popup/index.html');
-  const params = new URLSearchParams({ floating: 'true' });
-  if (route) params.append('route', route);
-  iframe.src = `${url}#${route}?${params.toString()}`;
+  iframe.src = `${url}#${route || '/'}`;
   
   element.appendChild(iframe);
   document.body.appendChild(element);

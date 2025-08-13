@@ -5,6 +5,7 @@ import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../util
 import { initializeRouteInterceptor } from '../utils/routeInterceptor'
 import { startIntentionMonitoring } from '../utils/intentionMonitor'
 import { hasExtensionAccess } from '../utils/subscription'
+import { createFloatingPopup } from '../utils/floatingPopup'
 
 // Extend Window interface to include our custom properties
 declare global {
@@ -139,150 +140,8 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       break;
       
     case 'floating-popup':
-      element.style.cssText = `
-        position: fixed;
-        top: ${position.y}px;
-        left: ${position.x}px;
-        width: 400px;
-        height: 600px;
-        background: radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%);
-        border-radius: 16px;
-        z-index: 2147483646;
-        pointer-events: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 148, 77, 0.2);
-        border: 1px solid rgba(255, 148, 77, 0.2);
-        overflow: hidden;
-        animation: floating-popup-appear 0.3s ease-out;
-        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-        cursor: move;
-        user-select: none;
-      `;
-      
-      // Add drag functionality
-      let isDragging = false;
-      let dragOffsetX = 0;
-      let dragOffsetY = 0;
-      
-      const handleMouseDown = (e: MouseEvent) => {
-        // Drag starts when pressing within the dedicated overlay area
-        const rect = element.getBoundingClientRect();
-        isDragging = true;
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-        element.style.cursor = 'grabbing';
-        e.preventDefault();
-      };
-      
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
-        
-        const newX = e.clientX - dragOffsetX;
-        const newY = e.clientY - dragOffsetY;
-        
-        // Keep popup within viewport bounds
-        const maxX = window.innerWidth - element.offsetWidth;
-        const maxY = window.innerHeight - element.offsetHeight;
-        
-        element.style.left = `${Math.max(0, Math.min(newX, maxX))}px`;
-        element.style.top = `${Math.max(0, Math.min(newY, maxY))}px`;
-      };
-      
-      const handleMouseUp = () => {
-        if (isDragging) {
-          isDragging = false;
-          element.style.cursor = 'move';
-        }
-      };
-      
-      // Create a dedicated drag overlay at the top, above the iframe
-      const headerHeight = 96; // expanded grab area height (height retained)
-      const dragOverlay = document.createElement('div');
-      dragOverlay.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 36%; /* further narrowed grab area to avoid overlapping header controls */
-        height: ${headerHeight}px;
-        cursor: move;
-        user-select: none;
-        -webkit-user-select: none;
-        pointer-events: auto;
-        z-index: 3; /* below close button (z: 2147483647), above iframe */
-        background: transparent;
-      `;
-      dragOverlay.addEventListener('mousedown', handleMouseDown);
-      element.appendChild(dragOverlay);
-      // Keep element listener for backwards compatibility if needed
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      
-      // Add close button
-      const closeButton = document.createElement('button');
-      closeButton.innerHTML = '×';
-      closeButton.style.cssText = `
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 24px;
-        height: 24px;
-        background: rgba(255, 148, 77, 0.2);
-        border: 1px solid rgba(255, 148, 77, 0.3);
-        border-radius: 50%;
-        color: #F5E6D3;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 2147483647;
-        transition: all 0.2s ease;
-      `;
-      
-      closeButton.onmouseover = () => {
-        closeButton.style.background = 'rgba(255, 148, 77, 0.4)';
-        closeButton.style.borderColor = 'rgba(255, 148, 77, 0.5)';
-      };
-      
-      closeButton.onmouseout = () => {
-        closeButton.style.background = 'rgba(255, 148, 77, 0.2)';
-        closeButton.style.borderColor = 'rgba(255, 148, 77, 0.3)';
-      };
-      
-      closeButton.onclick = () => {
-        // Remove drag event listeners
-        dragOverlay.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        
-        // Add fade-out animation
-        element.style.animation = 'floating-popup-disappear 0.3s ease-in forwards';
-        
-        // Remove element after animation completes
-        setTimeout(() => {
-          element.remove();
-          style.remove();
-        }, 300);
-      };
-      
-      element.appendChild(closeButton);
-      
-      // Create iframe to load the actual popup
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = `
-        width: 100%;
-        height: 100%;
-        border: none;
-        border-radius: 16px;
-        background: transparent;
-      `;
-      
-      // Add a parameter to prevent infinite loop
-      iframe.src = chrome.runtime.getURL('src/popup/index.html') + '?floating=true';
-      
-      element.appendChild(iframe);
-      break;
+      createFloatingPopup({ draggable: true });
+      return;
       
     default:
       element.style.cssText = `
@@ -319,16 +178,6 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       20% { opacity: 1; transform: scale(1); }
       80% { opacity: 1; transform: scale(1); }
       100% { opacity: 0; transform: scale(0.5); }
-    }
-    
-    @keyframes floating-popup-appear {
-      0% { opacity: 0; transform: scale(0.8) translateY(20px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    
-    @keyframes floating-popup-disappear {
-      0% { opacity: 1; transform: scale(1) translateY(0); }
-      100% { opacity: 0; transform: scale(0.8) translateY(20px); }
     }
     
     @keyframes pulse {
