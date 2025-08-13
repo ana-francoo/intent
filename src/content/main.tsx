@@ -164,17 +164,13 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       let dragOffsetY = 0;
       
       const handleMouseDown = (e: MouseEvent) => {
-        // Only allow dragging from the header area (top portion of the popup)
+        // Drag starts when pressing within the dedicated overlay area
         const rect = element.getBoundingClientRect();
-        const headerHeight = 60; // Height of the header area
-        
-        if (e.clientY - rect.top <= headerHeight) {
-          isDragging = true;
-          dragOffsetX = e.clientX - rect.left;
-          dragOffsetY = e.clientY - rect.top;
-          element.style.cursor = 'grabbing';
-          e.preventDefault();
-        }
+        isDragging = true;
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+        element.style.cursor = 'grabbing';
+        e.preventDefault();
       };
       
       const handleMouseMove = (e: MouseEvent) => {
@@ -198,7 +194,26 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
         }
       };
       
-      element.addEventListener('mousedown', handleMouseDown);
+      // Create a dedicated drag overlay at the top, above the iframe
+      const headerHeight = 96; // expanded grab area height (height retained)
+      const dragOverlay = document.createElement('div');
+      dragOverlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36%; /* further narrowed grab area to avoid overlapping header controls */
+        height: ${headerHeight}px;
+        cursor: move;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: auto;
+        z-index: 3; /* below close button (z: 2147483647), above iframe */
+        background: transparent;
+      `;
+      dragOverlay.addEventListener('mousedown', handleMouseDown);
+      element.appendChild(dragOverlay);
+      // Keep element listener for backwards compatibility if needed
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       
@@ -237,7 +252,7 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       
       closeButton.onclick = () => {
         // Remove drag event listeners
-        element.removeEventListener('mousedown', handleMouseDown);
+        dragOverlay.removeEventListener('mousedown', handleMouseDown);
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         

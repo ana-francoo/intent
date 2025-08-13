@@ -93,7 +93,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                     </div>
                     <span className="text-xs text-foreground truncate">YouTube</span>
                     <div className="w-3 h-3 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center ml-auto">
-                      <div className="w-1 h-1 text-muted-foreground text-xs">×</div>
+                      <span className="text-muted-foreground text-[10px] leading-none">×</span>
                     </div>
                   </div>
                   {/* Plus Button */}
@@ -250,7 +250,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                        <span className="opacity-0 animate-tab-text-fade-in">Intent Demo - YouTube</span>
                      </span>
                      <div className="w-3 h-3 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center ml-auto">
-                       <div className="w-1 h-1 text-muted-foreground text-xs">×</div>
+                       <span className="text-muted-foreground text-[10px] leading-none">×</span>
                      </div>
                    </div>
                    {/* Plus Button */}
@@ -517,7 +517,7 @@ const IntentOnboarding = ({ onComplete }: { onComplete: () => void }) => {
                     </div>
                     <span className="text-xs text-foreground truncate">Intent Demo - YouTube</span>
                     <div className="w-3 h-3 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center ml-auto">
-                      <div className="w-1 h-1 text-muted-foreground text-xs">×</div>
+                      <span className="text-muted-foreground text-[10px] leading-none">×</span>
                     </div>
 
                     {/* AI Status Widget removed on third slide */}

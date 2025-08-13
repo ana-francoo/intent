@@ -508,6 +508,39 @@ export const getBlockedSites = async () => {
     }
   };
 
+/**
+ * Remove one or more blocked sites for the current user
+ */
+export const deleteBlockedSites = async (urls: string[]) => {
+  try {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) {
+      if (userError.message.includes('Auth session missing')) return null;
+      throw new Error('Authentication error: ' + userError.message);
+    }
+    if (!user) return null;
+
+    // Delete matching rows for this user
+    const { error } = await supabase
+      .from('blocked_sites')
+      .delete()
+      .eq('user_id', user.id)
+      .in('url', urls);
+
+    if (error) {
+      console.error('❌ Error deleting blocked sites:', error);
+      throw error;
+    }
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to delete blocked sites:', error);
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      return null;
+    }
+    throw error;
+  }
+};
+
   
 
 

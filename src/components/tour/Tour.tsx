@@ -9,25 +9,23 @@ const Tour = () => {
   const getInitialGuideImage = () => {
     if (typeof window === 'undefined') return { top: 220, right: 110, width: 320 };
     const viewportWidth = window.innerWidth;
-    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
     
     const viewportHeight = window.innerHeight;
     const imageTopPercent = 0.22; // keep in sync with calculateDynamicPositions
     return {
       top: Math.max(0, Math.round(viewportHeight * imageTopPercent)),
       right: Math.max(0, Math.round(viewportWidth * 0.12)), // align with text right offset
-      width: clamp(Math.round(viewportWidth * 0.4 * 1.3), 220, 650),
+      width: Math.min(Math.max(Math.round(viewportWidth * 0.4 * 1.3), 220), 650),
     };
   };
   const getInitialArrow = () => {
     if (typeof window === 'undefined') return { top: 10, right: 180, size: 180 };
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
     return {
       top: Math.max(0, Math.round(viewportHeight * 0.02)),
       right: Math.max(0, Math.round(viewportWidth * 0.15)),
-      size: clamp(Math.round(viewportWidth * 0.2), 120, 260),
+      size: Math.min(Math.max(Math.round(viewportWidth * 0.2), 120), 260),
     };
   };
   const getInitialFirstText = () => {
@@ -142,7 +140,6 @@ const Tour = () => {
     // Calculate center position and dimensions based on viewport
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
     // Use fixed popup dimensions to match the inner iframe's layout (400x600)
     const getPopupDimensions = () => ({ width: 400, height: 600 });
@@ -163,6 +160,25 @@ const Tour = () => {
     const secondSvgWidth = Math.round(viewportWidth * secondSvgWidthPercent);
     const secondSvgHeight = Math.round(viewportHeight * secondSvgHeightPercent);
     // ===========================================
+    
+    // Helper: position second text relative to the second SVG (maintains gap)
+    const positionSecondTextRelativeToSvg = () => {
+      const svgEl = document.getElementById('additional-svg');
+      const textEl = document.getElementById('second-tour-text');
+      if (!svgEl || !textEl) return;
+      const rect = svgEl.getBoundingClientRect();
+      const svgWidth = rect.width;
+      const svgHeight = rect.height;
+      // Tweakable gap definitions relative to SVG size
+      const textOffsetXPercent = -0.38; // horizontal gap: 6% of svg width to the right of svg
+      const textOffsetYPercent = 0.1; // vertical offset: 20% of svg height from svg top
+      const leftPx = Math.round(rect.right + svgWidth * textOffsetXPercent);
+      const topPx = Math.round(rect.top + svgHeight * textOffsetYPercent);
+      textEl.setAttribute(
+        'style',
+        `position: fixed; top: ${topPx}px; left: ${leftPx}px; z-index: 2147483646; max-width: 25vw; pointer-events: none; animation: tour-text-appear 0.5s ease-out; color: black; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: clamp(0.95rem, 1.5vw, 1.25rem); font-weight: 500; line-height: 1.4; font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;`
+      );
+    };
     
     const element = document.createElement('div');
     
@@ -219,6 +235,15 @@ const Tour = () => {
           `width: ${newSecondSvgWidth}px; height: ${newSecondSvgHeight}px; pointer-events: none;`
         );
       }
+      const continueBtnRepos = document.getElementById('tour-continue-button');
+      if (continueBtnRepos) {
+        continueBtnRepos.setAttribute(
+          'style',
+          `position: fixed; top: ${newCenterY + newPopupHeight + Math.round(newPopupHeight * 0.04)}px; left: ${newCenterX + Math.round(newPopupWidth / 2)}px; transform: translateX(-50%); z-index: 2147483646; pointer-events: auto; padding: 10px 16px; border-radius: 10px; background: rgba(0,0,0,0.12); color: #1a1a1a; border: 1px solid rgba(0,0,0,0.15); backdrop-filter: blur(2px); font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.2px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); transition: background 0.2s ease, border-color 0.2s ease; animation: additional-svg-appear 0.5s ease-out;`
+        );
+      }
+      // After resizing/repositioning, re-place the text to maintain the gap
+      positionSecondTextRelativeToSvg();
     };
     
     window.addEventListener('resize', handleResize);
@@ -269,6 +294,10 @@ const Tour = () => {
       const rightContainer = document.getElementById('tour-right-container');
       if (rightContainer) {
         rightContainer.remove();
+      }
+      const continueBtnCleanup = document.getElementById('tour-continue-button');
+      if (continueBtnCleanup) {
+        continueBtnCleanup.remove();
       }
       
       // Add fade-out animation
@@ -351,29 +380,56 @@ const Tour = () => {
         </svg>
       `;
 
-      // The explanatory text to the right of the arrow
+      // The explanatory text to the right of the arrow (positioned relative to the SVG)
       const secondText = document.createElement('div');
       secondText.id = 'second-tour-text';
-      secondText.style.cssText = `
-        position: relative; /* positioned by flex container, not absolute */
-        max-width: 25vw; /* responsive width cap */
-        pointer-events: none;
-        animation: tour-text-appear 0.5s ease-out;
-        color: black;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.5rem;
-        font-size: clamp(0.95rem, 1.5vw, 1.25rem); /* responsive font, no px */
-        font-weight: 500;
-        line-height: 1.4;
-        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-
-      
-        `;
+      // Temporary style; real position will be applied next frame based on SVG bounds
+      secondText.style.cssText = `position: fixed; top: 0; left: 0; opacity: 0;`;
       secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
 
       rightContainer.appendChild(additionalSvg);
-      rightContainer.appendChild(secondText);
       document.body.appendChild(rightContainer);
+      document.body.appendChild(secondText);
+      // Create Continue button under the popup, centered with a small gap
+      const continueBtn = document.createElement('button');
+      continueBtn.id = 'tour-continue-button';
+      continueBtn.textContent = 'Continue';
+      continueBtn.style.cssText = `
+        position: fixed;
+        top: ${centerY + popupHeight + Math.round(popupHeight * 0.04)}px;
+        left: ${centerX + Math.round(popupWidth / 2)}px;
+        transform: translateX(-50%);
+        z-index: 2147483646;
+        pointer-events: auto;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.12);
+        color: #1a1a1a;
+        border: 1px solid rgba(0,0,0,0.15);
+        backdrop-filter: blur(2px);
+        font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        transition: background 0.2s ease, border-color 0.2s ease;
+        animation: additional-svg-appear 0.5s ease-out;
+      `;
+      continueBtn.onmouseenter = () => {
+        continueBtn.style.background = 'rgba(0,0,0,0.18)';
+        continueBtn.style.borderColor = 'rgba(0,0,0,0.22)';
+      };
+      continueBtn.onmouseleave = () => {
+        continueBtn.style.background = 'rgba(0,0,0,0.12)';
+        continueBtn.style.borderColor = 'rgba(0,0,0,0.15)';
+      };
+      document.body.appendChild(continueBtn);
+      // Position relative to SVG on next frame and reveal
+      requestAnimationFrame(() => {
+        positionSecondTextRelativeToSvg();
+        const textEl = document.getElementById('second-tour-text');
+        if (textEl) textEl.style.opacity = '1';
+      });
     }, 400);
   };
 

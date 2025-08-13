@@ -34,7 +34,7 @@ const ChromeBrowserWindow = ({ title, url, children, trigger }: ChromeBrowserWin
                 </div>
                 <span className="text-sm text-foreground truncate">{title}</span>
                 <div className="w-4 h-4 rounded-full hover:bg-muted-foreground/20 flex items-center justify-center ml-auto">
-                  <div className="w-2 h-2 text-muted-foreground">×</div>
+                  <span className="text-muted-foreground text-xs leading-none">×</span>
                 </div>
               </div>
               {/* Plus Button */}

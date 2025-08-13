@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 // Removed unused imports to fix build warnings
 import quotes from '../utils/quotes';
-import { saveBlockedSites } from '../utils/storage';
+import { saveBlockedSites, deleteBlockedSites, getBlockedSites, normalizeUrlToDomain } from '../utils/storage';
 
 import { 
   Settings, 
@@ -41,6 +41,7 @@ interface SiteCategory {
 
 const PersonalDashboard = () => {
   const [currentUrl, setCurrentUrl] = useState('https://example.com');
+  const [isDraggingUI, setIsDraggingUI] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
   const [showAddSite, setShowAddSite] = useState(false);
   const [newSiteUrl, setNewSiteUrl] = useState('');
@@ -135,28 +136,28 @@ const PersonalDashboard = () => {
       name: 'Social',
       icon: Users,
       expanded: false,
-      sites: SOCIAL_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
+      sites: SOCIAL_SITES.map((url) => ({ url, enabled: true })),
     },
     {
       id: 'entertainment',
       name: 'Entertainment',
       icon: Gamepad2,
       expanded: false,
-      sites: ENTERTAINMENT_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
+      sites: ENTERTAINMENT_SITES.map((url) => ({ url, enabled: true })),
     },
     {
       id: 'shopping',
       name: 'Shopping',
       icon: ShoppingBag,
       expanded: false,
-      sites: SHOPPING_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
+      sites: SHOPPING_SITES.map((url) => ({ url, enabled: true })),
     },
     {
       id: 'news',
       name: 'News',
       icon: Newspaper,
       expanded: false,
-      sites: NEWS_SITES.map((url, index) => ({ url, enabled: index % 2 === 0 })),
+      sites: NEWS_SITES.map((url) => ({ url, enabled: true })),
     },
     {
       id: 'my-sites',
@@ -218,7 +219,9 @@ const PersonalDashboard = () => {
     ));
   };
 
-  const toggleSite = (categoryId: string, siteUrl: string) => {
+  const toggleSite = async (categoryId: string, siteUrl: string) => {
+    const domain = normalizeUrlToDomain(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
+    // Optimistic UI update
     setCategories(prev => prev.map(cat => 
       cat.id === categoryId 
         ? {
@@ -229,21 +232,37 @@ const PersonalDashboard = () => {
           }
         : cat
     ));
+
+    try {
+      // Reflect in Supabase (inverted semantics):
+      // Default = enabled. If user disables (toggle -> false), INSERT into blocked_sites.
+      // If user enables (toggle -> true), DELETE from blocked_sites.
+      const prevCat = categories.find(c => c.id === categoryId);
+      const prevSite = prevCat?.sites.find(s => s.url === siteUrl);
+      const willDisable = prevSite?.enabled === true; // toggling from true -> false
+      if (willDisable) {
+        await saveBlockedSites([`https://${domain}`]);
+      } else {
+        await deleteBlockedSites([`https://${domain}`]);
+      }
+    } catch (e) {
+      console.error('Failed to sync blocked site toggle:', e);
+    }
   };
 
   const addNewSite = async () => {
     if (newSiteUrl.trim()) {
       try {
-        // Save to Supabase database
-        const urlToSave = newSiteUrl.trim().startsWith('http') ? newSiteUrl.trim() : `https://${newSiteUrl.trim()}`;
-        await saveBlockedSites([urlToSave]);
+        // Save to Supabase database as disabled entry
+        const normalized = normalizeUrlToDomain(newSiteUrl.trim().startsWith('http') ? newSiteUrl.trim() : `https://${newSiteUrl.trim()}`);
+        await saveBlockedSites([`https://${normalized}`]);
         
         // Add to the 'My Sites' category
         setCategories(prev => prev.map(cat => 
           cat.id === 'my-sites' 
             ? {
                 ...cat,
-                sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
+                sites: [...cat.sites, { url: normalized, enabled: false }]
               }
             : cat
         ));
@@ -256,7 +275,7 @@ const PersonalDashboard = () => {
           cat.id === 'my-sites' 
             ? {
                 ...cat,
-                sites: [...cat.sites, { url: newSiteUrl.trim(), enabled: true }]
+                sites: [...cat.sites, { url: normalizeUrlToDomain(newSiteUrl.trim()), enabled: false }]
               }
             : cat
         ));
@@ -270,11 +289,11 @@ const PersonalDashboard = () => {
     if (currentUrl && currentUrl !== 'Loading...' && currentUrl !== 'No active tab' && currentUrl !== 'Unknown site') {
       try {
         // Save to Supabase database
-        const urlToSave = currentUrl.startsWith('http') ? currentUrl : `https://${currentUrl}`;
-        await saveBlockedSites([urlToSave]);
+        const normalized = normalizeUrlToDomain(currentUrl.startsWith('http') ? currentUrl : `https://${currentUrl}`);
+        await saveBlockedSites([`https://${normalized}`]);
         
         // Add to the 'My Sites' category
-        const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
+        const domain = normalized;
         const mySitesCat = categories.find(cat => cat.id === 'my-sites');
         const siteExists = mySitesCat?.sites.some(site => site.url === domain);
         
@@ -283,7 +302,7 @@ const PersonalDashboard = () => {
             cat.id === 'my-sites' 
               ? {
                   ...cat,
-                  sites: [...cat.sites, { url: domain, enabled: true }]
+                  sites: [...cat.sites, { url: domain, enabled: false }]
                 }
               : cat
           ));
@@ -291,7 +310,7 @@ const PersonalDashboard = () => {
       } catch (error) {
         console.error('Failed to save blocked site:', error);
         // Still add to local state even if Supabase save fails
-        const domain = currentUrl.replace(/https?:\/\//, '').split('/')[0];
+        const domain = normalizeUrlToDomain(currentUrl);
         const mySitesCat = categories.find(cat => cat.id === 'my-sites');
         const siteExists = mySitesCat?.sites.some(site => site.url === domain);
         
@@ -300,7 +319,7 @@ const PersonalDashboard = () => {
             cat.id === 'my-sites' 
               ? {
                   ...cat,
-                  sites: [...cat.sites, { url: domain, enabled: true }]
+                  sites: [...cat.sites, { url: domain, enabled: false }]
                 }
               : cat
           ));
@@ -461,6 +480,26 @@ const PersonalDashboard = () => {
     );
   }
 
+  // Sync initial toggle states from Supabase
+  useEffect(() => {
+    (async () => {
+      try {
+        const blocked = await getBlockedSites();
+        const blockedDomains = new Set(blocked.map(u => normalizeUrlToDomain(u)));
+        setCategories(prev => prev.map(cat => ({
+          ...cat,
+          sites: cat.sites.map(site => ({
+            ...site,
+            // Default enabled; disable if domain is in the table
+            enabled: !blockedDomains.has(normalizeUrlToDomain(site.url))
+          }))
+        })));
+      } catch (e) {
+        console.warn('Unable to fetch blocked sites; leaving defaults.', e);
+      }
+    })();
+  }, []);
+
   return (
     <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
       background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
@@ -469,6 +508,41 @@ const PersonalDashboard = () => {
       <div className="relative p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out" style={{
         background: 'linear-gradient(135deg, #1A1108 0%, #3D2414 50%, #5A3518 100%)'
       }}>
+        {/* Drag handle: top-center 2x4 dots. Visible cue only; actual grab area is managed in content/main.tsx */}
+        <div
+          onMouseDown={() => setIsDraggingUI(true)}
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: 2,
+            width: 56,
+            height: 18,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateRows: 'repeat(2, 1fr)',
+            gap: 4,
+            alignItems: 'center',
+            justifyItems: 'center',
+            cursor: isDraggingUI ? 'grabbing' as const : 'grab' as const,
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            pointerEvents: 'auto'
+          }}
+          onMouseUp={() => setIsDraggingUI(false)}
+          onMouseLeave={() => setIsDraggingUI(false)}
+        >
+          {Array.from({ length: 8 }).map((_, idx) => (
+            <div
+              key={idx}
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: '50%',
+                background: isDraggingUI ? 'rgba(120,120,120,0.9)' : 'rgba(120,120,120,0.6)',
+                boxShadow: isDraggingUI ? '0 0 0 1px rgba(0,0,0,0.2) inset' : '0 0 0 1px rgba(0,0,0,0.15) inset'
+              }}
+            />
+          ))}
+        </div>
         <div className="flex items-center gap-3">
           <img src="/src/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           <h1 className="font-bold text-[#F5E6D3] text-lg tracking-tight">Intent</h1>

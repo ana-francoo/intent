@@ -4,6 +4,7 @@
 export const ENTERTAINMENT_SITES: string[] = [
   'youtube.com',
   'netflix.com',
+  'hbo.com',
   'twitch.tv',
   'hulu.com',
 ];
@@ -24,10 +25,10 @@ export const SHOPPING_SITES: string[] = [
   'shopify.com',
 ];
 
+// want news sites to only be yes or now, not have granularity in news sites.
 export const NEWS_SITES: string[] = [
   'cnn.com',
-  'bbc.com',
-  'reddit.com',
+  'bbc.com'
 ];
 
 
