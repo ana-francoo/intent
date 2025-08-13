@@ -7,7 +7,6 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 
 interface LoginProps {
-  onAuthSuccess: () => void;
   onGoBack?: () => void;
 }
 
@@ -16,7 +15,7 @@ const getRedirectUrl = () => {
   return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
 };
 
-export default function Login({ onAuthSuccess, onGoBack }: LoginProps) {
+export default function Login({ onGoBack }: LoginProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,14 +23,18 @@ export default function Login({ onAuthSuccess, onGoBack }: LoginProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleAuthSuccess = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
-      if (evt === 'SIGNED_IN' && session) onAuthSuccess();
+      if (evt === 'SIGNED_IN' && session) handleAuthSuccess();
     });
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [onAuthSuccess]);
+  }, [handleAuthSuccess]);
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,13 +44,13 @@ export default function Login({ onAuthSuccess, onGoBack }: LoginProps) {
     try {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      onAuthSuccess();
+      handleAuthSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, onAuthSuccess]);
+  }, [email, password, handleAuthSuccess]);
 
   const handleGoogle = useCallback(async () => {
     setError(null);

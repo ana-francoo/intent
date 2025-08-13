@@ -90,7 +90,13 @@ observer.observe(document, { subtree: true, childList: true });
 
 // Listen for overlay trigger messages
 if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg && msg.type === 'PING') {
+      // Respond to ping to confirm content script is loaded
+      sendResponse({ pong: true });
+      return true;
+    }
+    
     if (msg && msg.type === 'SHOW_OVERLAY') {
       initializeInterceptor();
     }

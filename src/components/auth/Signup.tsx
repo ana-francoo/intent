@@ -7,7 +7,6 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 
 interface SignupProps {
-  onAuthSuccess: () => void;
   onGoBack?: () => void;
 }
 
@@ -16,7 +15,7 @@ const getRedirectUrl = () => {
   return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
 };
 
-export default function Signup({ onAuthSuccess, onGoBack }: SignupProps) {
+export default function Signup({ onGoBack }: SignupProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,14 +30,19 @@ export default function Signup({ onAuthSuccess, onGoBack }: SignupProps) {
     return true;
   }, [email, password, confirmPassword]);
 
+  const handleAuthSuccess = useCallback(() => {
+    // Navigate to root route which will handle popup launching
+    navigate('/');
+  }, [navigate]);
+
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
-      if (evt === 'SIGNED_IN' && session) onAuthSuccess();
+      if (evt === 'SIGNED_IN' && session) handleAuthSuccess();
     });
     return () => {
       listener.subscription.unsubscribe();
     };
-  }, [onAuthSuccess]);
+  }, [handleAuthSuccess]);
 
   const handleSignup = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
