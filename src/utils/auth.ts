@@ -76,7 +76,7 @@ export function openAuthTab(provider: 'google' | 'email', additionalParams?: Rec
   });
   
   const authUrl = provider === 'google' 
-    ? `${redirectUrl.replace('/auth-callback', '/auth')}?${params}`
+    ? `${redirectUrl.replace('/auth-callback', '/login')}?${params}`
     : `${redirectUrl}?${params}`;
     
   chrome.tabs.create({ url: authUrl });

@@ -57,7 +57,7 @@ export default function Home() {
 
         <div className="text-sm animate-slide-in-up delay-900">
           <span className="text-muted-foreground">Have an account? </span>
-          <Button className='px-1' variant="link" onClick={() => navigate('/auth')}>
+          <Button className='px-1' variant="link" onClick={() => navigate('/login')}>
             Log in
           </Button>
         </div>
