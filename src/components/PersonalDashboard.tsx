@@ -557,7 +557,7 @@ const PersonalDashboard = () => {
       </div>
 
       {/* Blocked Sites Management */}
-      <div className="flex-1 overflow-hidden" style={{
+      <div className="flex-1 overflow-hidden flex flex-col" style={{
         background: 'radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)'
       }}>
         <div className="p-4 border-b border-[#7A4A1E]/20 flex items-center justify-between animate-in slide-in-from-bottom duration-300 ease-out delay-150">
@@ -607,7 +607,7 @@ const PersonalDashboard = () => {
           </div>
         )}
 
-        <div className={`h-full p-4 space-y-2 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+        <div className={`flex-1 min-h-0 p-4 space-y-2 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`}>
           {categories.map((category, index) => {
             const Icon = category.icon;
             return (
