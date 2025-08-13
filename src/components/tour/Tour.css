@@ -36,12 +36,11 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.25; /* overall grain strength */
-  background-image:
-    radial-gradient(rgba(0, 0, 0, 0.035) 0.5px, transparent 0.6px),
-    radial-gradient(rgba(0, 0, 0, 0.025) 0.5px, transparent 0.8px);
-  background-size: 2px 2px, 3px 3px;
-  background-position: 0 0, 1px 1px;
+  /* Tiled SVG noise texture */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" stitchTiles="stitch"/></filter><rect width="128" height="128" filter="url(%23n)" opacity="0.16"/></svg>');
+  background-size: 190px 190px;
+  background-repeat: repeat;
+  background-position: 0 0;
   mix-blend-mode: multiply;
 }
 
