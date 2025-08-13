@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import logo from '@/assets/logo2.png';
 import './Auth.css';
@@ -6,30 +7,23 @@ import Flame from '../home/Flame';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 
-interface AuthProps {
+interface LoginProps {
   onAuthSuccess: () => void;
-  defaultToLogin?: boolean;
   onGoBack?: () => void;
 }
 
-type AuthMode = 'login' | 'signup';
+const getRedirectUrl = () => {
+  const isDev = import.meta.env.DEV;
+  return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
+};
 
-const WEB_REDIRECT_URL = 'https://useintent.app';
-
-export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, onGoBack }: AuthProps) {
-  const [mode, setMode] = useState<AuthMode>(defaultToLogin ? 'login' : 'signup');
+export default function Login({ onAuthSuccess, onGoBack }: LoginProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const canSubmit = useMemo(() => {
-    if (!email || !password) return false;
-    if (mode === 'signup' && password !== confirmPassword) return false;
-    return true;
-  }, [email, password, confirmPassword, mode]);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
@@ -40,42 +34,38 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
     };
   }, [onAuthSuccess]);
 
-  const handleEmailPassword = useCallback(async (e: React.FormEvent) => {
+  const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setInfo(null);
     setIsLoading(true);
     try {
-      if (mode === 'login') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signInError) throw signInError;
-        onAuthSuccess();
-      } else {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: WEB_REDIRECT_URL },
-        });
-        if (signUpError) throw signUpError;
-        setInfo('Check your email for the confirmation link.');
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+      onAuthSuccess();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, mode, onAuthSuccess]);
+  }, [email, password, onAuthSuccess]);
 
   const handleGoogle = useCallback(async () => {
     setError(null);
     setIsLoading(true);
     try {
-      const { error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: WEB_REDIRECT_URL },
-      });
-      if (oauthError) throw oauthError;
-      // For OAuth we rely on redirect; no further action here
+      const isExtensionContext = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
+      
+      if (isExtensionContext) {
+        const authUrl = `${getRedirectUrl()}?provider=google&extension=true`;
+        chrome.tabs.create({ url: authUrl });
+      } else {
+        const { error: oauthError } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: getRedirectUrl() },
+        });
+        if (oauthError) throw oauthError;
+      }
     } catch (err: unknown) {
       setIsLoading(false);
       setError(err instanceof Error ? err.message : 'Failed to start Google sign-in');
@@ -92,7 +82,7 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
     setIsLoading(true);
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: WEB_REDIRECT_URL,
+        redirectTo: getRedirectUrl(),
       }); 
       if (resetError) throw resetError;
       setInfo('Password reset email sent. Check your inbox.');
@@ -143,11 +133,14 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
             {info}
           </div>
         )}
-        <form onSubmit={handleEmailPassword} className="space-y-1 w-full">
+        
+        <form onSubmit={handleLogin} className="space-y-1 w-full">
           <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm">
             <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
               <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
             </div>
+
+            <h2 className="text-xl font-semibold text-white mb-4">Log in to Intent</h2>
 
             <div className="grid gap-1.5 mb-2">
               <label htmlFor="email" className="text-sm text-white/85">Email</label>
@@ -158,7 +151,7 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                />
+              />
             </div>
 
             <div className="grid gap-1.5 mb-2">
@@ -166,40 +159,24 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
               <Input
                 id="password"
                 type="password"
-                placeholder={mode === 'signup' ? 'Create a password' : 'Enter your password'}
+                placeholder="Enter your password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
 
-            {mode === 'signup' && (
-              <div className="grid gap-1.5 mb-2">
-                <label htmlFor="confirm" className="text-sm text-white/85">Confirm password</label>
-                <Input
-                  id="confirm"
-                  type="password"
-                  placeholder="Re-enter your password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-            )}
-
-            <Button type="submit" disabled={!canSubmit || isLoading} className="mt-1 w-full">
-              {isLoading ? (mode === 'login' ? 'Logging in…' : 'Signing up…') : mode === 'login' ? 'Log in' : 'Create account'}
+            <Button type="submit" disabled={!email || !password || isLoading} className="mt-1 w-full">
+              {isLoading ? 'Logging in…' : 'Log in'}
             </Button>
 
-            {mode === 'login' && (
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                className="mt-2 w-fit text-left text-sm text-muted-foreground hover:underline"
-              >
-                Forgot your password?
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="mt-2 w-fit text-left text-sm text-muted-foreground hover:underline"
+            >
+              Forgot your password?
+            </button>
           </div>
         </form>
 
@@ -220,17 +197,13 @@ export default function AuthComponent({ onAuthSuccess, defaultToLogin = false, o
         </Button>
 
         <div className="mt-2 text-sm text-white/80">
-          {mode === 'login' ? (
-            <>
-              Don't have an account?{' '}
-              <button onClick={() => setMode('signup')} className="text-[var(--primary)] hover:underline">Sign up</button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button onClick={() => setMode('login')} className="text-[var(--primary)] hover:underline">Log in</button>
-            </>
-          )}
+          Don't have an account?{' '}
+          <button 
+            onClick={() => navigate('/signup')} 
+            className="text-[var(--primary)] hover:underline"
+          >
+            Sign up
+          </button>
         </div>
       </div>
     </div>
