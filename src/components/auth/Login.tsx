@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import logo from '@/assets/logo2.png';
-import './Auth.css';
 import Flame from '../home/Flame';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
