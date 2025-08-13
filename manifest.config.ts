@@ -8,6 +8,12 @@ export default defineManifest({
   version: pkg.version,
   permissions: ['storage', 'activeTab', 'tabs'],
   optional_host_permissions: ['https://*/src/popup/index#/tour'],
+  externally_connectable: {
+    matches: [
+      'http://localhost:5173/*',
+      'https://useintent.app/*'
+    ]
+  },
   icons: {
     48: 'public/logo.png',
   },

@@ -1,5 +1,6 @@
 // Background script for Chrome extension
 import { cleanupExpiredIntentions } from './utils/storage';
+import { checkExistingSession } from './utils/auth';
 
 console.log('[CRXJS] Background script loaded');
 
@@ -10,6 +11,14 @@ const CLEANUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 cleanupExpiredIntentions().then(cleanedCount => {
   if (cleanedCount > 0) {
     console.log(`[Background] Initial cleanup: removed ${cleanedCount} expired intentions`);
+  }
+});
+
+checkExistingSession().then(session => {
+  if (session) {
+    console.log('[Background] Existing session found for user:', session.user?.email);
+  } else {
+    console.log('[Background] No existing session found');
   }
 });
 
@@ -126,10 +135,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // this is used in the landing page to open the extension
   if (message.type === 'OPEN_POPUP') {
     try {
+      // Try to open popup first (works in some contexts)
       chrome.action.openPopup().then(() => {
-        sendResponse({ success: true });
-      }).catch((error) => {
-        sendResponse({ success: false, error: String(error) });
+        console.log('[Background] Popup opened successfully');
+        sendResponse({ success: true, method: 'popup' });
+      }).catch((popupError) => {
+        console.log('[Background] Popup failed, opening in new tab:', popupError);
+        // Fallback to opening in a new tab
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('src/popup/index.html#/')
+        }).then((tab) => {
+          sendResponse({ success: true, method: 'tab', tabId: tab.id });
+        }).catch((tabError) => {
+          sendResponse({ success: false, error: String(tabError) });
+        });
       });
     } catch (error) {
       sendResponse({ success: false, error: String(error) });
@@ -182,4 +201,72 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     return true;
   }
+});
+
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  console.log('[Background] External message received:', message.type, 'from:', sender.origin);
+  
+  if (message.type === 'AUTH_SUCCESS' && message.session) {
+    console.log('[Background] Processing AUTH_SUCCESS with session');
+    
+    const sessionData = {
+      'supabase.auth.token': JSON.stringify({
+        currentSession: {
+          access_token: message.session.access_token,
+          refresh_token: message.session.refresh_token,
+          user: message.session.user,
+        },
+        expiresAt: Date.now() + (60 * 60 * 1000) // 1 hour expiry
+      })
+    };
+    
+    chrome.storage.local.set(sessionData, () => {
+      console.log('[Background] Session stored successfully');
+      
+      // Close the auth tab
+      if (sender.tab?.id) {
+        chrome.tabs.remove(sender.tab.id).catch(() => {
+          console.log('[Background] Could not close auth tab');
+        });
+      }
+      
+      // Try to open popup first, then fallback to tab
+      chrome.action.openPopup().then(() => {
+        console.log('[Background] Extension popup opened after auth');
+        sendResponse({ success: true, method: 'popup' });
+      }).catch(() => {
+        console.log('[Background] Popup failed, opening in new tab');
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('src/popup/index.html#/')
+        }).then(() => {
+          console.log('[Background] Extension opened in new tab after auth');
+          sendResponse({ success: true, method: 'tab' });
+        }).catch((error) => {
+          console.error('[Background] Failed to open extension:', error);
+          sendResponse({ success: false, error: String(error) });
+        });
+      });
+    });
+    
+    return true;
+  }
+  
+  if (message.type === 'OPEN_POPUP') {
+    // Handle OPEN_POPUP from external source
+    console.log('[Background] External OPEN_POPUP request');
+    chrome.action.openPopup().then(() => {
+      sendResponse({ success: true, method: 'popup' });
+    }).catch(() => {
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('src/popup/index.html#/')
+      }).then(() => {
+        sendResponse({ success: true, method: 'tab' });
+      }).catch((error) => {
+        sendResponse({ success: false, error: String(error) });
+      });
+    });
+    return true;
+  }
+  
+  sendResponse({ success: false, error: 'Unknown message type' });
 }); 
