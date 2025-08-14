@@ -223,3 +223,90 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ===== Tour dashboard anchor (centered) and relatives ===== */
+.tour-dashboard {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 2147483645 !important;
+}
+
+.tour-dashboard-anchor {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 600px;
+  pointer-events: none;
+  z-index: 2147483646;
+}
+
+.tour-continue-button {
+  position: absolute;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.12);
+  color: #1a1a1a;
+  border: 1px solid rgba(0,0,0,0.15);
+  backdrop-filter: blur(2px);
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  animation: additional-svg-appear 0.5s ease-out;
+}
+.tour-continue-button.hover {
+  background: rgba(0,0,0,0.18);
+  border-color: rgba(0,0,0,0.22);
+}
+
+.tour-second-svg {
+  position: absolute;
+  top: 170px;
+  right: -320px;
+  height: 600px;
+  pointer-events: none;
+  animation: additional-svg-appear 0.5s ease-out;
+}
+
+.tour-second-text {
+  position: absolute;
+  top: 70px;
+  right: -40px;
+  max-width: 520px;
+  pointer-events: none;
+  animation: tour-text-appear 0.5s ease-out;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* First-step text: positioned relative to the second SVG */
+.tour-firststep {
+  position: absolute;  /* positioned relative to .tour-second-svg */
+  top: 220px;           /* adjust px from the top edge of the second SVG */
+  left: 350px;          /* adjust px from the left edge of the second SVG */
+  width: 280px;
+  pointer-events: none;
+  animation: tour-text-appear 0.5s ease-out;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 20px;     /* control font size here */
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}

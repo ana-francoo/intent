@@ -55,15 +55,8 @@ const Tour = () => {
         const popupResult = createFloatingPopup({ route: '/' });
         const element = popupResult.element;
         
-        // Fixed pixel positions and sizes for Tour-specific elements (no relative positioning)
-        const rightContainerTop = 180;
-        const rightContainerLeft = 740;
-        const secondSvgWidth = 360;
-        const secondSvgHeight = 360;
-        const secondTextTop = 220;
-        const secondTextLeft = 1120;
-        const continueBtnTop = 560;
-        const continueBtnLeft = 960;
+        // Center the floating dashboard and create an anchor for relative elements
+        (element as HTMLElement).classList.add('tour-dashboard');
         
         // Override the close button behavior to clean up Tour-specific elements
         const closeButton = element.querySelector('button');
@@ -84,97 +77,49 @@ const Tour = () => {
           };
         }
         
-        // Add Tour-specific CSS animations if not already present
+        // Ensure Tour-specific CSS animations exist (kept for subtle appear effects)
         if (!document.getElementById('tour-animations')) {
           const style = document.createElement('style');
           style.id = 'tour-animations';
           style.textContent = `
-            @keyframes additional-svg-appear {
-              0% { opacity: 0; transform: scale(0.8) translateX(20px); }
-              100% { opacity: 1; transform: scale(1) translateX(0); }
-            }
-            @keyframes tour-text-appear {
-              0% { opacity: 0; transform: translateY(10px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
+            @keyframes additional-svg-appear { 0% { opacity: 0; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }
+            @keyframes tour-text-appear { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
           `;
           document.head.appendChild(style);
         }
         
-        // Create additional SVG and text that appear 0.4 seconds later
+        // Create anchor, second svg, text, and continue button using CSS classes
         setTimeout(() => {
-          const rightContainer = document.createElement('div');
-          rightContainer.id = 'tour-right-container';
-          rightContainer.style.cssText = `
-            position: fixed;
-            top: ${rightContainerTop}px;
-            left: ${rightContainerLeft}px;
-            z-index: 2147483645;
-            pointer-events: none;
-            display: inline-flex;
-            align-items: flex-start;
-            gap: 16px;
-            animation: additional-svg-appear 0.5s ease-out;
-          `;
-          
-          const additionalSvg = document.createElement('div');
-          additionalSvg.id = 'additional-svg';
-          additionalSvg.style.cssText = `
-            width: ${secondSvgWidth}px;
-            height: ${secondSvgHeight}px;
-            pointer-events: none;
-          `;
-          additionalSvg.innerHTML = `
+          const anchor = document.createElement('div');
+          anchor.id = 'tour-dashboard-anchor';
+          anchor.className = 'tour-dashboard-anchor';
+          document.body.appendChild(anchor);
+
+          const secondSvg = document.createElement('div');
+          secondSvg.className = 'tour-second-svg';
+          secondSvg.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" style="width: 100%; height: 100%;">
               <path d="M168.97138,43.22749c12.64149,0,12.90694,18.62863,12.90694,28.16059c0,14.17547-8.24082,31.42365-2.73783,43.80536.26999.60748.72094,1.37841.39112,1.9556-1.41257,2.47199-4.67465,2.15888-5.08455,6.25791-1.13699,11.36992,5.7975,26.79941,6.64903,38.72081.56991,7.97879.51404,29.72506-11.34246,29.72506" transform="translate(-18.97138 21.120441)" fill="none" stroke="#ff6b35" stroke-width="2"/>
             </svg>
           `;
-          
+          anchor.appendChild(secondSvg);
+
           const secondText = document.createElement('div');
-          secondText.id = 'second-tour-text';
-          secondText.style.cssText = `position: fixed; top: ${secondTextTop}px; left: ${secondTextLeft}px; z-index: 2147483646; max-width: 520px; pointer-events: none; animation: tour-text-appear 0.5s ease-out; color: black; padding: 8px 12px; border-radius: 8px; font-size: 18px; font-weight: 500; line-height: 1.4; font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;`;
-          secondText.textContent = "All websites are blocked by default. You can unblock and customize additional blocked site settings here";
-          
-          rightContainer.appendChild(additionalSvg);
-          document.body.appendChild(rightContainer);
-          document.body.appendChild(secondText);
-          
+          secondText.className = 'tour-firststep';
+          secondText.textContent = 'All websites are blocked by default. You can unblock and customize additional site settings here';
+          secondSvg.appendChild(secondText);
+
           const continueBtn = document.createElement('button');
-          continueBtn.id = 'tour-continue-button';
+          continueBtn.className = 'tour-continue-button';
           continueBtn.textContent = 'Continue';
-          continueBtn.style.cssText = `
-            position: fixed;
-            top: ${continueBtnTop}px;
-            left: ${continueBtnLeft}px;
-            transform: translateX(-50%);
-            z-index: 2147483646;
-            pointer-events: auto;
-            padding: 10px 16px;
-            border-radius: 10px;
-            background: rgba(0,0,0,0.12);
-            color: #1a1a1a;
-            border: 1px solid rgba(0,0,0,0.15);
-            backdrop-filter: blur(2px);
-            font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 0.2px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-            transition: background 0.2s ease, border-color 0.2s ease;
-            animation: additional-svg-appear 0.5s ease-out;
-          `;
           continueBtn.onmouseenter = () => {
-            continueBtn.style.background = 'rgba(0,0,0,0.18)';
-            continueBtn.style.borderColor = 'rgba(0,0,0,0.22)';
+            continueBtn.classList.add('hover');
           };
           continueBtn.onmouseleave = () => {
-            continueBtn.style.background = 'rgba(0,0,0,0.12)';
-            continueBtn.style.borderColor = 'rgba(0,0,0,0.15)';
+            continueBtn.classList.remove('hover');
           };
-          document.body.appendChild(continueBtn);
-          
-          // Elements are already at fixed positions
-        }, 400);
+          anchor.appendChild(continueBtn);
+        }, 300);
       }
     };
 
