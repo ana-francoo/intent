@@ -538,21 +538,19 @@ const PersonalDashboard = () => {
               </div>
             </div>
             <div className="flex-1">
-              <label className="text-xs font-medium text-[#D4C4A8] uppercase tracking-wider">
-                Current Site
-              </label>
-              <p className="text-sm text-[#F5E6D3] font-medium truncate">{currentUrl}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-[#F5E6D3] font-medium truncate">{currentUrl}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="px-3 py-1 text-xs rounded-lg border-[#7A4A1E]/50 text-[#F5E6D3] hover:bg-[#FF944D]/15 hover:border-[#FF944D]/40 hover:text-[#FF944D] whitespace-nowrap"
+                  onClick={blockCurrentSite}
+                >
+                  Block
+                </Button>
+              </div>
             </div>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full group hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 transition-all duration-200 rounded-xl border-[#7A4A1E]/50 text-[#F5E6D3]"
-            onClick={blockCurrentSite}
-          >
-            Block This Site
-          </Button>
-
         </div>
       </div>
 
