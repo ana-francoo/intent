@@ -58,7 +58,7 @@
 .tour-arrow {
   position: fixed;
   top: 80px;
-  right: 210px;
+  right: 170px;
   z-index: 10000;
   pointer-events: none;
   animation: slideInFromRight 0.8s ease-out 0.3s both;
