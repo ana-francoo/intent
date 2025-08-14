@@ -248,7 +248,7 @@
   position: absolute;
   bottom: -100px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 0);
   pointer-events: auto;
   padding: 10px 16px;
   border-radius: 10px;
@@ -262,11 +262,17 @@
   letter-spacing: 0.2px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
   transition: background 0.2s ease, border-color 0.2s ease;
-  animation: additional-svg-appear 0.5s ease-out;
+  will-change: transform, opacity;
+  animation: continue-enter 0.5s ease-out both;
 }
 .tour-continue-button.hover {
   background: rgba(0,0,0,0.18);
   border-color: rgba(0,0,0,0.22);
+}
+
+@keyframes continue-enter {
+  0% { opacity: 0; transform: translate(-50%, 30px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .tour-second-svg {

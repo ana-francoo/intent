@@ -90,6 +90,9 @@ const Tour = () => {
         
         // Create anchor, second svg, text, and continue button using CSS classes
         setTimeout(() => {
+          // Guard against duplicate creation if handler fires more than once
+          if (document.getElementById('tour-dashboard-anchor')) return;
+
           const anchor = document.createElement('div');
           anchor.id = 'tour-dashboard-anchor';
           anchor.className = 'tour-dashboard-anchor';
@@ -117,6 +120,17 @@ const Tour = () => {
           };
           continueBtn.onmouseleave = () => {
             continueBtn.classList.remove('hover');
+          };
+          continueBtn.onclick = () => {
+            // Hide all matching elements on first click (avoid duplicates lingering)
+            const hideSelectors = ['.tour-second-svg', '.tour-firststep'];
+            hideSelectors.forEach(sel => {
+              document.querySelectorAll(sel).forEach(el => {
+                (el as HTMLElement).style.display = 'none';
+              });
+            });
+            // Prevent repeated work
+            continueBtn.onclick = null as any;
           };
           anchor.appendChild(continueBtn);
         }, 300);
