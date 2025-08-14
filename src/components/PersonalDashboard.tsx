@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
 import { Switch } from './ui/switch';
@@ -50,6 +51,9 @@ const PersonalDashboard = () => {
   });
   
   const [emailError, setEmailError] = useState('');
+  const [partnerSaving, setPartnerSaving] = useState(false);
+  const [partnerSaved, setPartnerSaved] = useState(false);
+  const [partnerSaveError, setPartnerSaveError] = useState('');
   const [enableScroll, setEnableScroll] = useState(false);
   const [currentQuote, setCurrentQuote] = useState('');
 
@@ -114,6 +118,54 @@ const PersonalDashboard = () => {
     }
   }, [showAccount]);
 
+  // Prefill accountability partner from Supabase if present
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data, error } = await supabase
+          .from('accountability_partners')
+          .select('email')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (error) return; // ignore missing rows
+        if (data?.email) {
+          setAccountabilityPartner(prev => ({ ...prev, email: data.email, enabled: true }));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
+
+  const handleSaveAccountabilityPartner = async () => {
+    setPartnerSaveError('');
+    if (!validateEmail(accountabilityPartner.email)) return;
+    try {
+      setPartnerSaving(true);
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('accountability_partners')
+        .upsert({
+          user_id: user.id,
+          email: accountabilityPartner.email,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      if (error) throw error;
+
+      setPartnerSaved(true);
+      setTimeout(() => setPartnerSaved(false), 2000);
+    } catch (e: any) {
+      setPartnerSaveError(e?.message || 'Failed to save');
+    } finally {
+      setPartnerSaving(false);
+    }
+  };
+
   // Email validation function
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -171,6 +223,13 @@ const PersonalDashboard = () => {
   ]);
 
   useEffect(() => {
+    // In tour mode, hardcode the current URL for display
+    const isTour = typeof window !== 'undefined' && window.location.hash.includes('tour=1');
+    if (isTour) {
+      setCurrentUrl('mycurrenturl.com');
+      return;
+    }
+
     // Function to update current URL
     const updateCurrentUrl = () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -471,19 +530,20 @@ const PersonalDashboard = () => {
                   <p className="text-xs text-[#D4C4A8]">
                     Your accountability partner will be notified if the extension is removed from Chrome. Please note that once a partner is set up, this action can not be undone.
                   </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10"
-                    onClick={() => {
-                      if (validateEmail(accountabilityPartner.email)) {
-                        console.log('Saving accountability partner:', accountabilityPartner);
-                      }
-                    }}
-                    disabled={!!emailError}
-                  >
-                    Save Settings
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10 disabled:opacity-60"
+                      onClick={handleSaveAccountabilityPartner}
+                      disabled={!!emailError || partnerSaving || !accountabilityPartner.email}
+                    >
+                      {partnerSaving ? 'Saving...' : partnerSaved ? 'Saved!' : 'Save Settings'}
+                    </Button>
+                    {partnerSaveError && (
+                      <span className="text-xs text-red-400">{partnerSaveError}</span>
+                    )}
+                  </div>
                 </>
               )}
             </CardContent>
@@ -517,6 +577,8 @@ const PersonalDashboard = () => {
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={() => {
+          // Notify parent (tour overlay) immediately that settings was opened
+          try { window.parent?.postMessage({ type: 'OPEN_ACCOUNT_SETTINGS' }, '*'); } catch {}
           setShowAccount(true);
           setEnableScroll(false); // Reset scroll state when entering Account Settings
         }} className="absolute top-2 right-12 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl p-2">
@@ -624,7 +686,7 @@ const PersonalDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-xs">{category.name}</span>
-                      <span className="text-xs text-[#FF944D]">
+                      <span className="text-xs text-[#FF944D]/50">
                         {category.sites.reduce((count, site) => count + (site.enabled ? 1 : 0), 0)}
                       </span>
                     </div>

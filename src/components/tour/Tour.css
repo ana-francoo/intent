@@ -1,3 +1,28 @@
+.accountability-svg {
+  position: absolute;
+  top: 120px;
+  left: -420px; /* to the left of the dashboard */
+  width: 360px;
+  height: 360px;
+  transform: scaleY(0.8);
+  pointer-events: none;
+  animation: additional-svg-appear 0.4s ease-out;
+}
+
+.text-accountability {
+  position: absolute;
+  top: 100px;
+  left: -40px;
+  max-width: 260px;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  animation: tour-text-appear 0.4s ease-out;
+}
 .tour-container {
   position: fixed;
   top: 0;
@@ -252,9 +277,9 @@
   pointer-events: auto;
   padding: 10px 16px;
   border-radius: 10px;
-  background: rgba(0,0,0,0.12);
-  color: #1a1a1a;
-  border: 1px solid rgba(0,0,0,0.15);
+  background: rgba(255, 148, 77, 0.28); /* darker accent wash */
+  color: #B4551A; /* darker accent text */
+  border: 1px solid rgba(255, 148, 77, 0.65); /* darker accent border */
   backdrop-filter: blur(2px);
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-size: 14px;
@@ -266,8 +291,16 @@
   animation: continue-enter 0.5s ease-out both;
 }
 .tour-continue-button.hover {
-  background: rgba(0,0,0,0.18);
-  border-color: rgba(0,0,0,0.22);
+  background: rgba(255, 148, 77, 0.35);
+  border-color: rgba(255, 148, 77, 0.8);
+}
+
+/* Dimmed state for continue button on step 2 */
+.tour-continue-button.dimmed {
+  opacity: 0.65;
+  background: rgba(0, 0, 0, 0.12); /* greyed-out wash */
+  color: #d1d5db; /* very light grey text */
+  border-color: #e5e7eb; /* very light grey border */
 }
 
 @keyframes continue-enter {
@@ -324,7 +357,7 @@
   left: 110%;
   transform: translateX(-50%);
   pointer-events: none;
-  animation: additional-svg-appear 0.5s ease-out;
+  animation: arrow-subtle-in 0.35s ease-in both;
 }
 
 .arrow-block .arrow-svg {
@@ -347,5 +380,51 @@
   font-weight: 500;
   line-height: 1.4;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  animation: tour-text-appear 0.5s ease-out;
+  animation: text-subtle-in 0.35s ease-in both;
+}
+
+@keyframes arrow-subtle-in {
+  0% { opacity: 0; transform: translateX(-40%); }
+  100% { opacity: 1; transform: translateX(-50%); }
+}
+
+@keyframes text-subtle-in {
+  0% { opacity: 0; transform: translate(-40%, 0); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.press-settings {
+  position: absolute;
+  bottom: 520px; /* above Continue button area */
+  right: 30px;  /* near Settings icon area */
+  /* Size of the press animation (scales the ripple as well) */
+  width: 50px;
+  height: 50px;
+}
+
+.press-settings::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid #ff6b35;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  animation: pin-press-pulse 2.2s ease-in-out infinite, press-appear 0.3s ease-out both;
+}
+
+.text-settings {
+  position: absolute;
+  bottom: 610px;
+  right: -10px;
+  max-width: 260px;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  animation: tour-text-appear 0.4s ease-out;
 }

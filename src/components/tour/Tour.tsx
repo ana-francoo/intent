@@ -52,7 +52,7 @@ const Tour = () => {
         setExtensionClicked(true);
         
         // Create the floating popup iframe
-        const popupResult = createFloatingPopup({ route: '/' });
+        const popupResult = createFloatingPopup({ route: '/?tour=1' });
         const element = popupResult.element;
         
         // Center the floating dashboard and create an anchor for relative elements
@@ -77,6 +77,24 @@ const Tour = () => {
           };
         }
         
+        // Listen for settings-opened messages from the iframe to hide prompts immediately
+        const onMessage = (evt: MessageEvent) => {
+          if (evt?.data?.type === 'OPEN_ACCOUNT_SETTINGS') {
+            const press = document.querySelector('.press-settings') as HTMLElement | null;
+            if (press) press.style.display = 'none';
+            const settingsText = document.querySelector('.text-settings') as HTMLElement | null;
+            if (settingsText) settingsText.style.display = 'none';
+            const btn = document.querySelector('.tour-continue-button') as HTMLElement | null;
+            if (btn) btn.classList.remove('dimmed');
+            const accSvg = document.querySelector('.accountability-svg') as HTMLElement | null;
+            if (accSvg) accSvg.style.display = 'block';
+            const accText = document.querySelector('.text-accountability') as HTMLElement | null;
+            if (accText) accText.style.display = 'block';
+          }
+        };
+        window.addEventListener('message', onMessage);
+        ;(window as any)._tourOnMessage = onMessage;
+
         // Ensure Tour-specific CSS animations exist (kept for subtle appear effects)
         if (!document.getElementById('tour-animations')) {
           const style = document.createElement('style');
@@ -85,13 +103,14 @@ const Tour = () => {
             @keyframes additional-svg-appear { 0% { opacity: 0; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }
             @keyframes tour-text-appear { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
           `;
-          document.head.appendChild(style);
+        document.head.appendChild(style);
         }
         
         // Create anchor, second svg, text, and continue button using CSS classes
         setTimeout(() => {
           // Guard against duplicate creation if handler fires more than once
           if (document.getElementById('tour-dashboard-anchor')) return;
+          let tourStep = 0;
 
           const anchor = document.createElement('div');
           anchor.id = 'tour-dashboard-anchor';
@@ -106,10 +125,10 @@ const Tour = () => {
             </svg>
           `;
           anchor.appendChild(secondSvg);
-
+          
           const secondText = document.createElement('div');
           secondText.className = 'tour-firststep';
-          secondText.textContent = 'All websites are blocked by default. You can unblock and customize additional site settings here';
+          secondText.textContent = '3. All websites are blocked by default. You can unblock and customize additional site settings here';
           secondSvg.appendChild(secondText);
 
           // Prepare the arrow-block (initially hidden)
@@ -127,10 +146,39 @@ const Tour = () => {
           `;
           const textBlock = document.createElement('div');
           textBlock.className = 'text-block';
-          textBlock.textContent = "You can also block your current site directly by clicking 'Block'";
+          textBlock.textContent = "4. You can also block your current site directly by clicking 'Block'";
           arrowBlock.appendChild(textBlock);
           anchor.appendChild(arrowBlock);
 
+          // Prepare accountability step elements (initially hidden)
+          const accountabilitySvg = document.createElement('div');
+          accountabilitySvg.className = 'accountability-svg';
+          accountabilitySvg.style.display = 'none';
+          accountabilitySvg.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" fill="none" style="width: 100%; height: 100%;">
+              <path d="M168.97138,43.22749c12.64149,0,12.90694,18.62863,12.90694,28.16059c0,14.17547-8.24082,31.42365-2.73783,43.80536.26999.60748.72094,1.37841.39112,1.9556-1.41257,2.47199-4.67465,2.15888-5.08455,6.25791-1.13699,11.36992,5.7975,26.79941,6.64903,38.72081.56991,7.97879.51404,29.72506-11.34246,29.72506" transform="translate(-18.97138 21.120441)" stroke="#ff6b35" stroke-width="2"/>
+            </svg>
+          `;
+          anchor.appendChild(accountabilitySvg);
+
+          const accountabilityText = document.createElement('div');
+          accountabilityText.className = 'text-accountability';
+          accountabilityText.textContent = 'Manage your accountability partner here';
+          accountabilityText.style.display = 'none';
+          anchor.appendChild(accountabilityText);
+
+          // Prepare a new press animation and helper text (initially hidden)
+          const pressSettings = document.createElement('div');
+          pressSettings.className = 'press-settings';
+          pressSettings.style.display = 'none';
+          anchor.appendChild(pressSettings);
+
+          const settingsText = document.createElement('div');
+          settingsText.className = 'text-settings';
+          settingsText.textContent = '5. Click on Settings';
+          settingsText.style.display = 'none';
+          anchor.appendChild(settingsText);
+          
           const continueBtn = document.createElement('button');
           continueBtn.className = 'tour-continue-button';
           continueBtn.textContent = 'Continue';
@@ -141,17 +189,29 @@ const Tour = () => {
             continueBtn.classList.remove('hover');
           };
           continueBtn.onclick = () => {
-            // Hide all matching elements on first click (avoid duplicates lingering)
-            const hideSelectors = ['.tour-second-svg', '.tour-firststep'];
-            hideSelectors.forEach(sel => {
-              document.querySelectorAll(sel).forEach(el => {
-                (el as HTMLElement).style.display = 'none';
+            if (tourStep === 0) {
+              // Hide all matching elements on first click (avoid duplicates lingering)
+              const hideSelectors = ['.tour-second-svg', '.tour-firststep'];
+              hideSelectors.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                  (el as HTMLElement).style.display = 'none';
+                });
               });
-            });
-            // Show the arrow block and helper text
-            arrowBlock.style.display = 'block';
-            // Prevent repeated work
-            continueBtn.onclick = null as any;
+              // Show the arrow block and helper text
+              arrowBlock.style.display = 'block';
+              tourStep = 1;
+              return;
+            }
+            if (tourStep === 1) {
+              // Hide arrow-block/text and show settings press + text
+              arrowBlock.style.display = 'none';
+              pressSettings.style.display = 'block';
+              settingsText.style.display = 'block';
+              continueBtn.classList.add('dimmed');
+              tourStep = 2;
+              return;
+            }
+            // Further steps are triggered by clicking the Settings icon, not the Continue button
           };
           anchor.appendChild(continueBtn);
         }, 300);
@@ -168,6 +228,8 @@ const Tour = () => {
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(handleExtensionClick);
       }
+      // Remove window message listener if present
+      try { window.removeEventListener('message', (window as any)._tourOnMessage); } catch {}
     };
   }, []);
 
@@ -192,82 +254,82 @@ const Tour = () => {
               <path d="M219.05803,128.57757c.36866,1.84328,1.0723,3.5632,1.43866,5.39497" transform="matrix(-1.586704-1.373376-.74282 0.858203 558.235564 324.389133)" fill="none" stroke="#ff6b35"/>
             </g>
           </svg>
-
+      
           {/* First text positioned relative to the arrow wrapper */}
           {!isPinned && (
-            <TourText
-              text="1. Let's start by pinning the Intent extension"
+        <TourText
+          text="1. Let's start by pinning the Intent extension"
               className="tour-first-text"
-              fontSize={firstTextPosition.fontSize}
-              delay={0.6}
-            />
-          )}
+          fontSize={firstTextPosition.fontSize}
+          delay={0.6}
+        />
+      )}
           {isPinned && (
-            <TourText
-              text="2. Now open the extension by clicking on it"
+        <TourText
+          text="2. Now open the extension by clicking on it"
               className="tour-first-text"
-              fontSize={firstTextPosition.fontSize}
-              delay={0.1}
-            />
-          )}
+          fontSize={firstTextPosition.fontSize}
+          delay={0.1}
+        />
+      )}
 
           {/* Guide image positioned absolutely relative to the arrow wrapper */}
           <div className="tour-guide-image">
-            {/* Animated "press" hint over the pin icon area (hidden once pinned). */}
-            {!isPinned && (
-              <div
-                className="pin-press"
-                style={{
+          {/* Animated "press" hint over the pin icon area (hidden once pinned). */}
+          {!isPinned && (
+            <div
+              className="pin-press"
+              style={{
                   top: '58%',
                   right: '22.5%',
+              }}
+            />
+          )}
+
+          {/* After pinned, show a click animation targetting the extension icon area */}
+          {isPinned && (
+            <>
+              {/* Hover rectangle relative to the image container */}
+              <div
+                className="hover-rect"
+                style={{
+                    top: '51.5%',
+                  left: '34.5%',
                 }}
               />
-            )}
-
-            {/* After pinned, show a click animation targetting the extension icon area */}
-            {isPinned && (
-              <>
-                {/* Hover rectangle relative to the image container */}
-                <div
-                  className="hover-rect"
+              {/* Mouse click group (pointer + ring) */}
+              <div
+                className="mouse-click"
+                style={{ top: '55%', right: '52%' }}
+              >
+                {/* Cursor pointer */}
+                <svg
+                  className="mouse-pointer-svg"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="#1f2937"
                   style={{
-                    top: '51.5%',
-                    left: '34.5%',
+                    // Fine-tune where the pointer tip sits relative to the ring center
+                    ['--pointer-offset-x' as any]: '55%',
+                    ['--pointer-offset-y' as any]: '45%',
                   }}
-                />
-                {/* Mouse click group (pointer + ring) */}
-                <div
-                  className="mouse-click"
-                  style={{ top: '55%', right: '52%' }}
                 >
-                  {/* Cursor pointer */}
-                  <svg
-                    className="mouse-pointer-svg"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="#1f2937"
-                    style={{
-                      // Fine-tune where the pointer tip sits relative to the ring center
-                      ['--pointer-offset-x' as any]: '55%',
-                      ['--pointer-offset-y' as any]: '45%',
-                    }}
-                  >
-                    <path d="M4 2l14 8-6 2 2 6-3 1-2-6-5 3z" />
-                  </svg>
-                  {/* Click ring */}
-                  <div className="mouse-click-ring" />
-                </div>
-              </>
-            )}
-            <img
-              src={
-                typeof chrome !== 'undefined' && chrome.runtime
-                  ? chrome.runtime.getURL('src/assets/pin-open.png')
-                  : 'src/assets/pin-open.png'
-              }
-              alt="Step 1: Pin the Intent extension, Step 2: Click it to open"
-              style={{ display: 'block', width: '100%', height: 'auto' }}
-            />
+                  <path d="M4 2l14 8-6 2 2 6-3 1-2-6-5 3z" />
+                </svg>
+                {/* Click ring */}
+                <div className="mouse-click-ring" />
+              </div>
+            </>
+          )}
+          <img
+            src={
+              typeof chrome !== 'undefined' && chrome.runtime
+                ? chrome.runtime.getURL('src/assets/pin-open.png')
+                : 'src/assets/pin-open.png'
+            }
+            alt="Step 1: Pin the Intent extension, Step 2: Click it to open"
+            style={{ display: 'block', width: '100%', height: 'auto' }}
+          />
           </div>
         </div>
       )}
