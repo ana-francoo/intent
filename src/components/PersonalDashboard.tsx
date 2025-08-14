@@ -327,8 +327,29 @@ const PersonalDashboard = () => {
     }
   };
 
-  // Removed unused createVisualElement helper (not invoked)
+// Removed unused createVisualElement helper (not invoked)
 
+  // Sync initial toggle states from Supabase
+  useEffect(() => {
+    (async () => {
+      try {
+        const blocked = await getBlockedSites();
+        const blockedDomains = new Set(blocked.map(u => normalizeUrlToDomain(u)));
+        setCategories(prev => prev.map(cat => ({
+          ...cat,
+          sites: cat.sites.map(site => ({
+            ...site,
+            // Default enabled; disable if domain is in the table
+            enabled: !blockedDomains.has(normalizeUrlToDomain(site.url))
+          }))
+        })));
+      } catch (e) {
+        console.warn('Unable to fetch blocked sites; leaving defaults.', e);
+      }
+    })();
+  }, []);
+
+  // Render Account/User Settings as the second page
   if (showAccount) {
     return (
       <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
@@ -337,23 +358,23 @@ const PersonalDashboard = () => {
         <div className="p-4 border-b border-[#5A351E]/20 animate-in slide-in-from-top duration-300 ease-out" style={{
           background: 'linear-gradient(135deg, #1E120B 0%, #2D1B11 50%, #3E2718 100%)'
         }}>
-                      <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setShowAccount(false)} className="text-[#F5E6D3] hover:bg-[#5A351E]/20">
-                ←
-              </Button>
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#FF944D]/20 animate-pulse rounded-full"></div>
-                <div className="relative bg-gradient-to-br from-[#5A351E] to-[#3A2315] p-2 rounded-full border border-[#FF944D]/30 shadow-lg">
-                  <User className="w-5 h-5 text-[#FF944D]" />
-                </div>
-              </div>
-              <div>
-                <h2 className="font-bold text-[#F5E6D3] text-lg">Account Settings</h2>
-                <p className="text-sm text-[#D4C4A8] -mt-0.5">Manage your preferences</p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowAccount(false)} className="text-[#F5E6D3] hover:bg-[#5A351E]/20">
+              ←
+            </Button>
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#FF944D]/20 animate-pulse rounded-full"></div>
+              <div className="relative bg-gradient-to-br from-[#5A351E] to-[#3A2315] p-2 rounded-full border border-[#FF944D]/30 shadow-lg">
+                <User className="w-5 h-5 text-[#FF944D]" />
               </div>
             </div>
+            <div>
+              <h2 className="font-bold text-[#F5E6D3] text-lg">Account Settings</h2>
+              <p className="text-sm text-[#D4C4A8] -mt-0.5">Manage your preferences</p>
+            </div>
+          </div>
         </div>
-        
+
         <div className={`p-4 space-y-3 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{
           background: 'radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)'
         }}>
@@ -424,8 +445,7 @@ const PersonalDashboard = () => {
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className={accountabilityPartner.enabled ? "space-y-4" : "space-y-0"}>
-              
+            <CardContent className={accountabilityPartner.enabled ? 'space-y-4' : 'space-y-0'}>
               {accountabilityPartner.enabled && (
                 <>
                   <div className="space-y-2">
@@ -457,7 +477,6 @@ const PersonalDashboard = () => {
                     className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10"
                     onClick={() => {
                       if (validateEmail(accountabilityPartner.email)) {
-                        // Save logic here
                         console.log('Saving accountability partner:', accountabilityPartner);
                       }
                     }}
@@ -478,26 +497,6 @@ const PersonalDashboard = () => {
       </div>
     );
   }
-
-  // Sync initial toggle states from Supabase
-  useEffect(() => {
-    (async () => {
-      try {
-        const blocked = await getBlockedSites();
-        const blockedDomains = new Set(blocked.map(u => normalizeUrlToDomain(u)));
-        setCategories(prev => prev.map(cat => ({
-          ...cat,
-          sites: cat.sites.map(site => ({
-            ...site,
-            // Default enabled; disable if domain is in the table
-            enabled: !blockedDomains.has(normalizeUrlToDomain(site.url))
-          }))
-        })));
-      } catch (e) {
-        console.warn('Unable to fetch blocked sites; leaving defaults.', e);
-      }
-    })();
-  }, []);
 
   return (
     <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
