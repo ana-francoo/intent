@@ -625,9 +625,9 @@ const PersonalDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-[#F5E6D3] group-hover:text-[#FF944D] transition-colors text-xs">{category.name}</span>
-                      <Badge className="text-xs bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full px-2 py-0.5">
+                      <span className="text-xs text-[#FF944D]">
                         {category.sites.reduce((count, site) => count + (site.enabled ? 1 : 0), 0)}
-                      </Badge>
+                      </span>
                     </div>
                   </div>
                   {category.expanded ? 

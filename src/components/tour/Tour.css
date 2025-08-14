@@ -316,3 +316,36 @@
   line-height: 1.4;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
+
+/* New arrow and text that point to the Block button */
+.arrow-block {
+  position: absolute; /* relative to the centered dashboard anchor */
+  bottom: 335px;     /* pixels from dashboard bottom */
+  left: 110%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: additional-svg-appear 0.5s ease-out;
+}
+
+.arrow-block .arrow-svg {
+  /* Scale only the new arrow inside arrow-block */
+  transform: scaleY(0.8);
+  transform-origin: center;
+  rotate: -10deg;
+}
+
+.text-block {
+  position: absolute; /* relative to the arrow-block */
+  top: -100px;          /* pixels below the arrow */
+  left: 120%;
+  transform: translateX(-50%);
+  width: 200px;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  animation: tour-text-appear 0.5s ease-out;
+}

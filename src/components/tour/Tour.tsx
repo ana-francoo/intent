@@ -112,6 +112,25 @@ const Tour = () => {
           secondText.textContent = 'All websites are blocked by default. You can unblock and customize additional site settings here';
           secondSvg.appendChild(secondText);
 
+          // Prepare the arrow-block (initially hidden)
+          const arrowBlock = document.createElement('div');
+          arrowBlock.className = 'arrow-block';
+          arrowBlock.style.display = 'none';
+          arrowBlock.innerHTML = `
+            <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+              <g transform="matrix(2.866928 0 0 2.7726-42.151342-361.726266)">
+                <path d="M184.45817,163.48724c16.49325-2.06166,29.20963-21.42272,35.04981-35.04981" transform="matrix(2.093763 0 0 1.610628-344.452366-72.639951)" fill="none" stroke="#ff6b35"/>
+                <path d="M219.05803,128.57757c.36866,1.84328,1.0723,3.5632,1.43866,5.39497" transform="matrix(1.728749 0 0 1.14198-264.022798-13.373526)" fill="none" stroke="#ff6b35"/>
+                <path d="M219.05803,128.57757c.36866,1.84328,1.0723,3.5632,1.43866,5.39497" transform="matrix(-1.586704-1.373376-.74282 0.858203 558.235564 324.389133)" fill="none" stroke="#ff6b35"/>
+              </g>
+            </svg>
+          `;
+          const textBlock = document.createElement('div');
+          textBlock.className = 'text-block';
+          textBlock.textContent = "You can also block your current site directly by clicking 'Block'";
+          arrowBlock.appendChild(textBlock);
+          anchor.appendChild(arrowBlock);
+
           const continueBtn = document.createElement('button');
           continueBtn.className = 'tour-continue-button';
           continueBtn.textContent = 'Continue';
@@ -129,6 +148,8 @@ const Tour = () => {
                 (el as HTMLElement).style.display = 'none';
               });
             });
+            // Show the arrow block and helper text
+            arrowBlock.style.display = 'block';
             // Prevent repeated work
             continueBtn.onclick = null as any;
           };
