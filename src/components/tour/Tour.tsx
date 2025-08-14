@@ -8,7 +8,7 @@ const Tour = () => {
   const [isPinned, setIsPinned] = useState(false);
   const getInitialFirstText = () => {
     // Fixed pixels (no viewport-relative positioning)
-    return { top: 440, right: 110, fontSize: 24 };
+    return { top: 440, right: 110, fontSize: 26};
   };
   const [firstTextPosition] = useState(getInitialFirstText);
 

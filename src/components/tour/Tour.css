@@ -50,13 +50,14 @@
   height: 300px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   transform-origin: center;
+  transform: scaleY(1.5); /* scale arrow only on Y axis */
   /* Keep SVG unpositioned; wrapper controls placement */
 }
 
 /* Arrow wrapper (fixed on screen) */
 .tour-arrow {
   position: fixed;
-  top: 20px;
+  top: 80px;
   right: 210px;
   z-index: 10000;
   pointer-events: none;
@@ -67,7 +68,7 @@
 /* Guide image positioned absolutely relative to the anchor */
 .tour-guide-image {
   position: absolute;
-  bottom: -300px; /* pixels from bottom of anchor */
+  bottom: -350px; /* pixels from bottom of anchor */
   right: -100px;  /* pixels from right of anchor */
   width: 600px; /* guide image width */
   border-radius: 14px;
