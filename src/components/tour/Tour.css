@@ -44,11 +44,43 @@
   mix-blend-mode: multiply;
 }
 
+/* Arrow SVG */
+.arrow-svg {
+  width: 300px;
+  height: 300px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  transform-origin: center;
+  /* Keep SVG unpositioned; wrapper controls placement */
+}
+
+/* Arrow wrapper (fixed on screen) */
 .tour-arrow {
   position: fixed;
+  top: 20px;
+  right: 210px;
   z-index: 10000;
   pointer-events: none;
   animation: slideInFromRight 0.8s ease-out 0.3s both;
+}
+
+
+/* Guide image positioned absolutely relative to the anchor */
+.tour-guide-image {
+  position: absolute;
+  bottom: -300px; /* pixels from bottom of anchor */
+  right: -100px;  /* pixels from right of anchor */
+  width: 600px; /* guide image width */
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  background: #fff;
+  opacity: 0;
+  animation: tour-guide-appear 0.6s ease-out 0.2s forwards;
+}
+
+@keyframes tour-guide-appear {
+  0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes slideInFromRight {
@@ -62,11 +94,7 @@
   }
 }
 
-.arrow-svg {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-  transform-origin: center;
-  /* Removed animation to make it static */
-}
+
 
 /* Pin press hint animation shown on top of the guide image */
 .pin-press {
@@ -81,7 +109,13 @@
   transform: translate(-50%, -50%) scale(1);
   pointer-events: none;
   z-index: 1;
-  animation: pin-press-pulse 2.2s ease-in-out infinite;
+  opacity: 0;
+  animation: press-appear 0.4s ease-out 0.4s forwards, pin-press-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes press-appear {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .pin-press::after {
@@ -172,8 +206,8 @@
 .hover-rect {
   position: absolute;
   transform: none;
-  min-width: 160px;
-  min-height: 40px;
+  min-width: 188px;
+  min-height: 45px;
   border-radius: 2px;
   background: rgba(167, 167, 167, 0.18);
   border: none;

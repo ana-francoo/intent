@@ -3,7 +3,7 @@ import './TourText.css';
 
 interface TourTextProps {
   text: string;
-  position: {
+  position?: {
     top?: number | string;
     left?: number | string;
     right?: number | string;
@@ -25,9 +25,8 @@ const TourText: React.FC<TourTextProps> = ({
     <div 
       className={`tour-text ${className}`}
       style={{
-        position: 'fixed',
-        ...position,
-        fontSize: `${fontSize}px`,
+        ...(position || {}),
+        ...(fontSize ? { fontSize: `${fontSize}px` } : {}),
         animationDelay: `${delay}s`
       }}
     >
