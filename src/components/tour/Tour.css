@@ -1,7 +1,7 @@
 .accountability-svg {
   position: absolute;
-  top: 120px;
-  left: -420px; /* to the left of the dashboard */
+  top: 280px;
+  left: 230px; /* to the left of the dashboard */
   width: 360px;
   height: 360px;
   transform: scaleY(0.8);
@@ -11,8 +11,8 @@
 
 .text-accountability {
   position: absolute;
-  top: 100px;
-  left: -40px;
+  top: 400px;
+  left: 450px;
   max-width: 260px;
   color: black;
   padding: 8px 12px;
@@ -83,7 +83,7 @@
 .tour-arrow {
   position: fixed;
   top: 80px;
-  right: 170px;
+  right: 130px;
   z-index: 10000;
   pointer-events: none;
   animation: slideInFromRight 0.8s ease-out 0.3s both;
@@ -423,6 +423,39 @@
   padding: 8px 12px;
   border-radius: 8px;
   font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  animation: tour-text-appear 0.4s ease-out;
+}
+
+/* (intentionally left blank to preserve earlier accountability classes) */
+
+/* Subscription arrow (relative to dashboard), with vertical scale control */
+.subscription-svg {
+  position: absolute;
+  top: 90px;
+  right: -220px; /* to the right of the dashboard */
+  width: 340px;
+  height: 340px;
+  pointer-events: none;
+  animation: additional-svg-appear 0.4s ease-out;
+}
+.subscription-svg .arrow-svg {
+  transform: scaleY(0.7);
+  transform-origin: center;
+}
+
+/* Text positioned relative to the subscription arrow */
+.text-subscription {
+  position: absolute; /* relative to .subscription-svg */
+  top: -50px;
+  left: 45%;
+  width: 240px;
+  color: black;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.4;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;

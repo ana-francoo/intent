@@ -77,6 +77,9 @@ const Tour = () => {
           };
         }
         
+        // Track tour step across handlers (0 initial, 1 after arrow-block, 2 after settings prompt, 3 after settings opened)
+        let tourStep = 0;
+
         // Listen for settings-opened messages from the iframe to hide prompts immediately
         const onMessage = (evt: MessageEvent) => {
           if (evt?.data?.type === 'OPEN_ACCOUNT_SETTINGS') {
@@ -90,6 +93,8 @@ const Tour = () => {
             if (accSvg) accSvg.style.display = 'block';
             const accText = document.querySelector('.text-accountability') as HTMLElement | null;
             if (accText) accText.style.display = 'block';
+            // Advance to step 3 so next Continue hides accountability and shows subscription
+            tourStep = 3;
           }
         };
         window.addEventListener('message', onMessage);
@@ -110,7 +115,6 @@ const Tour = () => {
         setTimeout(() => {
           // Guard against duplicate creation if handler fires more than once
           if (document.getElementById('tour-dashboard-anchor')) return;
-          let tourStep = 0;
 
           const anchor = document.createElement('div');
           anchor.id = 'tour-dashboard-anchor';
@@ -149,6 +153,26 @@ const Tour = () => {
           textBlock.textContent = "4. You can also block your current site directly by clicking 'Block'";
           arrowBlock.appendChild(textBlock);
           anchor.appendChild(arrowBlock);
+
+          // Prepare subscription step elements (initially hidden)
+          const subscriptionSvg = document.createElement('div');
+          subscriptionSvg.className = 'subscription-svg';
+          subscriptionSvg.style.display = 'none';
+          subscriptionSvg.innerHTML = `
+            <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="arrow-svg">
+              <g transform="matrix(2.866928 0 0 2.7726-42.151342-361.726266)">
+                <path d="M184.45817,163.48724c16.49325-2.06166,29.20963-21.42272,35.04981-35.04981" transform="matrix(2.093763 0 0 1.610628-344.452366-72.639951)" fill="none" stroke="#ff6b35"/>
+                <path d="M219.05803,128.57757c.36866,1.84328,1.0723,3.5632,1.43866,5.39497" transform="matrix(1.728749 0 0 1.14198-264.022798-13.373526)" fill="none" stroke="#ff6b35"/>
+                <path d="M219.05803,128.57757c.36866,1.84328,1.0723,3.5632,1.43866,5.39497" transform="matrix(-1.586704-1.373376-.74282 0.858203 558.235564 324.389133)" fill="none" stroke="#ff6b35"/>
+              </g>
+            </svg>
+          `;
+          const subscriptionText = document.createElement('div');
+          subscriptionText.className = 'text-subscription';
+          subscriptionText.textContent = 'Manage your subscription here';
+          subscriptionText.style.display = 'none';
+          subscriptionSvg.appendChild(subscriptionText);
+          anchor.appendChild(subscriptionSvg);
 
           // Prepare accountability step elements (initially hidden)
           const accountabilitySvg = document.createElement('div');
@@ -211,7 +235,20 @@ const Tour = () => {
               tourStep = 2;
               return;
             }
-            // Further steps are triggered by clicking the Settings icon, not the Continue button
+            if (tourStep === 3) {
+              // Hide accountability visuals and show subscription arrow/text
+              const accSvg = document.querySelector('.accountability-svg') as HTMLElement | null;
+              if (accSvg) accSvg.style.display = 'none';
+              const accText = document.querySelector('.text-accountability') as HTMLElement | null;
+              if (accText) accText.style.display = 'none';
+              subscriptionSvg.style.display = 'block';
+              subscriptionText.style.display = 'block';
+              // Update button label for final step
+              continueBtn.textContent = 'Done!';
+              tourStep = 4;
+              return;
+            }
+            // Further steps are triggered by other actions
           };
           anchor.appendChild(continueBtn);
         }, 300);
