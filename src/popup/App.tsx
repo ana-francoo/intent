@@ -7,6 +7,7 @@ import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
 import Home from '@/components/home/Home'
 import PopupLauncher from '@/components/popup-launcher/PopupLauncher'
+import { SubscriptionTest } from '@/components/subscription-test'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<PersonalDashboard />} />
         <Route path="/overlay" element={<IntentionOverlay />} />
+        <Route path="subscription-test" element={<SubscriptionTest />} />
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
         {/* I don't think these routes are being used, confirming before can be removed */}
         {/* <Route path="/home" element={<Home />} /> */}

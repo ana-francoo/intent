@@ -6,27 +6,110 @@ export interface SubscriptionStatus {
   trialEndsAt: Date | null;
   daysRemaining: number;
   subscriptionActive: boolean;
-  planType: 'trial' | 'yearly' | 'expired';
+  planType: 'trial' | 'monthly' | 'expired';
+  currentPeriodEnd: Date | null;
 }
 
-// 2 weeks in milliseconds
-// const TRIAL_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
+const POLAR_PRODUCT_ID = import.meta.env.VITE_POLAR_PRODUCT_ID || '9d05c24b-68af-4545-84c9-db4dc75c871c';
+const CHECKOUT_URL = import.meta.env.VITE_CHECKOUT_URL || 'https://useintent.app/api/checkout';
 
 /**
- * Get the user's subscription status and access level
- * DEVELOPMENT: Always returns pro subscription for testing
+ * Get the user's subscription status and access level from profiles table
  */
 export const getSubscriptionStatus = async (): Promise<SubscriptionStatus> => {
-  // DEVELOPMENT: Always return pro subscription status
-  
-  return {
-    hasAccess: true,
-    isTrialActive: false,
-    trialEndsAt: null,
-    daysRemaining: 365, // 1 year
-    subscriptionActive: true,
-    planType: 'yearly'
-  };
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return {
+        hasAccess: false,
+        isTrialActive: false,
+        trialEndsAt: null,
+        daysRemaining: 0,
+        subscriptionActive: false,
+        planType: 'expired',
+        currentPeriodEnd: null
+      };
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 day trial
+
+      await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          subscription_status: 'trialing',
+          trial_end: trialEndDate.toISOString(),
+        });
+
+      return {
+        hasAccess: true,
+        isTrialActive: true,
+        trialEndsAt: trialEndDate,
+        daysRemaining: 14,
+        subscriptionActive: false,
+        planType: 'trial',
+        currentPeriodEnd: null
+      };
+    }
+
+    const now = new Date();
+    
+    const trialEnd = profile.trial_end ? new Date(profile.trial_end) : null;
+    const isTrialActive = trialEnd && trialEnd > now;
+    
+    const currentPeriodEnd = profile.current_period_end ? new Date(profile.current_period_end) : null;
+    const hasActiveSubscription = 
+      profile.subscription_status === 'active' && 
+      currentPeriodEnd && 
+      currentPeriodEnd > now;
+
+    let daysRemaining = 0;
+    if (isTrialActive && trialEnd) {
+      daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    } else if (hasActiveSubscription && currentPeriodEnd) {
+      daysRemaining = Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    }
+
+    const hasAccess = isTrialActive || hasActiveSubscription;
+    
+    let planType: 'trial' | 'monthly' | 'expired' = 'expired';
+    if (isTrialActive) {
+      planType = 'trial';
+    } else if (hasActiveSubscription) {
+      planType = 'monthly';
+    }
+
+    return {
+      hasAccess,
+      isTrialActive: isTrialActive || false,
+      trialEndsAt: trialEnd,
+      daysRemaining,
+      subscriptionActive: hasActiveSubscription || false,
+      planType,
+      currentPeriodEnd
+    };
+    
+  } catch (error) {
+    console.error('Error getting subscription status:', error);
+    return {
+      hasAccess: false,
+      isTrialActive: false,
+      trialEndsAt: null,
+      daysRemaining: 0,
+      subscriptionActive: false,
+      planType: 'expired',
+      currentPeriodEnd: null
+    };
+  }
 };
 
 /**
@@ -39,9 +122,9 @@ export const hasExtensionAccess = async (): Promise<boolean> => {
 };
 
 /**
- * Create Stripe Checkout session for yearly subscription
+ * Redirect to Polar Checkout for monthly subscription
  */
-export const createCheckoutSession = async () => {
+export const createPolarCheckout = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -49,38 +132,27 @@ export const createCheckoutSession = async () => {
       throw new Error('User not authenticated');
     }
 
-    // Call your backend API to create Stripe session
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: user.id,
-        email: user.email,
-        priceId: process.env.VITE_STRIPE_YEARLY_PRICE_ID,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to create checkout session');
-    }
-
-    const { url } = await response.json();
+    const checkoutUrl = `${CHECKOUT_URL}?` +
+      `products=${POLAR_PRODUCT_ID}&` +
+      `customerExternalId=${user.id}&` +
+      `customerEmail=${encodeURIComponent(user.email || '')}`;
     
-    // Redirect to Stripe Checkout
-    window.open(url, '_blank');
+    console.log('Redirecting to Polar checkout:', checkoutUrl);
+    
+    window.open(checkoutUrl, '_blank');
+    
+    return checkoutUrl;
     
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error creating Polar checkout:', error);
     throw error;
   }
 };
 
 /**
- * Handle successful subscription (called after Stripe webhook)
+ * Redirect to Polar Customer Portal for subscription management
  */
-export const handleSubscriptionSuccess = async (subscriptionId: string, customerId: string) => {
+export const openCustomerPortal = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -88,27 +160,15 @@ export const handleSubscriptionSuccess = async (subscriptionId: string, customer
       throw new Error('User not authenticated');
     }
 
-    // Update user subscription in database
-    const { error } = await supabase
-      .from('user_subscriptions')
-      .upsert({
-        user_id: user.id,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        status: 'active',
-        plan_type: 'yearly',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-
-    if (error) {
-      throw error;
-    }
-
-
+    const portalUrl = `${CHECKOUT_URL.replace('/checkout', '/portal')}?userId=${user.id}`;
+    
+    console.log('Redirecting to customer portal:', portalUrl);
+    window.open(portalUrl, '_blank');
+    
+    return portalUrl;
     
   } catch (error) {
-    console.error('Error handling subscription success:', error);
+    console.error('Error opening customer portal:', error);
     throw error;
   }
 };
