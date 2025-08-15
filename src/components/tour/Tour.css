@@ -313,33 +313,14 @@
 }
 
 /* Logo + flame overlay in the center */
-.logo-flame-overlay {
+/* (Logo + flame overlay styles removed per request) */
+.logo-flame-root {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.92);
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
+  transform: translate(-50%, -50%);
   z-index: 2147483647;
   pointer-events: none;
-  animation: logo-flame-in 0.55s ease-out forwards;
-}
-.logo-flame-overlay .brand-text {
-  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 28px;
-  letter-spacing: 0.4px;
-  color: #1a1a1a;
-}
-.logo-flame-overlay .flame-svg {
-  width: 38px;
-  height: 38px;
-  filter: drop-shadow(0 6px 16px rgba(255,107,53,0.35));
-}
-@keyframes logo-flame-in {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.84); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 @keyframes continue-enter {

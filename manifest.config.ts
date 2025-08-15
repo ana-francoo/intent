@@ -7,7 +7,7 @@ export default defineManifest({
   short_name: 'Intent',
   version: pkg.version,
   permissions: ['storage', 'activeTab', 'tabs', 'scripting'],
-  host_permissions: ['https://www.google.com/*'],
+  host_permissions: ['https://www.google.com/*', 'https://www.google-analytics.com/*'],
   optional_host_permissions: ['https://*/src/popup/index#/tour'],
   externally_connectable: {
     matches: [
