@@ -17,7 +17,7 @@
   color: black;
   padding: 8px 12px;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.4;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -83,7 +83,7 @@
 .tour-arrow {
   position: fixed;
   top: 80px;
-  right: 130px;
+  right: 180px;
   z-index: 10000;
   pointer-events: none;
   animation: slideInFromRight 0.8s ease-out 0.3s both;
@@ -271,7 +271,7 @@
 
 .tour-continue-button {
   position: absolute;
-  bottom: -100px;
+  bottom: -75px;
   left: 50%;
   transform: translate(-50%, 0);
   pointer-events: auto;
@@ -282,7 +282,7 @@
   border: 1px solid rgba(255, 148, 77, 0.65); /* darker accent border */
   backdrop-filter: blur(2px);
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.2px;
   box-shadow: 0 6px 18px rgba(0,0,0,0.15);
@@ -303,6 +303,45 @@
   border-color: #e5e7eb; /* very light grey border */
 }
 
+/* Fade-out helper for end-of-tour */
+.tour-fade-out {
+  animation: tour-fade-out 0.4s ease-out forwards;
+}
+@keyframes tour-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Logo + flame overlay in the center */
+.logo-flame-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 2147483647;
+  pointer-events: none;
+  animation: logo-flame-in 0.55s ease-out forwards;
+}
+.logo-flame-overlay .brand-text {
+  font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.4px;
+  color: #1a1a1a;
+}
+.logo-flame-overlay .flame-svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 6px 16px rgba(255,107,53,0.35));
+}
+@keyframes logo-flame-in {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.84); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
 @keyframes continue-enter {
   0% { opacity: 0; transform: translate(-50%, 30px); }
   100% { opacity: 1; transform: translate(-50%, 0); }
@@ -320,8 +359,8 @@
 .tour-second-text {
   position: absolute;
   top: 70px;
-  right: -40px;
-  max-width: 520px;
+  right: 0px;
+  max-width: 300px;
   pointer-events: none;
   animation: tour-text-appear 0.5s ease-out;
   color: black;
@@ -334,11 +373,12 @@
 }
 
 /* First-step text: positioned relative to the second SVG */
+/* this is the text that says "All websites are blocked by default. You can unblock and customize additional site settings here" */
 .tour-firststep {
   position: absolute;  /* positioned relative to .tour-second-svg */
-  top: 220px;           /* adjust px from the top edge of the second SVG */
-  left: 350px;          /* adjust px from the left edge of the second SVG */
-  width: 280px;
+  top: 200px;           /* adjust px from the top edge of the second SVG */
+  left: 320px;          /* adjust px from the left edge of the second SVG */
+  width: 200px;
   pointer-events: none;
   animation: tour-text-appear 0.5s ease-out;
   color: black;
@@ -369,10 +409,10 @@
 
 .text-block {
   position: absolute; /* relative to the arrow-block */
-  top: -100px;          /* pixels below the arrow */
-  left: 120%;
+  top: -40px;          /* pixels below the arrow */
+  left: 32%;
   transform: translateX(-50%);
-  width: 200px;
+  width: 500px;
   color: black;
   padding: 8px 12px;
   border-radius: 8px;
@@ -460,4 +500,39 @@
   line-height: 1.4;
   font-family: 'Geist', system-ui, Avenir, Helvetica, Arial, sans-serif;
   animation: tour-text-appear 0.4s ease-out;
+}
+
+/* Confetti overlay */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: auto;
+  z-index: 2147483647;
+}
+
+.confetti-center {
+  inset: auto !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation: confetti-burst var(--dur, 1.2s) cubic-bezier(.16,.9,.17,1) var(--delay, 0s) forwards;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+@keyframes confetti-burst {
+  0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, 720deg)) scale(1); opacity: 0.75; }
 }

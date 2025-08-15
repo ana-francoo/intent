@@ -2,10 +2,15 @@ import { useState, useEffect } from 'react';
 import './Tour.css';
 import TourText from './TourText';
 import { createFloatingPopup } from '@/utils/floatingPopup';
+import logo from '@/assets/logo2.png';
+import Flame from '@/components/home/Flame';
+
+// Removed old logo + flame overlay
 
 const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [showBrandOverlay, setShowBrandOverlay] = useState(false);
   const getInitialFirstText = () => {
     // Fixed pixels (no viewport-relative positioning)
     return { top: 440, right: 110, fontSize: 26};
@@ -58,23 +63,26 @@ const Tour = () => {
         // Center the floating dashboard and create an anchor for relative elements
         (element as HTMLElement).classList.add('tour-dashboard');
         
-        // Override the close button behavior to clean up Tour-specific elements
+        // Disable the popup close (X) button while in the Tour page
         const closeButton = element.querySelector('button');
         if (closeButton) {
-          const originalOnclick = closeButton.onclick;
-          closeButton.onclick = () => {
-            // No resize handlers to remove (fixed positions)
-            
-            const rightContainer = document.getElementById('tour-right-container');
-            if (rightContainer) rightContainer.remove();
-            
-            const continueBtnCleanup = document.getElementById('tour-continue-button');
-            if (continueBtnCleanup) continueBtnCleanup.remove();
-            
-            if (originalOnclick && typeof originalOnclick === 'function') {
-              (originalOnclick as any)();
-            }
-          };
+          try {
+            // Visually and functionally disable the button
+            (closeButton as HTMLButtonElement).disabled = true;
+            (closeButton as HTMLButtonElement).ariaDisabled = 'true';
+            closeButton.style.opacity = '0.45';
+            closeButton.style.cursor = 'not-allowed';
+            closeButton.style.pointerEvents = 'none';
+            closeButton.title = 'Disabled during tour';
+            // Prevent any existing handlers from firing
+            closeButton.onclick = (ev: any) => {
+              if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+              if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+              return false;
+            };
+          } catch {
+            // ignore
+          }
         }
         
         // Track tour step across handlers (0 initial, 1 after arrow-block, 2 after settings prompt, 3 after settings opened)
@@ -108,7 +116,7 @@ const Tour = () => {
             @keyframes additional-svg-appear { 0% { opacity: 0; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }
             @keyframes tour-text-appear { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
           `;
-        document.head.appendChild(style);
+          document.head.appendChild(style);
         }
         
         // Create anchor, second svg, text, and continue button using CSS classes
@@ -169,7 +177,7 @@ const Tour = () => {
           `;
           const subscriptionText = document.createElement('div');
           subscriptionText.className = 'text-subscription';
-          subscriptionText.textContent = 'Manage your subscription here';
+          subscriptionText.textContent = '6. Manage your subscription here';
           subscriptionText.style.display = 'none';
           subscriptionSvg.appendChild(subscriptionText);
           anchor.appendChild(subscriptionSvg);
@@ -187,7 +195,7 @@ const Tour = () => {
 
           const accountabilityText = document.createElement('div');
           accountabilityText.className = 'text-accountability';
-          accountabilityText.textContent = 'Manage your accountability partner here';
+          accountabilityText.textContent = '5. You can add an accountability partner here!';
           accountabilityText.style.display = 'none';
           anchor.appendChild(accountabilityText);
 
@@ -248,6 +256,76 @@ const Tour = () => {
               tourStep = 4;
               return;
             }
+            if (tourStep === 4) {
+              // Fire confetti and finish
+              const container = document.createElement('div');
+              container.className = 'confetti-container confetti-center';
+              document.body.appendChild(container);
+              const colors = ['#FF944D', '#FF6B35', '#F5E6D3', '#8FBC8F', '#D4C4A8'];
+              const count = 140;
+              for (let i = 0; i < count; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti';
+                // Random trajectory (explosive radial burst)
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 160 + Math.random() * 260; // px
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                const rot = (Math.random() * 720 + 360) + 'deg';
+                piece.style.setProperty('--dx', dx + 'px');
+                piece.style.setProperty('--dy', dy + 'px');
+                piece.style.setProperty('--rot', rot);
+                piece.style.setProperty('--dur', (0.8 + Math.random() * 0.8) + 's');
+                piece.style.setProperty('--delay', (Math.random() * 0.15) + 's');
+                piece.style.background = colors[i % colors.length];
+                piece.onclick = () => {
+                  piece.style.opacity = '0';
+                  piece.style.transform = 'scale(1.6)';
+                  setTimeout(() => piece.remove(), 200);
+                };
+                container.appendChild(piece);
+              }
+              // Fade out remaining tour elements (except confetti), and show centered logo+flame
+              const toFade = [
+                '.tour-dashboard',
+                '#floating-popup-container',
+                '.tour-dashboard-anchor',
+                '.tour-arrow',
+                '.tour-guide-image',
+                '.tour-first-text',
+                '.tour-continue-button',
+                '.tour-second-svg',
+                '.tour-firststep',
+                '.arrow-block',
+                '.text-block',
+                '.accountability-svg',
+                '.text-accountability',
+                '.subscription-svg',
+                '.text-subscription'
+              ];
+              toFade.forEach(sel => {
+                document.querySelectorAll(sel).forEach(el => {
+                  (el as HTMLElement).classList.add('tour-fade-out');
+                  (el as HTMLElement).style.pointerEvents = 'none';
+                });
+              });
+              // Explicitly override inline animation on the popup container so the fade applies
+              const popupEl = document.getElementById('floating-popup-container');
+              if (popupEl) {
+                (popupEl as HTMLElement).style.animation = 'tour-fade-out 0.4s ease-out forwards';
+              }
+              continueBtn.classList.add('tour-fade-out');
+
+              // No DOM-based flame/text overlay; React overlay below will handle
+              // Show the brand overlay rendered by React
+              setShowBrandOverlay(true);
+
+              // Auto-cleanup after animation completes
+              setTimeout(() => {
+                container.remove();
+              }, 1600);
+              return;
+            }
             // Further steps are triggered by other actions
           };
           anchor.appendChild(continueBtn);
@@ -275,6 +353,17 @@ const Tour = () => {
       {/* Instruction text changes based on pin state */}
       {/* White background */}
       <div className="tour-background"></div>
+      
+      {showBrandOverlay && (
+        <div className="flex flex-col items-center justify-center min-h-screen gap-8 logo-flame-overlay" style={{ pointerEvents: 'none' }}>
+          <div className="flex justify-center relative animate-slide-in-up">
+            <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '15.5px' }}>
+              <Flame top="-8vh" className="origin-bottom animate-flame-ignition scale-90 scale-y-60" />
+            </div>
+            <img src={logo} alt="Logo" className="size-36 transition-all duration-500 rounded-full bg-radial from-orange-400/15 from-60% to-transparent shadow-[0_0_40px_10px_rgb(251_146_60),0_0_0_4px_rgb(251_146_60/0.08)] opacity-100" />
+          </div>
+        </div>
+      )}
       
       {/* Squiggly arrow wrapper with fixed position; guide image positioned absolutely relative to it */}
       {!extensionClicked && (
