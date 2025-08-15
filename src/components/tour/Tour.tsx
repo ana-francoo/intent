@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import './Tour.css';
 import TourText from './TourText';
 import { createFloatingPopup } from '@/utils/floatingPopup';
-import logo from '@/assets/logo2.png';
-import Flame from '@/components/home/Flame';
 
-// Removed old logo + flame overlay
+import logo from '@/assets/logo2.png';
+import Flame from './Flame';
 
 const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-  const [showBrandOverlay, setShowBrandOverlay] = useState(false);
   const getInitialFirstText = () => {
     // Fixed pixels (no viewport-relative positioning)
     return { top: 440, right: 110, fontSize: 26};
@@ -316,10 +314,15 @@ const Tour = () => {
               }
               continueBtn.classList.add('tour-fade-out');
 
-              // No DOM-based flame/text overlay; React overlay below will handle
-              // Show the brand overlay rendered by React
-              setShowBrandOverlay(true);
-
+              const logo = document.createElement('div');
+              logo.className = 'logo-flame-overlay';
+              logo.innerHTML = `
+                <svg class="flame-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2s5 4 5 8-2.239 7-5 7-5-3.134-5-7 5-8 5-8z" fill="#FF6B35"/>
+                </svg>
+                <span class="brand-text">Intent</span>
+              `;
+              document.body.appendChild(logo);
               // Auto-cleanup after animation completes
               setTimeout(() => {
                 container.remove();
@@ -353,17 +356,6 @@ const Tour = () => {
       {/* Instruction text changes based on pin state */}
       {/* White background */}
       <div className="tour-background"></div>
-      
-      {showBrandOverlay && (
-        <div className="flex flex-col items-center justify-center min-h-screen gap-8 logo-flame-overlay" style={{ pointerEvents: 'none' }}>
-          <div className="flex justify-center relative animate-slide-in-up">
-            <div className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '15.5px' }}>
-              <Flame top="-8vh" className="origin-bottom animate-flame-ignition scale-90 scale-y-60" />
-            </div>
-            <img src={logo} alt="Logo" className="size-36 transition-all duration-500 rounded-full bg-radial from-orange-400/15 from-60% to-transparent shadow-[0_0_40px_10px_rgb(251_146_60),0_0_0_4px_rgb(251_146_60/0.08)] opacity-100" />
-          </div>
-        </div>
-      )}
       
       {/* Squiggly arrow wrapper with fixed position; guide image positioned absolutely relative to it */}
       {!extensionClicked && (
