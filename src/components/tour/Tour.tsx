@@ -458,7 +458,10 @@ const Tour = () => {
                   // Move CTA downward to a fixed top position
                   const ctaWrapper = document.getElementById('tour-create-account-cta') as HTMLElement | null;
                   if (ctaWrapper) {
-                    // Use CSS-defined --cta-top-final fallback; just trigger the motion
+                    // Compute current center-top as animation start and animate to final top
+                    const rect = ctaWrapper.getBoundingClientRect();
+                    const currentTop = rect.top;
+                    ctaWrapper.style.setProperty('--cta-top-start', `${Math.round(currentTop)}px`);
                     ctaWrapper.classList.add('tour-cta-move-down');
                   }
                   if (!document.getElementById('tour-embedded-signup-root')) {

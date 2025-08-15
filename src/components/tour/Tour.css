@@ -65,11 +65,11 @@
   background:
     radial-gradient(
       ellipse 80% 60% at 50% 0%,
-      rgba(31,41,55,0.95) 0%,
-      rgba(31,41,55,0.7) 40%,
-      rgba(31,41,55,0.35) 70%,
-      rgba(31,41,55,0.12) 85%,
-      rgba(31,41,55,0.0) 100%
+      rgba(55, 43, 31, 0.95) 0%,
+      rgba(55, 47, 31, 0.7) 40%,
+      rgba(55, 47, 31, 0.35) 70%,
+      rgba(55, 42, 31, 0.12) 85%,
+      rgba(55, 49, 31, 0) 100%
     ),
     linear-gradient(#0b0b0b, #0b0b0b);
   opacity: 0;
@@ -566,7 +566,8 @@
 /* Return animation: from current exploded position back to the button center */
 @keyframes confetti-return {
   0% { transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, 720deg)) scale(1); opacity: 0.9; }
-  100% { transform: translate(var(--tx-return, 0px), var(--ty-return, 0px)) rotate(0deg) scale(1); opacity: 0.95; }
+  85% { opacity: 0.5; }
+  100% { transform: translate(var(--tx-return, 0px), var(--ty-return, 0px)) rotate(0deg) scale(1); opacity: 0; }
 }
 
 /* Bottom CTA for Create Account after finishing the tour */
@@ -586,6 +587,7 @@
   animation: tour-cta-move-down 0.9s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 @keyframes tour-cta-move-down {
+  from { top: var(--cta-top-start, 0px); }
   to { top: var(--cta-top-final, 800px); }
 }
 
@@ -652,7 +654,7 @@
   mask-clip: content-box, border-box;
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  padding: 1px; /* border thickness */
+  padding: 0.8px; /* border thickness */
   animation: conic-spin 1.5s linear infinite;
   pointer-events: none;
 }
@@ -689,7 +691,7 @@
   mask-clip: content-box, border-box;
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  padding: 5px; /* border thickness */
+  padding: 3px; /* border thickness */
   /* Two revolutions: 1) fast→slow, 2) constant slow pace */
   animation:
     conic-spin-ccw var(--border-dur, 1.2s) cubic-bezier(0.2, 0, 0, 1) 0s 1 forwards,
