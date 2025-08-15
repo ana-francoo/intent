@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AddWebsiteInput from '../AddWebsiteInput';
 import { saveBlockedSites, getBlockedSites, isUrlBlocked, getIntention } from '../../utils/storage';
-import { getSubscriptionStatus, SubscriptionStatus, formatTimeRemaining, createCheckoutSession } from '../../utils/subscription';
+import { getSubscriptionStatus, SubscriptionStatus, formatTimeRemaining, createPolarCheckout } from '../../utils/subscription';
 import { supabase } from '../../supabaseClient';
 import './PopoverDashboard.css';
 
@@ -138,7 +138,7 @@ const PopoverDashboard: React.FC = () => {
 
   const handleLevelUp = async () => {
     try {
-      await createCheckoutSession();
+      await createPolarCheckout();
     } catch (error) {
       console.error('Failed to start checkout:', error);
       alert('Failed to start checkout. Please try again.');

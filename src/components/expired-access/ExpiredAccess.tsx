@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createCheckoutSession, formatTimeRemaining } from '../../utils/subscription';
+import { createPolarCheckout, formatTimeRemaining } from '../../utils/subscription';
 import logo from '@/assets/logo2.png';
 import './ExpiredAccess.css';
 
@@ -19,7 +19,7 @@ const ExpiredAccess: React.FC<ExpiredAccessProps> = ({
   const handleLevelUp = async () => {
     try {
       setIsLoading(true);
-      await createCheckoutSession();
+      await createPolarCheckout();
     } catch (error) {
       console.error('Failed to start checkout:', error);
       alert('Failed to start checkout. Please try again.');
