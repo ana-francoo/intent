@@ -58,9 +58,57 @@ export default function Login({ onGoBack }: LoginProps) {
     try {
       const isExtensionContext = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
       
-      if (isExtensionContext) {
-        const authUrl = `${getRedirectUrl()}?provider=google&extension=true`;
-        chrome.tabs.create({ url: authUrl });
+      if (isExtensionContext && chrome.identity) {
+        // EXACT implementation from Supabase docs
+        const manifest = chrome.runtime.getManifest() as any;
+        const url = new URL('https://accounts.google.com/o/oauth2/auth');
+        url.searchParams.set('client_id', manifest.oauth2.client_id);
+        url.searchParams.set('response_type', 'id_token');
+        url.searchParams.set('access_type', 'offline');
+        const redirectUri = `https://${chrome.runtime.id}.chromiumapp.org`;
+        url.searchParams.set('redirect_uri', redirectUri);
+        url.searchParams.set('scope', manifest.oauth2.scopes.join(' '));
+        
+        // Log exactly what we're sending
+        console.log('=== OAuth Configuration ===');
+        console.log('Extension ID:', chrome.runtime.id);
+        console.log('Redirect URI being used:', redirectUri);
+        console.log('Client ID:', manifest.oauth2.client_id);
+        console.log('Scopes:', manifest.oauth2.scopes);
+        console.log('Full Auth URL:', url.href);
+        console.log('========================');
+        
+        chrome.identity.launchWebAuthFlow(
+          {
+            url: url.href,
+            interactive: true,
+          },
+          async (redirectedTo) => {
+            if (chrome.runtime.lastError) {
+              console.error('Chrome runtime error:', chrome.runtime.lastError);
+              setIsLoading(false);
+              setError(chrome.runtime.lastError.message || 'Authentication failed');
+            } else if (redirectedTo) {
+              console.log('Redirected to:', redirectedTo);
+              // auth was successful, extract the ID token from the redirectedTo URL
+              const url = new URL(redirectedTo);
+              const params = new URLSearchParams(url.hash);
+              const { data, error } = await supabase.auth.signInWithIdToken({
+                provider: 'google',
+                token: params.get('id_token'),
+              });
+              
+              if (error) {
+                console.error('Supabase error:', error);
+                setIsLoading(false);
+                setError(error.message);
+              } else {
+                console.log('Auth successful:', data);
+                handleAuthSuccess();
+              }
+            }
+          }
+        );
       } else {
         const { error: oauthError } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -72,7 +120,7 @@ export default function Login({ onGoBack }: LoginProps) {
       setIsLoading(false);
       setError(err instanceof Error ? err.message : 'Failed to start Google sign-in');
     }
-  }, []);
+  }, [handleAuthSuccess]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!email) {
