@@ -55,6 +55,40 @@
   background: linear-gradient(180deg, rgba(235, 235, 235, 0.9) 0%, rgba(249, 249, 249, 1) 100%);
 }
 
+/* Smooth dark overlay for background transition */
+.tour-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Match welcome page dark radial, with a dark fill beneath to ensure full-screen darkening */
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      rgba(31,41,55,0.95) 0%,
+      rgba(31,41,55,0.7) 40%,
+      rgba(31,41,55,0.35) 70%,
+      rgba(31,41,55,0.12) 85%,
+      rgba(31,41,55,0.0) 100%
+    ),
+    linear-gradient(#0b0b0b, #0b0b0b);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.tour-background.tour-dark::before {
+  opacity: 1;
+}
+
+/* When dark mode is active, swap out the light base for a dark base to match welcome page */
+/* Keep base background unchanged; rely on overlay to fade in darkness */
+
+/* Hide grain overlay in dark mode to avoid lightening/blue-ish tint */
+.tour-background.tour-dark::after {
+  content: '';
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
 /* Very subtle grain overlay */
 .tour-background::after {
   content: '';
@@ -323,6 +357,14 @@
   pointer-events: none;
 }
 
+/* Move logo+flame wrapper upward to a fixed top position */
+.logo-flame-root.logo-flame-move-up {
+  animation: logo-flame-move-up 0.9s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes logo-flame-move-up {
+  to { top: var(--logo-top-final, 300px); }
+}
+
 @keyframes continue-enter {
   0% { opacity: 0; transform: translate(-50%, 30px); }
   100% { opacity: 1; transform: translate(-50%, 0); }
@@ -509,6 +551,9 @@
   border-radius: 2px;
   opacity: 0.9;
   animation: confetti-burst var(--dur, 1.2s) cubic-bezier(.16,.9,.17,1) var(--delay, 0s) forwards;
+  animation-iteration-count: 2;
+  animation-direction: alternate;
+  animation-fill-mode: both;
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
@@ -518,13 +563,144 @@
   100% { transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, 720deg)) scale(1); opacity: 0.75; }
 }
 
+/* Return animation: from current exploded position back to the button center */
+@keyframes confetti-return {
+  0% { transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, 720deg)) scale(1); opacity: 0.9; }
+  100% { transform: translate(var(--tx-return, 0px), var(--ty-return, 0px)) rotate(0deg) scale(1); opacity: 0.95; }
+}
+
 /* Bottom CTA for Create Account after finishing the tour */
 .tour-create-account-cta {
   position: fixed;
   left: 50%;
-  bottom: 300px;
+  bottom: 240px;
   transform: translateX(-50%);
   z-index: 2147483647;
   pointer-events: auto;
   animation: continue-enter 0.5s ease-out both;
+}
+
+/* Move CTA downward to a fixed top position */
+.tour-create-account-cta.tour-cta-move-down {
+  bottom: auto; /* switch to top-based positioning for the animation */
+  animation: tour-cta-move-down 0.9s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+@keyframes tour-cta-move-down {
+  to { top: var(--cta-top-final, 800px); }
+}
+
+/* ===== Embedded signup positioning (px from top) ===== */
+.tour-embedded-signup {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: var(--signup-top, 450px);
+  animation: embedded-signup-enter 0.5s ease-out both;
+}
+
+/* Utility overrides for quick top adjustments */
+.signup-top-520 { --signup-top: 520px; }
+.signup-top-560 { --signup-top: 560px; }
+.signup-top-600 { --signup-top: 600px; }
+.signup-top-800 { --signup-top: 800px; }
+
+@keyframes embedded-signup-enter {
+  0% { opacity: 0; transform: translate(-50%, -16px); }
+  100% { opacity: 1; transform: translate(-50%, 0); }
+}
+
+
+
+
+
+
+/*  Conic gradient border TO ADD TO CREATE ACCOUN TBUTTON*/
+
+/* Conic gradient border animation for input container */
+.conic-pending-border {
+  position: relative;
+  isolation: isolate;
+}
+
+/* COLORS OF BROER ANIAMTION EFFECT */
+/* #7C2D12 80%,
+    #FED7AA 88%,
+    #FED7AA 92%,
+    #7C2D12 100% */
+
+.conic-pending-border::before {
+  content: "";
+  position: absolute;
+  inset: -0px; /* matches border-2 thickness */
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    rgba(124, 74, 18, 0.6) 80%,
+    rgba(251, 252, 182, 0.884) 88%,
+    rgba(254, 215, 170, 0.8) 92%,
+    rgba(124, 69, 18, 0.6) 100%
+  );
+  /* mask so only the border ring shows */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-clip: content-box, border-box;
+  mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 1px; /* border thickness */
+  animation: conic-spin 1.5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes conic-spin {
+  to { --angle: 360deg; }
+}
+
+/* One-off, counterclockwise conic border flash for the Create Account button */
+.intent-border-flash {
+  position: relative;
+  isolation: isolate;
+}
+.intent-border-flash::before {
+  content: "";
+  position: absolute;
+  inset: -0px; /* matches border thickness */
+  z-index: -1;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    rgba(124, 74, 18, 0.6) 80%,
+    rgba(251, 252, 182, 0.884) 88%,
+    rgba(254, 215, 170, 0.8) 92%,
+    rgba(124, 69, 18, 0.6) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-clip: content-box, border-box;
+  mask-clip: content-box, border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 5px; /* border thickness */
+  /* Two revolutions: 1) fast→slow, 2) constant slow pace */
+  animation:
+    conic-spin-ccw var(--border-dur, 1.2s) cubic-bezier(0.2, 0, 0, 1) 0s 1 forwards,
+    conic-spin-ccw-2 var(--border-dur-slow, 2.4s) linear var(--border-dur, 1.2s) 1 forwards;
+  pointer-events: none;
+}
+
+@keyframes conic-spin-ccw {
+  to { --angle: -360deg; }
+}
+
+@keyframes conic-spin-ccw-2 {
+  to { --angle: -720deg; }
 }

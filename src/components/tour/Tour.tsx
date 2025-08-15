@@ -1,11 +1,97 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import './Tour.css';
 import TourText from './TourText';
 import { createFloatingPopup } from '@/utils/floatingPopup';
+import { supabase } from '../../supabaseClient';
+import { Input } from '../ui/input';
 
 import logo from '@/assets/logo2.png';
 import Flame from '@/components/home/Flame';
+
+function EmbeddedSignupCard() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [, setIsLoading] = useState(false);
+
+  const getRedirectUrl = () => {
+    const isDev = import.meta.env.DEV;
+    return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
+  };
+
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (session) {
+        setInfo('Signed in successfully.');
+      }
+    });
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleSignup = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    setIsLoading(true);
+    try {
+      const isExtensionContext = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
+      const redirectUrl = getRedirectUrl();
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: isExtensionContext ? `${redirectUrl}?extension=true` : redirectUrl,
+        },
+      });
+      if (signUpError) throw signUpError;
+      setInfo('Check your email for the confirmation link.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [email, password]);
+
+  
+
+  return (
+    <div className="tour-embedded-signup w-full max-w-md z-[2147483647]">
+      <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm">
+        <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
+          <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
+        </div>
+        
+        {error && (
+          <div className="w-full rounded-md border border-red-500/30 bg-red-500/10 p-2 text-center text-xs text-red-400 mb-2">{error}</div>
+        )}
+        {info && (
+          <div className="w-full rounded-md border border-green-500/25 bg-green-500/50 p-2 text-center text-xs text-green-500 mb-2">{info}</div>
+        )}
+        <form onSubmit={handleSignup} className="space-y-2" id="tour-embedded-signup-form">
+          <div className="grid gap-1.5">
+            <label htmlFor="tour-email" className="text-sm text-white/85">Email</label>
+            <Input id="tour-email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="tour-password" className="text-sm text-white/85">Password</label>
+            <Input id="tour-password" type="password" placeholder="Create a password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="tour-confirm" className="text-sm text-white/85">Confirm password</label>
+            <Input id="tour-confirm" type="password" placeholder="Re-enter your password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+          </div>
+          {/* Submit button removed; submission will be triggered by the external CTA */}
+        </form>
+        
+      </div>
+    </div>
+  );
+}
 
 const Tour = () => {
   const [extensionClicked, setExtensionClicked] = useState(false);
@@ -260,6 +346,48 @@ const Tour = () => {
               const container = document.createElement('div');
               container.className = 'confetti-container confetti-center';
               document.body.appendChild(container);
+
+              // Ensure the Create Account CTA exists now so we can target it
+              let cta = document.getElementById('tour-create-account-cta');
+              if (!cta) {
+                cta = document.createElement('div');
+                cta.id = 'tour-create-account-cta';
+                cta.className = 'tour-create-account-cta';
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'get-started-btn';
+                btn.innerHTML = `
+                  <span class="btn-text">Create Account</span>
+                  <span class="btn-arrow">
+                    <svg width="24" height="24" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6">
+                      <path
+                        d="M8.14645 3.14645C8.34171 2.95118 8.65829 2.95118 8.85355 3.14645L12.8536 7.14645C13.0488 7.34171 13.0488 7.65829 12.8536 7.85355L8.85355 11.8536C8.65829 12.0488 8.34171 12.0488 8.14645 11.8536C7.95118 11.6583 7.95118 11.3417 8.14645 11.1464L11.2929 8H2.5C2.22386 8 2 7.77614 2 7.5C2 7.22386 2.22386 7 2.5 7H11.2929L8.14645 3.85355C7.95118 3.65829 7.95118 3.34171 8.14645 3.14645Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+                    </svg>
+                  </span>
+                `;
+                btn.onclick = () => {
+                  // Trigger the embedded signup form submission instead of opening popup
+                  const form = document.getElementById('tour-embedded-signup-form') as HTMLFormElement | null;
+                  if (form) {
+                    form.requestSubmit();
+                  }
+                };
+                cta.appendChild(btn);
+                document.body.appendChild(cta);
+              }
+
+              // Compute CTA button center relative to viewport center (confetti origin)
+              const btnEl = (cta!.querySelector('button') as HTMLElement) || (cta as HTMLElement);
+              const rect = btnEl.getBoundingClientRect();
+              const ctaCenterX = rect.left + rect.width / 2;
+              // Use true vertical center and add a slight upward correction to match perceived center
+              const ctaCenterY = rect.top + rect.height / 2;
+              const viewportCenterX = window.innerWidth / 2;
+              const viewportCenterY = window.innerHeight / 2;
+              const verticalAdjustPx = -55; // nudge upward to visually center on the button
+              const txReturn = `${ctaCenterX - viewportCenterX}px`;
+              const tyReturn = `${ctaCenterY - viewportCenterY + verticalAdjustPx}px`;
+
               const colors = ['#FF944D', '#FF6B35', '#F5E6D3', '#8FBC8F', '#D4C4A8'];
               const count = 140;
               for (let i = 0; i < count; i++) {
@@ -274,16 +402,79 @@ const Tour = () => {
                 piece.style.setProperty('--dx', dx + 'px');
                 piece.style.setProperty('--dy', dy + 'px');
                 piece.style.setProperty('--rot', rot);
-                piece.style.setProperty('--dur', (0.8 + Math.random() * 0.8) + 's');
-                piece.style.setProperty('--delay', (Math.random() * 0.15) + 's');
+                const dur = 1;
+                const delay = Math.random() * 0.15;
+                piece.style.setProperty('--dur', `${dur}s`);
+                piece.style.setProperty('--delay', `${delay}s`);
+                // Return target toward CTA center
+                piece.style.setProperty('--tx-return', txReturn);
+                piece.style.setProperty('--ty-return', tyReturn);
+                // Chain outward burst then return toward CTA
+                // Faster return with a brief gap and snappier easing
+                const returnDur = Math.random() * 0.25; // 0.45s - 0.70s
+                const returnDelay = delay + dur + 0.05; // shorter gap before return
+                piece.style.animation = `confetti-burst ${dur}s cubic-bezier(.16,.9,.17,1) ${delay}s forwards, confetti-return ${returnDur}s cubic-bezier(.35,1,.35,1) ${returnDelay}s forwards`;
                 piece.style.background = colors[i % colors.length];
                 piece.onclick = () => {
                   piece.style.opacity = '0';
                   piece.style.transform = 'scale(1.6)';
                   setTimeout(() => piece.remove(), 200);
                 };
+                // Track end time of this piece to trigger border flash later
+                const totalMs = (delay + dur + 0.05 + returnDur) * 1000;
+                (piece as any)._endAt = performance.now() + totalMs;
                 container.appendChild(piece);
               }
+
+              // Switch background to dark when return starts
+              const bg = document.querySelector('.tour-background');
+              setTimeout(() => {
+                bg?.classList.add('tour-dark');
+                // Remove popup (if any); embedded signup will render after first border revolution
+                const popupContainer = document.getElementById('floating-popup-container') as HTMLElement | null;
+                if (popupContainer) popupContainer.remove();
+              }, 1350); // add 300ms delay to the light→dark transition
+
+              // After all pieces return, flash the CTA border once (counterclockwise) and restore bg
+              const btnElFlash = (cta!.querySelector('button') as HTMLElement) || (cta as HTMLElement);
+              const endTimes = Array.from(container.children).map(ch => (ch as any)._endAt || 0);
+              const maxEnd = Math.max(...endTimes, 0);
+              const waitMs = Math.max(0, maxEnd - performance.now());
+              setTimeout(() => {
+                // Add class for a two-rev CCW border animation
+                btnElFlash.classList.add('intent-border-flash');
+                // Timings must align with CSS animations:
+                const firstRevMs = 1200; // var(--border-dur, 1.2s)
+                const secondRevMs = 2400; // var(--border-dur-slow, 2.4s)
+                // Trigger movements and embedded signup ~30% into first revolution
+                const triggerMs = Math.floor(firstRevMs * 0.3);
+                setTimeout(() => {
+                  // Move logo+flame wrapper upward
+                  const logoWrapper = document.querySelector('.logo-flame-root') as HTMLElement | null;
+                  if (logoWrapper) {
+                    // Use CSS-defined --logo-top-final fallback; just trigger the motion
+                    logoWrapper.classList.add('logo-flame-move-up');
+                  }
+                  // Move CTA downward to a fixed top position
+                  const ctaWrapper = document.getElementById('tour-create-account-cta') as HTMLElement | null;
+                  if (ctaWrapper) {
+                    // Use CSS-defined --cta-top-final fallback; just trigger the motion
+                    ctaWrapper.classList.add('tour-cta-move-down');
+                  }
+                  if (!document.getElementById('tour-embedded-signup-root')) {
+                    const signupRoot = document.createElement('div');
+                    signupRoot.id = 'tour-embedded-signup-root';
+                    document.body.appendChild(signupRoot);
+                    const root = createRoot(signupRoot);
+                    root.render(<EmbeddedSignupCard />);
+                  }
+                }, triggerMs);
+                // Remove border flash class only after second revolution completes
+                setTimeout(() => {
+                  btnElFlash.classList.remove('intent-border-flash');
+                  // Keep dark background after the effect completes
+                }, firstRevMs + secondRevMs + 80);
+              }, waitMs + 50);
               // Fade out remaining tour elements (except confetti), and show centered logo+flame
               const toFade = [
                 '.tour-dashboard',
@@ -330,10 +521,10 @@ const Tour = () => {
               );
 
               // (Logo + flame overlay removed per request)
-              // Auto-cleanup after animation completes
+              // Auto-cleanup after animation completes (outward + inward)
               setTimeout(() => {
                 container.remove();
-              }, 1600);
+              }, 3500);
 
               // Create Account CTA at bottom with same UI as "I'm Ready"
               if (!document.getElementById('tour-create-account-cta')) {
