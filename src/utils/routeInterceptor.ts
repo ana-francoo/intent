@@ -1,11 +1,12 @@
 import { getIntention, normalizeUrlToDomain, isUrlBlocked } from './storage';
-import { shouldCheckIntentionForUrl } from './urlHandlers';
+// import { shouldCheckIntentionForUrl } from './urlHandlers';
 import { hasExtensionAccess } from './subscription';
 import { markNewIntentionSet } from './intentionMonitor';
 
 export const initializeRouteInterceptor = async (): Promise<void> => {
   try {
     const currentUrl = window.location.href;
+    console.log('🚦 RouteInterceptor.start', { currentUrl });
 
     // Don't intercept extension pages
     if (currentUrl.startsWith('chrome-extension://') || 
@@ -16,33 +17,40 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     }
 
     // Check if chrome storage is available
-    if (typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local) {
+    const hasStorage = !(typeof chrome === 'undefined' || !chrome.storage || !chrome.storage.local);
+    if (!hasStorage) {
+      console.log('🛑 RouteInterceptor: chrome.storage not available, aborting');
       return;
     }
 
     // Check if user has access to extension features
     const hasAccess = await hasExtensionAccess();
+    console.log('🔐 RouteInterceptor: hasExtensionAccess', { hasAccess });
     if (!hasAccess) {
+      console.log('🚫 RouteInterceptor: No access — skipping interception');
       return;
     }
 
     // Check if URL is blocked
     const isBlocked = await isUrlBlocked(currentUrl);
+    console.log('🧱 RouteInterceptor: isUrlBlocked', { isBlocked, url: currentUrl });
     if (!isBlocked) {
+      console.log('✅ RouteInterceptor: URL not blocked — no action');
       return;
     }
 
-    // Check custom URL handling rules
-    const urlHandlerResult = shouldCheckIntentionForUrl(currentUrl);
-    if (!urlHandlerResult.shouldCheckIntention) {
-      return;
-    }
+    // For blocked sites, always proceed to intention prompt/monitoring
+    // even if custom URL handlers would normally skip checks (e.g., social feeds)
 
     // Check if there's an existing intention for this URL
     const intentionData = await getIntention(currentUrl);
+    console.log('🧠 RouteInterceptor: intention lookup', {
+      hasIntention: !!(intentionData && intentionData.intention),
+      intentionPreview: intentionData?.intention?.slice?.(0, 120) || null
+    });
     
     if (intentionData && intentionData.intention) {
-      
+      console.log('📡 RouteInterceptor: intention exists — starting monitoring');
       sessionStorage.setItem('intent_monitoring_active', 'true');
       const { startIntentionMonitoring } = await import('./intentionMonitor');
       await startIntentionMonitoring();
@@ -58,17 +66,21 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       
       // If we just set an intention for this domain and it's less than 10 seconds old
       if (intentionData.domain === domain && (Date.now() - intentionData.timestamp) < 10000) {
+        console.log('⏱️ RouteInterceptor: recent intention set detected — marking for immediate monitoring');
         // Mark for immediate checking since this is a new intention
         markNewIntentionSet();
         return;
       } else if ((Date.now() - intentionData.timestamp) >= 10000) {
         // Clean up expired flag
+        console.log('🧹 RouteInterceptor: clearing expired intent_just_set flag');
         sessionStorage.removeItem('intent_just_set');
       }
     }
 
     // Redirect to extension overlay page with the target URL
+    // Use the standard overlay for setting/refining intention
     const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay?targetUrl=${encodeURIComponent(currentUrl)}`;
+    console.log('🎯 RouteInterceptor: prompting overlay', { extensionOverlayUrl });
     window.location.href = extensionOverlayUrl;
 
   } catch (error) {

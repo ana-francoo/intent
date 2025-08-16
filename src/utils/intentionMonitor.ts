@@ -5,7 +5,7 @@
 import { getWebsiteCategory } from './domainCategories';
 import { getIntention } from './storage';
 import { checkIntentionMatch } from './intentionMatcher'; // this actually has api call to check intent vs scraped content
-import { initializeRouteInterceptor } from './routeInterceptor';
+// import { initializeRouteInterceptor } from './routeInterceptor';
 
 const MONITORING_FLAG_KEY = 'intent_monitoring_active';
 const NEW_INTENTION_FLAG_KEY = 'intent_new_intention_set';
@@ -15,7 +15,7 @@ let previousUrl: string | null = null;
 export class IntentionMonitor {
   private checkInterval: number | null = null;
   private isMonitoring: boolean = false;
-  private readonly CHECK_INTERVAL_MS = 10 * 1000;
+  private readonly CHECK_INTERVAL_MS = 3 * 1000;
   
   // Add doom scrolling tracking
   private doomScrollingData: {
@@ -25,6 +25,17 @@ export class IntentionMonitor {
     scrollDistance: number;
     timeSpent: number;
   } | null = null;
+
+  // Event-based scroll tracking to handle inner scroll containers (e.g., Instagram)
+  private accumulatedScrollDistancePx: number = 0;
+  private lastTouchY: number | null = null;
+  private scrollListenersAttached: boolean = false;
+  private onWheelBound?: (e: WheelEvent) => void;
+  private onTouchStartBound?: (e: TouchEvent) => void;
+  private onTouchMoveBound?: (e: TouchEvent) => void;
+  private wheelEventCount: number = 0;
+  private touchMoveEventCount: number = 0;
+  private lastCheckedAtMs: number | null = null;
   
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
@@ -39,6 +50,9 @@ export class IntentionMonitor {
       time: new Date().toISOString()
     });
 
+    // Attach scroll listeners for robust distance tracking
+    this.attachScrollListeners();
+
     // Check if this is a new intention that needs immediate validation
     const isNewIntention = sessionStorage.getItem(NEW_INTENTION_FLAG_KEY) === 'true';
     if (isNewIntention) {
@@ -47,9 +61,11 @@ export class IntentionMonitor {
       await this.performImmediateCheck();
     }
 
+    console.log('🧭 IntentionMonitor: initial activity check');
     await this.checkCurrentActivity();
 
     this.checkInterval = window.setInterval(async () => {
+      console.log('⏲️ IntentionMonitor: interval activity check');
       await this.checkCurrentActivity();
     }, this.CHECK_INTERVAL_MS);
   }
@@ -61,10 +77,52 @@ export class IntentionMonitor {
     }
     this.isMonitoring = false;
     sessionStorage.removeItem(MONITORING_FLAG_KEY);
+    this.detachScrollListeners();
     console.log('🛑 IntentionMonitor.stopMonitoring', {
       url: window.location.href,
       time: new Date().toISOString()
     });
+  }
+
+  private attachScrollListeners(): void {
+    if (this.scrollListenersAttached) return;
+    this.onWheelBound = (e: WheelEvent) => {
+      this.accumulatedScrollDistancePx += Math.abs(e.deltaY || 0);
+      this.wheelEventCount += 1;
+    };
+    this.onTouchStartBound = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        this.lastTouchY = e.touches[0].clientY;
+      }
+    };
+    this.onTouchMoveBound = (e: TouchEvent) => {
+      if (e.touches && e.touches.length > 0) {
+        const currentY = e.touches[0].clientY;
+        if (this.lastTouchY != null) {
+          this.accumulatedScrollDistancePx += Math.abs(currentY - this.lastTouchY);
+        }
+        this.lastTouchY = currentY;
+        this.touchMoveEventCount += 1;
+      }
+    };
+    window.addEventListener('wheel', this.onWheelBound, { passive: true } as AddEventListenerOptions);
+    window.addEventListener('touchstart', this.onTouchStartBound, { passive: true } as AddEventListenerOptions);
+    window.addEventListener('touchmove', this.onTouchMoveBound, { passive: true } as AddEventListenerOptions);
+    this.scrollListenersAttached = true;
+    console.log('🧷 IntentionMonitor: scroll listeners attached');
+  }
+
+  private detachScrollListeners(): void {
+    if (!this.scrollListenersAttached) return;
+    if (this.onWheelBound) window.removeEventListener('wheel', this.onWheelBound as EventListener);
+    if (this.onTouchStartBound) window.removeEventListener('touchstart', this.onTouchStartBound as EventListener);
+    if (this.onTouchMoveBound) window.removeEventListener('touchmove', this.onTouchMoveBound as EventListener);
+    this.scrollListenersAttached = false;
+    this.lastTouchY = null;
+    this.accumulatedScrollDistancePx = 0;
+    this.wheelEventCount = 0;
+    this.touchMoveEventCount = 0;
+    console.log('🧹 IntentionMonitor: scroll listeners detached');
   }
 
   // New method for immediate check after intention is set
@@ -83,9 +141,9 @@ export class IntentionMonitor {
       // Determine which type of check to perform based on website category
       const websiteCategory = await getWebsiteCategory(currentUrl);
       
-      if (websiteCategory === 'social') {
-        // For social sites, we don't do immediate content check since content might not be loaded yet
-        console.log('📱 Social site detected - skipping immediate content check');
+      if (websiteCategory === 'social' || websiteCategory === 'entertainment') {
+        // For social/entertainment sites, skip immediate content check; monitor doom scrolling instead
+        console.log('📱 Social/Entertainment site detected - skipping immediate content check');
         return;
       } else {
         // For non-social sites, perform immediate content check
@@ -101,46 +159,53 @@ export class IntentionMonitor {
   private async checkCurrentActivity(): Promise<void> {
     try {
       const currentUrl = window.location.href;
+      const nowMs = Date.now();
 
-      //apply doom scrolling check depending on website s. Actually it sokay, because if there isnt an intention set for this url, the call will return false
-      const intentionData = await getIntention(currentUrl); 
-
-      //if there isnt an intention set for this url, stop monitoring
-      if (!intentionData || !intentionData.intention) {
-        previousUrl = null;
-        console.log('ℹ️ No intention found for URL, stopping monitoring', { currentUrl });
-        this.stopMonitoring();
-        return;
-      }
-
-      if (currentUrl === previousUrl){
-        console.warn('⏸️ URL unchanged since last check; stopping monitoring to avoid duplicate work', {
-          currentUrl,
-          previousUrl
-        });
-        this.stopMonitoring();
-        return;
-      }
-
-      
-      previousUrl = currentUrl;
-
-      //
-      //call either checkIntentionmatch or checkDoomScrolling depending on website
-      //
+      // Determine site category early for flow control
       const websiteCategory = await getWebsiteCategory(currentUrl);
+
+      // Intention lookup (may be absent for social/entertainment where we still want to monitor)
+      const intentionData = await getIntention(currentUrl);
+      const hasIntention = !!(intentionData && intentionData.intention);
+
+      // If not social/entertainment and no intention, stop monitoring
+      if (!hasIntention && !(websiteCategory === 'social' || websiteCategory === 'entertainment')) {
+        previousUrl = null;
+        console.log('ℹ️ No intention found for URL (non-social/entertainment), stopping monitoring', { currentUrl });
+        this.stopMonitoring();
+        return;
+      }
+
+      // For logging insight
       console.log('🧭 IntentionMonitor.checkCurrentActivity', {
         currentUrl,
         websiteCategory,
-        intentionPreview: intentionData.intention.slice(0, 160)
+        hasIntention,
+        intentionPreview: intentionData?.intention?.slice?.(0, 160) || null,
+        previousUrl,
+        secondsSinceLastCheck: this.lastCheckedAtMs ? Number(((nowMs - this.lastCheckedAtMs) / 1000).toFixed(2)) : null
       });
-      if (websiteCategory === 'social'){
-        console.log('📱 Social category detected — running doom scrolling check');
+
+      // Always run doom-scrolling checks for social/entertainment, even if URL unchanged or no intention
+      if (websiteCategory === 'social' || websiteCategory === 'entertainment') {
         await this.checkDoomScrolling();
-      }else{
-        console.log('🧪 Non-social category detected — running content match check');
-        await this.checkActivity(currentUrl);
+        // Update previousUrl tracking but do not block future checks if unchanged
+        previousUrl = currentUrl;
+        this.lastCheckedAtMs = nowMs;
+        return;
       }
+
+      // For non-social categories: only run content check when URL changes to avoid heavy repeated calls
+      if (currentUrl === previousUrl) {
+        const seconds = this.lastCheckedAtMs ? Number(((nowMs - this.lastCheckedAtMs) / 1000).toFixed(2)) : null;
+        console.log('⏸️ URL unchanged since ~3s ago; skipping content check this tick', { secondsSinceLastCheck: seconds });
+        return;
+      }
+
+      previousUrl = currentUrl;
+      this.lastCheckedAtMs = nowMs;
+      console.log('🧪 Non-social category — running content match check');
+      await this.checkActivity(currentUrl);
     } catch (error) {
       console.error('❌ Error in checkCurrentActivity:', error);
       this.stopMonitoring();
@@ -159,11 +224,17 @@ export class IntentionMonitor {
       
       if (result.match == false){
         // User is doing something different than intended
-        console.warn('🚫 Intention mismatch detected — stopping monitoring and triggering interceptor');
+        console.warn('🚫 Intention mismatch detected — redirecting to overlay');
         this.stopMonitoring();
-        await initializeRouteInterceptor();  // Redirect to overlay to set new intention
-        console.log('🔁 Route interceptor initialized');
-      }else{
+        try {
+          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') +
+            `#/overlay?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
+          console.log('🎯 Intention mismatch: redirecting to overlay', { overlayUrl });
+          window.location.href = overlayUrl;
+        } catch (e) {
+          console.error('❌ Failed to redirect to overlay on mismatch', e);
+        }
+      } else {
         // User is still on track, keep monitoring
         console.log('✅ Intention matches — continuing monitoring');
       }
@@ -211,6 +282,10 @@ export class IntentionMonitor {
 
   private async checkDoomScrolling(): Promise<void> {
     try {
+      console.log('📱 DoomScrolling: check start', {
+        href: window.location.href,
+        ts: new Date().toISOString()
+      });
   // Get scroll position and time spent
       const scrollY = window.scrollY;
       const currentTime = Date.now();
@@ -228,30 +303,74 @@ export class IntentionMonitor {
       
       // Calculate metrics
       const timeSinceLastCheck = currentTime - this.doomScrollingData.lastCheckTime;
-      const scrollDistance = Math.abs(scrollY - this.doomScrollingData.startScrollY);
+      // Poll-based distance (window)
+      const pollDistance = Math.abs(scrollY - this.doomScrollingData.startScrollY);
+      // Event-based distance (inner containers)
+      const eventDistance = this.accumulatedScrollDistancePx;
+      const scrollDistance = Math.max(pollDistance, eventDistance);
       
       // Update tracking data
       this.doomScrollingData.scrollDistance = scrollDistance;
       this.doomScrollingData.timeSpent += timeSinceLastCheck;
       this.doomScrollingData.lastCheckTime = currentTime;
       
-      // Check for doom scrolling patterns
-      const timeSpentMinutes = this.doomScrollingData.timeSpent / (1000 * 60);
-      const scrollDistanceThreshold = 5000; // 5 screens worth of scrolling
-      const timeThreshold = 10; // 10 minutes
+      // Check for doom scrolling patterns — 2+ screens within 10 seconds
+      const timeSpentSeconds = this.doomScrollingData.timeSpent / 1000;
+      // Use a conservative screen height to avoid huge thresholds on tall viewports (e.g., reels)
+      const screenHeight = Math.min(Math.max(window.innerHeight || 0, 600), 800);
+      const scrollDistanceThreshold = screenHeight * 2; // 2 screens dynamically (capped)
+      const fallbackDistanceThreshold = 1200; // px
+      const wheelCountThreshold = 24; // events within window
+      const timeThresholdSeconds = 10; // evaluate within a 10s window
       console.log('🧪 DoomScrolling metrics', {
-        timeSpentMinutes: Number(timeSpentMinutes.toFixed(2)),
-        scrollDistance,
-        thresholds: { scrollDistanceThreshold, timeThreshold }
+        timeSpentSeconds: Number(timeSpentSeconds.toFixed(2)),
+        pollDistance,
+        eventDistance,
+        effectiveDistance: scrollDistance,
+        screenHeight,
+        wheelEventCount: this.wheelEventCount,
+        touchMoveEventCount: this.touchMoveEventCount,
+        thresholds: { scrollDistanceThreshold, fallbackDistanceThreshold, wheelCountThreshold, timeThresholdSeconds }
       });
-      
-      if (scrollDistance > scrollDistanceThreshold && timeSpentMinutes > timeThreshold) {
 
-        console.warn('🛑 DoomScrolling threshold exceeded — triggering interceptor');
-        await initializeRouteInterceptor();
-        
-        // Reset tracking data
+      // Trigger if user scrolled 2+ screens within the last 10 seconds
+      const distanceTrigger = scrollDistance >= scrollDistanceThreshold;
+      // Fallback triggers: absolute distance or high-frequency wheel events within window
+      const fallbackTrigger = scrollDistance >= fallbackDistanceThreshold || this.wheelEventCount >= wheelCountThreshold;
+
+      if ((distanceTrigger || fallbackTrigger) && timeSpentSeconds <= timeThresholdSeconds) {
+        console.warn('🛑 DoomScrolling: threshold exceeded — triggering overlay', {
+          reason: distanceTrigger ? 'distance>=2screens' : (this.wheelEventCount >= wheelCountThreshold ? 'wheelCount' : 'fallbackDistance'),
+        });
+        try {
+          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
+            `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
+          console.log('🎯 DoomScrolling: redirecting to overlay', { overlayUrl });
+          window.location.href = overlayUrl;
+        } catch (e) {
+          console.error('❌ DoomScrolling: failed to redirect to overlay', e);
+        }
+        // Reset tracking data after triggering
         this.doomScrollingData = null;
+        this.accumulatedScrollDistancePx = 0;
+        this.wheelEventCount = 0;
+        this.touchMoveEventCount = 0;
+        return;
+      }
+
+      // If we've exceeded the 10s window without triggering, reset the window
+      if (timeSpentSeconds > timeThresholdSeconds) {
+        console.log('🔄 DoomScrolling: window expired (>10s), resetting counters');
+        this.doomScrollingData = {
+          startTime: currentTime,
+          startScrollY: scrollY,
+          lastCheckTime: currentTime,
+          scrollDistance: 0,
+          timeSpent: 0
+        };
+        this.accumulatedScrollDistancePx = 0;
+        this.wheelEventCount = 0;
+        this.touchMoveEventCount = 0;
       }
       
     } catch (error) {

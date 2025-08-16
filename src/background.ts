@@ -70,6 +70,7 @@ let isCreatingTab = false;
 // Listen for when extension icon is clicked (only fires when no popup is defined in manifest)
 chrome.action.onClicked?.addListener(async (tab) => {
   console.log("🎯 Extension icon clicked, creating floating popup...");
+  console.log("🔍 Current tab URL:", tab.url);
 
   const canInject =
     tab.id &&
@@ -82,14 +83,49 @@ chrome.action.onClicked?.addListener(async (tab) => {
     !tab.url.startsWith("about:") &&
     !tab.url.startsWith("file://");
 
+  // Special handling for our own extension pages (welcome/tour)
+  const isOwnExtensionPage = tab.url && tab.url.includes(chrome.runtime.id) && 
+    (tab.url.includes('#/welcome') || tab.url.includes('#/tour') || tab.url.includes('tour=1'));
+
+  console.log("🔍 Can inject:", canInject);
+  console.log("🔍 Is own extension page:", isOwnExtensionPage);
+
+  // Handle clicks on our own extension pages (welcome/tour) - create floating popup without content script injection
+  if (isOwnExtensionPage && tab.id) {
+    console.log("🎯 Extension clicked from our own extension pages, creating floating popup directly");
+    
+    // Send message to the current page (which should be able to receive it since it's our extension page)
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: "CREATE_VISUAL_ELEMENT",
+        elementType: "floating-popup", 
+        position: { x: 100, y: 100 },
+        skipAuth: true, // Always skip auth for our own pages
+      });
+      console.log("✅ Floating popup message sent to extension page");
+    } catch (error) {
+      console.log("❌ Failed to send message to extension page:", error);
+    }
+    return;
+  }
+
   if (canInject && tab.id) {
     try {
       await chrome.tabs.sendMessage(tab.id, { type: "PING" });
+
+      // Check if user is on welcome page or tour page
+      const isWelcomeOrTour = tab.url && 
+        (tab.url.includes('#/welcome') || 
+         tab.url.includes('#/tour') || 
+         tab.url.includes('tour=1'));
+
+      console.log("🔍 Is welcome or tour page:", isWelcomeOrTour);
 
       await chrome.tabs.sendMessage(tab.id, {
         type: "CREATE_VISUAL_ELEMENT",
         elementType: "floating-popup",
         position: { x: 100, y: 100 },
+        skipAuth: isWelcomeOrTour, // Pass context to skip auth check
       });
       console.log("✅ Floating popup message sent to existing content script");
     } catch (error) {
@@ -103,10 +139,19 @@ chrome.action.onClicked?.addListener(async (tab) => {
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
+        // Check if user is on welcome page or tour page
+        const isWelcomeOrTour = tab.url && 
+          (tab.url.includes('#/welcome') || 
+           tab.url.includes('#/tour') || 
+           tab.url.includes('tour=1'));
+
+        console.log("🔍 Is welcome or tour page (after inject):", isWelcomeOrTour);
+
         await chrome.tabs.sendMessage(tab.id, {
           type: "CREATE_VISUAL_ELEMENT",
           elementType: "floating-popup",
           position: { x: 100, y: 100 },
+          skipAuth: isWelcomeOrTour, // Pass context to skip auth check
         });
         console.log("✅ Content script injected and floating popup created");
       } catch (injectError) {

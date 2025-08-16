@@ -78,6 +78,13 @@ export function openAuthTab(provider: 'google' | 'email', additionalParams?: Rec
   const authUrl = provider === 'google' 
     ? `${redirectUrl.replace('/auth-callback', '/login')}?${params}`
     : `${redirectUrl}?${params}`;
-    
-  chrome.tabs.create({ url: authUrl });
+  // Do not force a new tab; open in the current context
+  try {
+    window.location.href = authUrl;
+  } catch {
+    // Fallback only if navigation fails
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.create({ url: authUrl });
+    }
+  }
 }

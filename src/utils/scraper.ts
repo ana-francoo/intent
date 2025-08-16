@@ -61,7 +61,7 @@ export function extractRelevantContentFromPage(): string {
       };
     })
     .filter(el => el.isVisible && el.length > 30) // Increased min length, filter noise
-    .sort((a, b) => (b.length * b.weight) - (a.length * b.weight))
+    .sort((a, b) => (b.length * b.weight) - (a.length * a.weight))
     .slice(0, 8) // Top 8 longest + high-weight blocks
     .map(el => el.text);
 
@@ -74,45 +74,85 @@ export function extractRelevantContentFromPage(): string {
  * Extract comprehensive content from the current page
  * Returns structured data with relevant text content
  */
-export const scrapeCurrentPage = (): PageContent => { //certain categories will not be scraped, this should be identified before
-  //in this function dynamically direct to the correct scraper based on the url
-  const url = window.location.href;
-  const category = getWebsiteCategory(url);
+type CustomScraper = (url: URL) => string;
+
+interface ScraperEntry {
+  name: string;
+  matches: (url: URL) => boolean;
+  scrape: CustomScraper;
+}
+
+const customScrapers: ScraperEntry[] = [
+  {
+    name: 'YouTube',
+    matches: (u) => u.hostname.replace(/^www\./, '').endsWith('youtube.com'),
+    scrape: () => extractYouTubeMetadata(),
+  },
+  {
+    name: 'Reddit',
+    matches: (u) => u.hostname.replace(/^www\./, '').endsWith('reddit.com'),
+    scrape: () => extractRedditMetadata(),
+  },
+  {
+    name: 'Pinterest',
+    matches: (u) => u.hostname.replace(/^www\./, '').endsWith('pinterest.com'),
+    scrape: () => extractPinterestSearchQuery(),
+  },
+];
+
+function findCustomScraper(urlObj: URL): ScraperEntry | null {
+  return customScrapers.find(entry => entry.matches(urlObj)) || null;
+}
+
+export const scrapeCurrentPage = (): PageContent => { // certain categories may skip scraping; identified before
+  const href = window.location.href;
+  const urlObj = new URL(href);
+  const category = getWebsiteCategory(href);
+
+  let usedScraper: string = 'generic';
   let content = '';
 
-  if (url.includes('youtube.com')) {
-    content = extractYouTubeMetadata();
+  // 1) Prefer site-specific custom scrapers
+  const custom = findCustomScraper(urlObj);
+  if (custom) {
+    try {
+      content = custom.scrape(urlObj) || '';
+      usedScraper = custom.name;
+    } catch (e) {
+      console.warn(`⚠️ Custom scraper failed for ${custom.name}, falling back to category/generic`, e);
+      content = '';
+      usedScraper = `${custom.name}-failed`;
+    }
   }
-  else if (url.includes('reddit.com')) {
-    content = extractRedditMetadata();
+
+  // 2) Category-specific handling if no content from custom scraper
+  if (!content) {
+    if (category === 'news') {
+      usedScraper = 'newsTitle';
+      content = extractNewsTitle();
+    } else if (category === 'social' || category === 'shopping' || category === 'entertainment') {
+      // Social/entertainment may still need some text; doom-scrolling is handled elsewhere
+      usedScraper = `category-${category}`;
+      content = extractRelevantContentFromPage();
+    }
   }
-  else if (url.includes('pinterest.com')) {
-    content = extractPinterestSearchQuery();
-  }  else if (category === 'news') { // update to categorize a news site
-    content = extractNewsTitle();
-  } else if (category === 'social') {
-    content = extractRelevantContentFromPage(); // Fallback to generic extraction; doomscrolling handled elsewhere
 
-  } else if (category === 'shopping') {
+  // 3) Generic fallback
+  if (!content) {
+    usedScraper = 'generic-fallback';
     content = extractRelevantContentFromPage();
-
-  } else if (category === 'entertainment') { // no scraping, will just ask for a time limit - 
-
-    content = extractRelevantContentFromPage();
-  } else {
-    content = extractRelevantContentFromPage();
-
   }
-  // Get relevant text content using the improved extraction method
+
   const relevantText = extractRelevantContentFromPage();
   console.log('🧲 scrapeCurrentPage', {
-    url,
+    url: href,
     category,
+    usedScraper,
     contentLength: content?.length || 0,
     contentPreview: (content || '').slice(0, 300),
     relevantTextLen: relevantText.length
   });
-  
+
   return { content };
 };
 
@@ -223,6 +263,7 @@ export const extractContentWithFilters = (options: {
 //Youtube specific scraper
 //TODO TEST
 export function extractYouTubeMetadata(): string {
+  console.log('🧩 extractYouTubeMetadata: invoked');
   // Validate that we're on the correct YouTube URL
   const title =
     document.querySelector('meta[name="title"]')?.getAttribute('content') ||
@@ -239,6 +280,7 @@ export function extractYouTubeMetadata(): string {
 
 //Reddit specific scraper
 export function extractRedditMetadata(): string {
+  console.log('🧩 extractRedditMetadata: invoked');
   const title = document.querySelector('h1[id*="post-title"]')?.textContent?.trim() || 'No title found';
 
   const description = Array.from(
@@ -259,6 +301,7 @@ export function extractRedditMetadata(): string {
 //
 
 export function extractNewsTitle(): string {
+  console.log('🧩 extractNewsTitle: invoked');
   // Priority 1: Standard <meta> tags
   const metaTitle =
     document.querySelector('meta[property="og:title"]')?.getAttribute('content');
@@ -277,6 +320,7 @@ export function extractNewsTitle(): string {
 
 
 export function extractPinterestSearchQuery(): string {
+  console.log('🧩 extractPinterestSearchQuery: invoked');
   // If user is on the Pinterest homepage with no path, check for doomscrolling
   // Note: doomscrolling detection handled by IntentionMonitor
 

@@ -292,6 +292,8 @@ export default function IntentionOverlay() {
               ]
             )} />
           </div>
+          {/* Unified overlay: no mismatch header */}
+
           <form action={handleFormAction} className="space-y-1 w-full">
             <input type="hidden" name="targetUrl" value={targetUrl || ''} />
             

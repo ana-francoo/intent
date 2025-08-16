@@ -8,6 +8,7 @@ import { Badge } from './ui/badge';
 // Removed unused imports to fix build warnings
 import quotes from '../utils/quotes';
 import { saveBlockedSites, deleteBlockedSites, getBlockedSites, normalizeUrlToDomain } from '../utils/storage';
+import { checkExistingSession } from '../utils/auth';
 
 import { 
   Settings, 
@@ -56,6 +57,7 @@ const PersonalDashboard = () => {
   const [partnerSaveError, setPartnerSaveError] = useState('');
   const [enableScroll, setEnableScroll] = useState(false);
   const [currentQuote, setCurrentQuote] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
 
   const getRandomQuote = (): string => {
     return quotes[Math.floor(Math.random() * quotes.length)];
@@ -64,6 +66,45 @@ const PersonalDashboard = () => {
   // Set initial random quote
   useEffect(() => {
     setCurrentQuote(getRandomQuote());
+  }, []);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log('[PersonalDashboard] Starting auth check...');
+      console.log('[PersonalDashboard] Current URL:', window.location.href);
+      console.log('[PersonalDashboard] Hash:', window.location.hash);
+      console.log('[PersonalDashboard] Search:', window.location.search);
+      console.log('[PersonalDashboard] Pathname:', window.location.pathname);
+      
+      // ALWAYS SKIP AUTH CHECK if we're on tour or welcome pages - no exceptions!
+      const currentUrl = window.location.href;
+      const isOnTourOrWelcomePage = currentUrl.includes('#/tour') || 
+                                   currentUrl.includes('#/welcome') || 
+                                   currentUrl.includes('tour=1') || 
+                                   currentUrl.includes('skipAuth=true');
+      
+      console.log('[PersonalDashboard] Is on tour/welcome page:', isOnTourOrWelcomePage);
+      
+      if (isOnTourOrWelcomePage) {
+        console.log('[PersonalDashboard] ✅ TOUR/WELCOME PAGE DETECTED - SKIPPING ALL AUTH CHECKS');
+        setAuthChecked(true);
+        return;
+      }
+
+      console.log('[PersonalDashboard] Not on tour/welcome page, checking authentication...');
+
+      try {
+        const session = await checkExistingSession();
+        // Do not open new tabs or windows here; just proceed with UI
+        setAuthChecked(true);
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setAuthChecked(true); // Continue loading even if auth check fails
+      }
+    };
+
+    checkAuth();
   }, []);
 
   // Note: This useEffect is no longer needed since we removed the popup from manifest
@@ -553,6 +594,20 @@ const PersonalDashboard = () => {
             <LogOut className="w-4 h-4 mr-2 group-hover:animate-pulse" />
             Log Out
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render the dashboard until authentication is checked
+  if (!authChecked) {
+    return (
+      <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center" style={{
+        background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
+      }}>
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-[#FF944D] border-t-transparent rounded-full mx-auto mb-3"></div>
+          <p className="text-[#D4C4A8] text-sm">Checking authentication...</p>
         </div>
       </div>
     );

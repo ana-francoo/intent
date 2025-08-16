@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './views/App.tsx'
+// import App from './views/App.tsx'
 import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
 import { initializeRouteInterceptor } from '../utils/routeInterceptor'
 import { startIntentionMonitoring } from '../utils/intentionMonitor'
@@ -40,11 +40,11 @@ document.body.appendChild(container)
 
 console.log('🎯 Content script container created:', container)
 
-createRoot(container).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// createRoot(container).render(
+//   <StrictMode>
+//     <App />
+//   </StrictMode>,
+// )
 
 // Route interceptor initialization - runs as early as possible
 const initializeInterceptor = async () => {
@@ -102,14 +102,14 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     }
     
     if (msg && msg.type === 'CREATE_VISUAL_ELEMENT') {
-      console.log('🎯 Creating visual element:', msg.elementType, msg.position);
-      createVisualElement(msg.elementType, msg.position);
+      console.log('🎯 Creating visual element:', msg.elementType, msg.position, 'skipAuth:', msg.skipAuth);
+      createVisualElement(msg.elementType, msg.position, msg.skipAuth);
     }
   });
 }
 
 // Function to create visual elements on the page
-function createVisualElement(elementType: string, position: { x: number, y: number }) {
+function createVisualElement(elementType: string, position: { x: number, y: number }, skipAuth?: boolean) {
   const element = document.createElement('div');
   
   switch (elementType) {
@@ -146,7 +146,8 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       break;
       
     case 'floating-popup':
-      createFloatingPopup({ draggable: true });
+      const route = skipAuth ? '/?skipAuth=true' : '';
+      createFloatingPopup({ draggable: true, route });
       return;
       
     default:

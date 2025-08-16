@@ -37,6 +37,8 @@ export default defineConfig(({ mode }) => {
       hmr: {
         port: 5173,
         host: 'localhost',
+          // Reduce WebSocket errors for extensions
+        skipErrorOverlay: true,
       },
     },
 
