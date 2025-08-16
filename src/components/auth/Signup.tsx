@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { saveSessionToStorage } from '@/utils/auth';
-import { saveSessionToStorage } from '@/utils/auth';
 import logo from '@/assets/logo2.png';
 import Flame from '../home/Flame';
 import { Input } from '../ui/input';
