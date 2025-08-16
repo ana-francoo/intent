@@ -34,6 +34,7 @@ import {
   ShoppingBag,
   Newspaper,
   Target,
+  X,
 } from "lucide-react";
 import {
   ENTERTAINMENT_SITES,
@@ -69,6 +70,10 @@ const PersonalDashboard = () => {
   const [showAddSite, setShowAddSite] = useState(false);
   const [newSiteUrl, setNewSiteUrl] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [customSitesList, setCustomSitesList] = useState<string[]>(() => {
+    const stored = localStorage.getItem('intent_custom_sites');
+    return stored ? JSON.parse(stored) : [];
+  });
 
   const formatDate = (date: Date | null) => {
     if (!date) return "N/A";
@@ -126,10 +131,25 @@ const PersonalDashboard = () => {
     `https://${normalizeUrlToDomain(withHttps(u.trim()))}`;
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [mySites, setMySites] = useState<string[]>([]);
+
+  useEffect(() => {
+    localStorage.setItem('intent_custom_sites', JSON.stringify(customSitesList));
+  }, [customSitesList]);
 
   const computedCategories = useMemo(() => {
     const blockedSet = new Set(blockedSites.map(normalize));
+    
+    const presetSites = new Set(
+      [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
+        .map(url => normalizeUrlToDomain(withHttps(url.trim())))
+    );
+    
+    const customFromDb = blockedSites
+      .map(url => normalizeUrlToDomain(withHttps(url.trim())))
+      .filter(url => !presetSites.has(url));
+    
+    const allCustomSites = Array.from(new Set([...customSitesList, ...customFromDb]));
+    
     const rawCategories: SiteCategory[] = [
       {
         id: "social",
@@ -176,14 +196,14 @@ const PersonalDashboard = () => {
         name: "My Sites",
         icon: Target,
         expanded: expanded["my-sites"] || false,
-        sites: mySites.map((url) => ({
+        sites: allCustomSites.map((url) => ({
           url,
           enabled: blockedSet.has(normalize(url)),
         })),
       },
     ];
     return rawCategories;
-  }, [blockedSites, expanded, mySites]);
+  }, [blockedSites, expanded, customSitesList]);
 
   const [currentUrl, setCurrentUrl] = useState<string>("Loading...");
 
@@ -223,7 +243,10 @@ const PersonalDashboard = () => {
       const full = normalize(newSiteUrl);
       try {
         await addBlockedSitesMutation.mutateAsync([full]);
-        setMySites((prev) => [...prev, normalized]);
+        if (!customSitesList.includes(normalized)) {
+          setCustomSitesList(prev => [...prev, normalized]);
+        }
+        setExpanded(prev => ({ ...prev, "my-sites": true }));
         setNewSiteUrl("");
         setShowAddSite(false);
       } catch {}
@@ -232,25 +255,36 @@ const PersonalDashboard = () => {
 
   const blockCurrentSite = async () => {
     if (currentUrl && !["Loading...", "Unknown site"].includes(currentUrl)) {
+      const normalized = normalizeUrlToDomain(withHttps(currentUrl));
       const full = normalize(currentUrl);
-      const domain = normalizeUrlToDomain(withHttps(currentUrl));
-      const siteExists = mySites.includes(domain);
-
-      if (!siteExists) {
-        try {
-          await addBlockedSitesMutation.mutateAsync([full]);
-          setMySites((prev) => [...prev, domain]);
-        } catch {}
-      }
+      try {
+        await addBlockedSitesMutation.mutateAsync([full]);
+        if (!customSitesList.includes(normalized)) {
+          setCustomSitesList(prev => [...prev, normalized]);
+        }
+        setExpanded(prev => ({ ...prev, "my-sites": true }));
+      } catch {}
     }
+  };
+
+  const removeCustomSite = (siteUrl: string) => {
+    const normalized = normalizeUrlToDomain(withHttps(siteUrl));
+    // Remove from custom sites list (localStorage)
+    setCustomSitesList(prev => prev.filter(url => url !== normalized));
+    const full = normalize(siteUrl);
+    removeBlockedSitesMutation.mutateAsync([full]).catch(() => {});
   };
 
   const SiteRow = ({
     site,
     onChange,
+    isCustom = false,
+    onDelete,
   }: {
     site: Site;
     onChange: (checked: boolean) => void;
+    isCustom?: boolean;
+    onDelete?: () => void;
   }) => (
     <div className="px-4 py-1.5 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
       <div className="flex items-center gap-2 flex-1">
@@ -259,11 +293,23 @@ const PersonalDashboard = () => {
           {site.url}
         </span>
       </div>
-      <Switch
-        checked={site.enabled}
-        onCheckedChange={onChange}
-        className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#7A4A1E]/70 scale-75"
-      />
+      <div className="flex items-center gap-1">
+        {isCustom && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            className="text-[#D4C4A8] hover:text-red-400 hover:bg-red-500/10 p-1 h-auto rounded"
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+        <Switch
+          checked={site.enabled}
+          onCheckedChange={onChange}
+          className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#7A4A1E]/70 scale-75"
+        />
+      </div>
     </div>
   );
 
@@ -276,7 +322,7 @@ const PersonalDashboard = () => {
   if (authLoading) {
     return (
       <div
-        className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center"
+        className="w-[400px] h-[600px] shadow-lg flex items-center justify-center"
         style={{
           background:
             "radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)",
@@ -293,7 +339,7 @@ const PersonalDashboard = () => {
   if (authError) {
     return (
       <div
-        className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center"
+        className="w-[400px] h-[600px] shadow-lg flex items-center justify-center"
         style={{
           background:
             "radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)",
@@ -341,7 +387,7 @@ const PersonalDashboard = () => {
   ) {
     return (
       <div
-        className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col"
+        className="w-[400px] h-[600px] shadow-lg flex flex-col"
         style={{
           background:
             "radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)",
@@ -355,7 +401,7 @@ const PersonalDashboard = () => {
   if (showAccount) {
     return (
       <div
-        className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col"
+        className="w-[400px] h-[600px] shadow-lg flex flex-col"
         style={{
           background:
             "radial-gradient(circle at center, #2D1B11 0%, #1E120B 40%, #0F0905 100%)",
@@ -395,7 +441,7 @@ const PersonalDashboard = () => {
         </div>
 
         <div
-          className="p-4 space-y-3 flex-1 overflow-y-auto opacity-0"
+          className="p-4 space-y-3 flex-1 opacity-0"
           style={{
             background:
               "radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)",
@@ -624,7 +670,7 @@ const PersonalDashboard = () => {
 
   return (
     <div
-      className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col"
+      className="w-[400px] h-[600px] shadow-lg flex flex-col"
       style={{
         background:
           "radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)",
@@ -704,7 +750,7 @@ const PersonalDashboard = () => {
       </div>
 
       <div
-        className="flex-1 overflow-hidden flex flex-col"
+        className="flex-1 flex flex-col"
         style={{
           background:
             "radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)",
@@ -774,7 +820,7 @@ const PersonalDashboard = () => {
           </div>
         )}
 
-        <div className="flex-1 min-h-0 p-4 space-y-2 overflow-y-auto">
+        <div className="flex-1 min-h-0 p-4 space-y-2">
           {computedCategories.map((category, index) => {
             const Icon = category.icon;
             return (
@@ -826,9 +872,11 @@ const PersonalDashboard = () => {
                       <SiteRow
                         key={site.url}
                         site={site}
+                        isCustom={category.id === "my-sites"}
                         onChange={(checked) =>
                           handleToggleSite(site.url, checked)
                         }
+                        onDelete={category.id === "my-sites" ? () => removeCustomSite(site.url) : undefined}
                       />
                     ))}
                   </div>
