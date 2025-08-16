@@ -70,168 +70,288 @@ interface SiteCategory {
 const PersonalDashboard = () => {
   const [showAccount, setShowAccount] = useState(false);
   const [showAddSite, setShowAddSite] = useState(false);
-  const [newSiteUrl, setNewSiteUrl] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [customSitesList, setCustomSitesList] = useState<string[]>(() => {
-    const stored = localStorage.getItem('intent_custom_sites');
-    return stored ? JSON.parse(stored) : [];
+  const [newSiteUrl, setNewSiteUrl] = useState('');
+  const [accountabilityPartner, setAccountabilityPartner] = useState({
+    enabled: false,
+    email: ''
   });
+  
+  const [emailError, setEmailError] = useState('');
+  const [partnerSaving, setPartnerSaving] = useState(false);
+  const [partnerSaved, setPartnerSaved] = useState(false);
+  const [partnerSaveError, setPartnerSaveError] = useState('');
+  const [enableScroll, setEnableScroll] = useState(false);
+  const [currentQuote, setCurrentQuote] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
 
-  const formatDate = (date: Date | null) => {
-    if (!date) return "N/A";
-    return date.toLocaleDateString();
+  const getRandomQuote = (): string => {
+    return quotes[Math.floor(Math.random() * quotes.length)];
   };
-
-  const {
-    data: session,
-    isLoading: authLoading,
-    isError: authError,
-  } = useAuth();
-  const signOutMutation = useSignOut();
-  const { data: accountabilityPartner } = useAccountabilityPartner();
-  const savePartnerMutation = useSaveAccountabilityPartner();
-  const { data: blockedSites = [] } = useBlockedSites();
-  const addBlockedSitesMutation = useAddBlockedSites();
-  const removeBlockedSitesMutation = useRemoveBlockedSites();
-  const { data: subscriptionStatus, isLoading: subscriptionLoading } =
-    useSubscriptionStatus();
-
-  const [partnerEmail, setPartnerEmail] = useState("");
-  const [partnerEnabled, setPartnerEnabled] = useState(false);
-  const [confirmingPartner, setConfirmingPartner] = useState(false);
-
+  
+  // Set initial random quote
   useEffect(() => {
-    if (accountabilityPartner) {
-      setPartnerEmail(accountabilityPartner.email ?? "");
-      setPartnerEnabled(!!accountabilityPartner.enabled);
-    }
-  }, [accountabilityPartner]);
+    setCurrentQuote(getRandomQuote());
+  }, []);
 
-  const currentQuote = useMemo(
-    () => quotes[Math.floor(Math.random() * quotes.length)],
-    []
-  );
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      console.log('[PersonalDashboard] Starting auth check...');
+      console.log('[PersonalDashboard] Current URL:', window.location.href);
+      console.log('[PersonalDashboard] Hash:', window.location.hash);
+      console.log('[PersonalDashboard] Search:', window.location.search);
+      console.log('[PersonalDashboard] Pathname:', window.location.pathname);
+      
+      // ALWAYS SKIP AUTH CHECK if we're on tour or welcome pages - no exceptions!
+      const currentUrl = window.location.href;
+      const isOnTourOrWelcomePage = currentUrl.includes('#/tour') || 
+                                   currentUrl.includes('#/welcome') || 
+                                   currentUrl.includes('tour=1') || 
+                                   currentUrl.includes('skipAuth=true');
+      
+      console.log('[PersonalDashboard] Is on tour/welcome page:', isOnTourOrWelcomePage);
+      
+      if (isOnTourOrWelcomePage) {
+        console.log('[PersonalDashboard] ✅ TOUR/WELCOME PAGE DETECTED - SKIPPING ALL AUTH CHECKS');
+        setAuthChecked(true);
+        return;
+      }
+
+      console.log('[PersonalDashboard] Not on tour/welcome page, checking authentication...');
+
+      try {
+        await checkExistingSession();
+        // Do not open new tabs or windows here; just proceed with UI
+        setAuthChecked(true);
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setAuthChecked(true); // Continue loading even if auth check fails
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Note: This useEffect is no longer needed since we removed the popup from manifest
+  // and now handle the icon click directly in the background script
+  // Keeping this code for reference in case we need it later
+  /*
+  useEffect(() => {
+    // Check if this is a floating popup to prevent infinite loop
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFloating = urlParams.get('floating') === 'true';
+    
+    if (isFloating) {
+      console.log('🔄 Floating popup detected, skipping POPUP_OPENED message');
+      return;
+    }
+    
+    console.log('🚀 Popup opened, sending message to background script...');
+    // Send message to background script that popup has opened
+    if (typeof chrome !== 'undefined' && chrome?.runtime) {
+      chrome.runtime.sendMessage({ 
+        type: 'POPUP_OPENED',
+        elementType: 'floating-popup',
+        position: { x: 100, y: 100 }
+      }).then(response => {
+        console.log('✅ Background script response:', response);
+      }).catch(error => {
+        console.error('❌ Error sending message to background script:', error);
+      });
+    } else {
+      console.log('❌ Chrome runtime not available');
+    }
+  }, []);
+  */
+
+  // Enable scrolling after animations complete
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setEnableScroll(true);
+    }, 300); // Increased delay for Account Settings animations (longest delay is 225ms + animation duration + buffer)
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Re-enable scrolling when switching to Account Settings
+  useEffect(() => {
+    if (showAccount) {
+      const timer = setTimeout(() => {
+        setEnableScroll(true);
+      }, 400); // Wait for Account Settings animations to complete
+
+      return () => clearTimeout(timer);
+    }
+  }, [showAccount]);
+
+  // Prefill accountability partner from Supabase if present
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        // Fetch subscription_status directly from profiles
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('subscription_status')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (!error && data?.subscription_status) {
+            setSubscriptionStatus(data.subscription_status);
+          }
+        } catch {}
+        const { data, error } = await supabase
+          .from('accountability_partners')
+          .select('email')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (error) return; // ignore missing rows
+        if (data?.email) {
+          setAccountabilityPartner(prev => ({ ...prev, email: data.email, enabled: true }));
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, []);
 
   const handleSaveAccountabilityPartner = async () => {
-    if (!validateEmail(partnerEmail)) {
-      setEmailError("Please enter a valid email address");
-      return;
-    }
-    setEmailError("");
-    
-    // First click - show confirmation
-    if (!confirmingPartner) {
-      setConfirmingPartner(true);
-      // Reset confirmation state after 3 seconds if not clicked
-      setTimeout(() => setConfirmingPartner(false), 3000);
-      return;
-    }
-    
-    // Second click - actually save
+    setPartnerSaveError('');
+    if (!validateEmail(accountabilityPartner.email)) return;
     try {
-      await savePartnerMutation.mutateAsync(partnerEmail);
-      setConfirmingPartner(false);
-    } catch {
-      setConfirmingPartner(false);
+      setPartnerSaving(true);
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('accountability_partners')
+        .upsert({
+          user_id: user.id,
+          email: accountabilityPartner.email,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+      if (error) throw error;
+
+      setPartnerSaved(true);
+      setTimeout(() => setPartnerSaved(false), 2000);
+    } catch (e: any) {
+      setPartnerSaveError(e?.message || 'Failed to save');
+    } finally {
+      setPartnerSaving(false);
     }
   };
 
   const handleLogout = async () => {
     try {
-      await signOutMutation.mutateAsync();
-      
-      if (window.parent !== window) {
-        window.parent.postMessage({ type: 'CLOSE_FLOATING_POPUP' }, '*');
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Failed to sign out cleanly; continuing with tab operations.', e);
+    }
+    try {
+      // Resolve a valid welcome URL depending on context
+      let welcomeUrl = '';
+      const isExt = typeof chrome !== 'undefined' && !!chrome.runtime && !!chrome.runtime.getURL;
+      if (isExt) {
+        // Prefer extension page
+        welcomeUrl = chrome.runtime.getURL('src/popup/index.html') + '#/welcome';
       } else {
-        window.close();
+        // Fallback to web app route
+        const isDev = (import.meta as any)?.env?.DEV;
+        const base = isDev ? 'http://localhost:5173' : 'https://useintent.app';
+        welcomeUrl = `${base}/#/welcome`;
       }
-    } catch {}
+      console.log('[Logout] Navigating to welcome URL:', welcomeUrl);
+
+      if (isExt && chrome.tabs && chrome.tabs.create && chrome.tabs.query && chrome.tabs.remove) {
+        // Capture the current active tab id BEFORE creating the new tab
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const previousTabId = tabs && tabs[0] && tabs[0].id;
+          // Create the welcome tab (active)
+          chrome.tabs.create({ url: welcomeUrl, active: true }, () => {
+            // After a brief delay, close the previous tab (not the newly created one)
+            if (previousTabId !== undefined) {
+              setTimeout(() => {
+                chrome.tabs.remove(previousTabId);
+              }, 200);
+            }
+          });
+        });
+      } else {
+        // Fallback: open welcome in a new tab, then attempt to close current
+        window.open(welcomeUrl, '_blank');
+        try { window.close(); } catch {}
+      }
+    } catch (err) {
+      console.error('Error handling logout tab operations:', err);
+    }
   };
 
-  const normalize = (u: string) =>
-    `https://${normalizeUrlToDomain(withHttps(u.trim()))}`;
-
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    localStorage.setItem('intent_custom_sites', JSON.stringify(customSitesList));
-  }, [customSitesList]);
-
-  const computedCategories = useMemo(() => {
-    const dbSites = new Set(blockedSites.map(normalize)); // Database contains UNBLOCKED presets OR BLOCKED custom sites
-    
-    const presetSites = new Set(
-      [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
-        .map(url => normalizeUrlToDomain(withHttps(url.trim())))
-    );
-    
-    const customFromDb = blockedSites
-      .map(url => normalizeUrlToDomain(withHttps(url.trim())))
-      .filter(url => !presetSites.has(url));
-    
-    const allCustomSites = Array.from(new Set([...customSitesList, ...customFromDb]));
-    
-    const rawCategories: SiteCategory[] = [
-      {
-        id: "social",
-        name: "Social",
-        icon: Users,
-        expanded: expanded["social"] || false,
-        sites: SOCIAL_SITES.map((url) => ({
-          url,
-          // Preset site: toggle ON means blocked by default when NOT in DB (DB presence = unblocked)
-          enabled: !dbSites.has(normalize(url)),
-        })),
-      },
-      {
-        id: "entertainment",
-        name: "Entertainment",
-        icon: Gamepad2,
-        expanded: expanded["entertainment"] || false,
-        sites: ENTERTAINMENT_SITES.map((url) => ({
-          url,
-          enabled: !dbSites.has(normalize(url)),
-        })),
-      },
-      {
-        id: "shopping",
-        name: "Shopping",
-        icon: ShoppingBag,
-        expanded: expanded["shopping"] || false,
-        sites: SHOPPING_SITES.map((url) => ({
-          url,
-          enabled: !dbSites.has(normalize(url)),
-        })),
-      },
-      {
-        id: "news",
-        name: "News",
-        icon: Newspaper,
-        expanded: expanded["news"] || false,
-        sites: NEWS_SITES.map((url) => ({
-          url,
-          enabled: !dbSites.has(normalize(url)),
-        })),
-      },
-      {
-        id: "my-sites",
-        name: "My Sites",
-        icon: Target,
-        expanded: expanded["my-sites"] || false,
-        sites: allCustomSites.map((url) => ({
-          url,
-          // Custom site: toggle ON means site is blocked only if in DB. If not present, it's allowed
-          enabled: dbSites.has(normalize(url)),
-        })),
-      },
-    ];
-    return rawCategories;
-  }, [blockedSites, expanded, customSitesList]);
-
-  const [currentUrl, setCurrentUrl] = useState<string>("Loading...");
+  // Email validation function
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setEmailError('');
+      return true;
+    }
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    setEmailError('');
+    return true;
+  };
+  
+  const [categories, setCategories] = useState<SiteCategory[]>([
+    {
+      id: 'social',
+      name: 'Social',
+      icon: Users,
+      expanded: false,
+      sites: SOCIAL_SITES.map((url) => ({ url, enabled: true })),
+    },
+    {
+      id: 'entertainment',
+      name: 'Entertainment',
+      icon: Gamepad2,
+      expanded: false,
+      sites: ENTERTAINMENT_SITES.map((url) => ({ url, enabled: true })),
+    },
+    {
+      id: 'shopping',
+      name: 'Shopping',
+      icon: ShoppingBag,
+      expanded: false,
+      sites: SHOPPING_SITES.map((url) => ({ url, enabled: true })),
+    },
+    {
+      id: 'news',
+      name: 'News',
+      icon: Newspaper,
+      expanded: false,
+      sites: NEWS_SITES.map((url) => ({ url, enabled: true })),
+    },
+    {
+      id: 'my-sites',
+      name: 'My Sites',
+      icon: Target,
+      expanded: false,
+      sites: []
+    }
+  ]);
 
   useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome?.tabs?.query) {
+    // In tour mode, hardcode the current URL for display
+    const isTour = typeof window !== 'undefined' && window.location.hash.includes('tour=1');
+    if (isTour) {
+      setCurrentUrl('mycurrenturl.com');
+      return;
+    }
+
+    // Function to update current URL
+    const updateCurrentUrl = () => {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const raw = tabs[0]?.url;
         try {
@@ -557,70 +677,16 @@ const PersonalDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 pt-3">
-              {subscriptionLoading ? (
-                <div className="flex justify-center py-2">
-                  <div className="animate-spin h-4 w-4 border-2 border-[#FF944D] border-t-transparent rounded-full"></div>
-                </div>
-              ) : subscriptionStatus ? (
-                <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-[#D4C4A8]">Plan</span>
-                    <Badge className="bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full text-xs px-2">
-                      {subscriptionStatus.planType === "trial"
-                        ? "Free Trial"
-                        : subscriptionStatus.planType === "monthly"
-                        ? "Pro"
-                        : "Expired"}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-[#D4C4A8]">Status</span>
-                    <Badge
-                      className={`rounded-full text-xs ${
-                        subscriptionStatus.hasAccess
-                          ? "bg-[#8FBC8F]/20 text-[#8FBC8F] border-[#8FBC8F]/30"
-                          : "bg-red-500/20 text-red-500 border-red-500/30"
-                      }`}
-                    >
-                      {subscriptionStatus.hasAccess ? "Active" : "Expired"}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-[#D4C4A8]">
-                      {subscriptionStatus.planType === "trial"
-                        ? "Trial ends"
-                        : subscriptionStatus.planType === "monthly"
-                        ? "Next billing"
-                        : "Expired on"}
-                    </span>
-                    <span className="text-xs font-medium text-[#F5E6D3]">
-                      {subscriptionStatus.planType === "trial" &&
-                      subscriptionStatus.trialEndsAt
-                        ? formatDate(subscriptionStatus.trialEndsAt)
-                        : subscriptionStatus.planType === "monthly" &&
-                          subscriptionStatus.currentPeriodEnd
-                        ? formatDate(subscriptionStatus.currentPeriodEnd)
-                        : subscriptionStatus.trialEndsAt
-                        ? formatDate(subscriptionStatus.trialEndsAt)
-                        : "N/A"}
-                    </span>
-                  </div>
-                  {subscriptionStatus.planType === "trial" &&
-                    subscriptionStatus.daysRemaining >= 0 && (
-                      <div className="pt-1">
-                        <p className="text-xs text-[#FF944D] text-center font-medium">
-                          {formatTimeRemaining(
-                            subscriptionStatus.daysRemaining
-                          )}
-                        </p>
-                      </div>
-                    )}
-                </>
-              ) : (
-                <div className="text-xs text-[#D4C4A8] text-center py-2">
-                  Unable to load subscription status
-                </div>
-              )}
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-[#D4C4A8]">Plan</span>
+                <Badge className="bg-[#FF944D]/20 text-[#FF944D] border-[#FF944D]/30 rounded-full text-xs px-2">Pro</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-[#D4C4A8]">Status</span>
+                <Badge className="bg-[#8FBC8F]/20 text-[#8FBC8F] border-[#8FBC8F]/30 rounded-full text-xs">
+                  {subscriptionStatus ? (subscriptionStatus === 'active' ? 'Active' : subscriptionStatus === 'trialing' ? 'Trialing' : subscriptionStatus) : '…'}
+                </Badge>
+              </div>
             </CardContent>
           </Card>
 
@@ -777,12 +843,7 @@ const PersonalDashboard = () => {
             </CardContent>
           </Card>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 transition-all duration-200 group rounded-xl"
-            onClick={handleLogout}
-          >
+          <Button variant="outline" size="sm" onClick={handleLogout} className="w-full hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 transition-all duration-200 group rounded-xl">
             <LogOut className="w-4 h-4 mr-2 group-hover:animate-pulse" />
             Log Out
           </Button>
