@@ -69,8 +69,25 @@ let isCreatingTab = false;
 
 // Listen for when extension icon is clicked (only fires when no popup is defined in manifest)
 chrome.action.onClicked?.addListener(async (tab) => {
-  console.log("🎯 Extension icon clicked, creating floating popup...");
+  console.log("🎯 Extension icon clicked, checking authentication...");
   console.log("🔍 Current tab URL:", tab.url);
+  
+  const session = await checkExistingSession();
+  const isAuthenticated = !!session;
+  
+  const isOnTourPage = tab.url && (tab.url.includes('#/tour') || tab.url.includes('tour=1'));
+  
+  console.log("🔐 User authenticated:", isAuthenticated);
+  console.log("🎯 On tour page:", isOnTourPage);
+  
+  if (!isAuthenticated && !isOnTourPage) {
+    console.log("🚀 User not authenticated and not on tour, opening welcome page in new tab...");
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("src/popup/index.html#/welcome"),
+      active: true
+    });
+    return;
+  }
 
   const canInject =
     tab.id &&

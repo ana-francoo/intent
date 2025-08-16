@@ -139,7 +139,12 @@ const PersonalDashboard = () => {
   const handleLogout = async () => {
     try {
       await signOutMutation.mutateAsync();
-      window.location.href = "#/welcome";
+      
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'CLOSE_FLOATING_POPUP' }, '*');
+      } else {
+        window.close();
+      }
     } catch {}
   };
 

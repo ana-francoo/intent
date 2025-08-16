@@ -108,6 +108,19 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
   });
 }
 
+window.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLOSE_FLOATING_POPUP') {
+    console.log('🔌 Received CLOSE_FLOATING_POPUP message, closing popup...');
+    const floatingPopup = document.getElementById('floating-popup-container');
+    if (floatingPopup) {
+      floatingPopup.style.animation = 'floating-popup-disappear 0.3s ease-in forwards';
+      setTimeout(() => {
+        floatingPopup.remove();
+      }, 300);
+    }
+  }
+});
+
 // Function to create visual elements on the page
 function createVisualElement(elementType: string, position: { x: number, y: number }, skipAuth?: boolean) {
   const element = document.createElement('div');
