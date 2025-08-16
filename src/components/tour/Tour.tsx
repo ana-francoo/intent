@@ -226,7 +226,7 @@ const Tour = () => {
           
           const secondText = document.createElement('div');
           secondText.className = 'tour-firststep';
-          secondText.textContent = '3. All websites are blocked by default. You can unblock and customize additional site settings here';
+          secondText.textContent = '3. By default, all sites are blocked. You can unblock or customize sites anytime to match your focus zones';
           secondSvg.appendChild(secondText);
 
           // Prepare the arrow-block (initially hidden)
@@ -244,7 +244,7 @@ const Tour = () => {
           `;
           const textBlock = document.createElement('div');
           textBlock.className = 'text-block';
-          textBlock.textContent = "4. You can also block your current site directly by clicking 'Block'";
+          textBlock.textContent = "4. Want to stay focused on your current site? Just hit 'Block' to add it instantly";
           arrowBlock.appendChild(textBlock);
           anchor.appendChild(arrowBlock);
 
@@ -263,7 +263,7 @@ const Tour = () => {
           `;
           const subscriptionText = document.createElement('div');
           subscriptionText.className = 'text-subscription';
-          subscriptionText.textContent = '6. Manage your subscription here';
+          subscriptionText.textContent = '7. Manage your subscription anytime from this screen! Your first 2 weeks of Pro are free';
           subscriptionText.style.display = 'none';
           subscriptionSvg.appendChild(subscriptionText);
           anchor.appendChild(subscriptionSvg);
@@ -281,7 +281,7 @@ const Tour = () => {
 
           const accountabilityText = document.createElement('div');
           accountabilityText.className = 'text-accountability';
-          accountabilityText.textContent = '5. You can add an accountability partner here!';
+          accountabilityText.textContent = '6. An accountability partner can be added to stay on track together';
           accountabilityText.style.display = 'none';
           anchor.appendChild(accountabilityText);
 
@@ -293,7 +293,7 @@ const Tour = () => {
 
           const settingsText = document.createElement('div');
           settingsText.className = 'text-settings';
-          settingsText.textContent = '5. Click on Settings';
+          settingsText.textContent = '5. Click on Settings to customize your experience';
           settingsText.style.display = 'none';
           anchor.appendChild(settingsText);
           
@@ -620,7 +620,7 @@ const Tour = () => {
           {/* First text positioned relative to the arrow wrapper */}
           {!isPinned && (
         <TourText
-          text="1. Let's start by pinning the Intent extension"
+          text="1. Let's start by pinning Intent so it's always easy to find"
               className="tour-first-text"
           fontSize={firstTextPosition.fontSize}
           delay={0.6}
@@ -628,7 +628,7 @@ const Tour = () => {
       )}
           {isPinned && (
         <TourText
-          text="2. Now open the extension by clicking on it"
+          text="2. Next, click the Intent icon to open the dashboard"
               className="tour-first-text"
           fontSize={firstTextPosition.fontSize}
           delay={0.1}

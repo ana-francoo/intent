@@ -213,8 +213,7 @@
 
 .mouse-pointer-svg {
   position: absolute;
-  width: 3.5%;
-  min-width: 14px;
+  width: 24px; /* fixed px size */
   height: auto;
   /* Set the click center to the middle of the .mouse-click container */
   top: 50%;
@@ -230,9 +229,8 @@
 
 .mouse-click-ring {
   position: absolute;
-  width: 7%;
-  min-width: 28px;
-  aspect-ratio: 1 / 1;
+  width: 48px; /* fixed px size */
+  height: 48px;
   border-radius: 50%;
   border: 2px solid #ff6b35;
   opacity: 0;

@@ -16,7 +16,7 @@
 .tour-first-text {
   position: absolute;
   bottom: 0px;  /* adjust as needed relative to .tour-arrow */
-  right: 10px;     /* adjust as needed relative to .tour-arrow */
+  right: -100px;     /* adjust as needed relative to .tour-arrow */
   z-index: 10002;
 }
 
