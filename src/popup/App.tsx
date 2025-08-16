@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Login from '@/components/auth/login'
 import Signup from '@/components/auth/signup'
 import PersonalDashboard from '@/components/PersonalDashboard'
@@ -8,7 +8,6 @@ import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
 import Home from '@/components/home/Home'
 import PopupLauncher from '@/components/popup-launcher/PopupLauncher'
-import { SubscriptionTest } from '@/components/subscription-test'
 
 export default function App() {
   return (
@@ -23,7 +22,7 @@ export default function App() {
         <Route path="/dashboard" element={<PersonalDashboard />} />
         <Route path="/tour-dashboard" element={<TourDashboard />} />
         <Route path="/overlay" element={<IntentionOverlay />} />
-        <Route path="subscription-test" element={<SubscriptionTest />} />
+        {/* <Route path="subscription-test" element={<SubscriptionTest />} /> */}
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
         {/* I don't think these routes are being used, confirming before can be removed */}
         {/* <Route path="/home" element={<Home />} /> */}
