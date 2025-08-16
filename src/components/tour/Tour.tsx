@@ -39,13 +39,12 @@ function EmbeddedSignupCard() {
     setInfo(null);
     setIsLoading(true);
     try {
-      const isExtensionContext = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
       const redirectUrl = getRedirectUrl();
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: isExtensionContext ? `${redirectUrl}?extension=true` : redirectUrl,
+          emailRedirectTo: redirectUrl,
         },
       });
       if (signUpError) throw signUpError;
@@ -141,8 +140,8 @@ const Tour = () => {
         console.log('🎯 Extension icon clicked, hiding arrow and text, creating floating popup');
         setExtensionClicked(true);
         
-        // Create the floating popup iframe
-        const popupResult = createFloatingPopup({ route: '/?tour=1' });
+        // Create the floating popup iframe with the tour-specific dashboard
+        const popupResult = createFloatingPopup({ route: '/tour-dashboard' });
         const element = popupResult.element;
         
         // Center the floating dashboard and create an anchor for relative elements
@@ -326,6 +325,11 @@ const Tour = () => {
               settingsText.style.display = 'block';
               continueBtn.classList.add('dimmed');
               tourStep = 2;
+              // Notify the TourDashboard that step 2 is reached and settings can be enabled
+              const iframe = document.querySelector('#floating-popup-container iframe') as HTMLIFrameElement;
+              if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'TOUR_STEP_2_REACHED' }, '*');
+              }
               return;
             }
             if (tourStep === 3) {
