@@ -377,6 +377,7 @@ export const saveBlockedSites = async (urls: string[]) => {
 
 export const getBlockedSites = async () => {
   try {
+    console.log('📥 getBlockedSites: Starting fetch...');
     
     // Get the current session (less intrusive than getUser)
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -384,9 +385,11 @@ export const getBlockedSites = async () => {
     if (sessionError) {
       console.error('❌ Session error:', sessionError);
       if (sessionError.message.includes('Auth session missing')) {
+        console.log('⚠️ No auth session - returning empty array');
         return [];
       }
-      throw new Error('Session error: ' + sessionError.message);
+      console.error('❌ Unexpected session error - returning empty array');
+      return [];
     }
     
     if (!session?.user) {
@@ -403,15 +406,15 @@ export const getBlockedSites = async () => {
       .eq('user_id', user.id);
     
     if (error) {
-      console.error('❌ Error fetching blocked sites:', error);
+      console.error('❌ Error fetching blocked sites from database:', error);
       return [];
     }
     
     const urls = data?.map(item => item.url) || [];
-    console.log('✅ Successfully fetched blocked sites for user:', urls);
+    console.log('✅ Successfully fetched blocked sites for user:', urls.length, 'sites:', urls);
     return urls;
   } catch (error) {
-    console.error('❌ Failed to fetch blocked sites:', error);
+    console.error('❌ Unexpected error in getBlockedSites:', error);
     return [];
   }
 };
@@ -432,6 +435,7 @@ export const getBlockedSites = async () => {
           return true;
         }
       } catch (e) {
+        console.log('⚠️ Error parsing URL for YouTube Shorts check:', e);
         // Ignore URL parse errors and continue with regular checks
       }
 
@@ -451,10 +455,22 @@ export const getBlockedSites = async () => {
         ]
           .filter(Boolean)
           .map(d => d.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, ''));
-      } catch {}
+        console.log('📚 Preset domains loaded:', defaultBlockedDomains.length, 'domains');
+      } catch (e) {
+        console.error('⚠️ Error loading preset domains:', e);
+      }
 
-      const currentDomain = new URL(currentUrl).hostname.replace(/^www\./, '').toLowerCase();
+      let currentDomain: string;
+      try {
+        currentDomain = new URL(currentUrl).hostname.replace(/^www\./, '').toLowerCase();
+        console.log('🌐 Current domain:', currentDomain);
+      } catch (e) {
+        console.error('❌ Error parsing current URL:', currentUrl, e);
+        return false;
+      }
+
       const isPresetSite = defaultBlockedDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
+      console.log('🔍 Is preset site?', isPresetSite);
 
       // 2) Fetch database entries (dual purpose: unblocked presets OR blocked custom sites)
       const dbEntries = await getBlockedSites();
@@ -469,23 +485,25 @@ export const getBlockedSites = async () => {
           }
         })
         .filter(Boolean) as string[];
+      console.log('📋 Normalized DB domains:', dbDomains);
 
       const isInDatabase = dbDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
+      console.log('🔍 Is in database?', isInDatabase);
 
       // 3) Determine blocking based on site type
       if (isPresetSite) {
         // PRESET SITE: blocked by default, database entry = unblocked
         const isBlocked = !isInDatabase;
-        console.log('📚 Preset site', { currentDomain, isInDatabase, isBlocked });
+        console.log('📚 Preset site result:', { currentDomain, isInDatabase, isBlocked });
         return isBlocked;
       } else {
         // CUSTOM SITE: allowed by default, database entry = blocked
         const isBlocked = isInDatabase;
-        console.log(`🎯 Custom site ${currentUrl} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+        console.log(`🎯 Custom site result: ${currentDomain} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'} (in database: ${isInDatabase})`);
         return isBlocked;
       }
     } catch (error) {
-      console.error('❌ Error checking if URL is blocked:', error);
+      console.error('❌ Error in isUrlBlocked function:', error);
       return false;
     }
   };
