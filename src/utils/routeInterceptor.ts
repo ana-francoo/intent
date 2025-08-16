@@ -60,7 +60,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       const urlObj = new URL(currentUrl);
       const host = urlObj.hostname.replace(/^www\./, '').toLowerCase();
       const path = urlObj.pathname;
-      const isYouTubeHome = (host === 'youtube.com' || host === 'm.youtube.com') && (path === '/' || path === '/feed/');
+      const isYouTubeHome = (host === 'youtube.com' || host === 'm.youtube.com') && (path === '/' || path === '/feed/' || path === '/results');
       if (isYouTubeHome) {
         const ytIntention = await getIntention(currentUrl);
         if (ytIntention && ytIntention.intention) {
