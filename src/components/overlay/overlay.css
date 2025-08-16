@@ -4,6 +4,12 @@
   isolation: isolate;
 }
 
+/* COLORS OF BROER ANIAMTION EFFECT */
+/* #7C2D12 80%,
+    #FED7AA 88%,
+    #FED7AA 92%,
+    #7C2D12 100% */
+
 .conic-pending-border::before {
   content: "";
   position: absolute;
@@ -35,4 +41,24 @@
 
 @keyframes conic-spin {
   to { --angle: 360deg; }
+}
+
+/* Hero wrapper (logo + flame + intention text) with adjustable top offset in viewport height */
+.overlay-hero {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--overlay-hero-top, 30vh);
+  transition: margin-top 200ms ease;
+}
+
+/* Optional: Back button horizontal positioning relative to viewport (in pixels)
+   Usage: add class and set --overlay-back-left: 32px; to move from viewport left */
+.overlay-back-horizontal {
+  position: fixed;
+  top: 8%;
+  font-size: 30px;
+  opacity: 0.7;
+  left: var(--overlay-back-left, 80px);
 }

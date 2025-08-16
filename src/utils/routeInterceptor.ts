@@ -9,6 +9,15 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     const currentUrl = window.location.href;
     console.log('🚦 RouteInterceptor.start', { currentUrl });
 
+    // Track previous/current URLs to aid back-navigation from overlay
+    try {
+      const prevTracked = sessionStorage.getItem('intent_current_url');
+      if (prevTracked) {
+        sessionStorage.setItem('intent_prev_url', prevTracked);
+      }
+      sessionStorage.setItem('intent_current_url', currentUrl);
+    } catch {}
+
     // Don't intercept extension pages
     if (currentUrl.startsWith('chrome-extension://') || 
         currentUrl.startsWith('moz-extension://') ||
@@ -42,6 +51,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     console.log('🧱 RouteInterceptor: isUrlBlocked', { isBlocked, url: currentUrl });
     if (!isBlocked) {
       console.log('✅ RouteInterceptor: URL not blocked — no action');
+      try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
       return;
     }
 
@@ -55,6 +65,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
         const ytIntention = await getIntention(currentUrl);
         if (ytIntention && ytIntention.intention) {
           console.log('📺 RouteInterceptor: YouTube home with existing intention — skipping overlay');
+          try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
           return;
         }
       }
@@ -80,6 +91,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     
     if (intentionData && intentionData.intention) {
       console.log('📡 RouteInterceptor: intention exists — starting monitoring');
+      try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
       sessionStorage.setItem('intent_monitoring_active', 'true');
       const { startIntentionMonitoring } = await import('./intentionMonitor');
       await startIntentionMonitoring();
@@ -110,6 +122,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     // Use the standard overlay for setting/refining intention
     const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay?targetUrl=${encodeURIComponent(currentUrl)}`;
     console.log('🎯 RouteInterceptor: prompting overlay', { extensionOverlayUrl });
+    try { sessionStorage.setItem('intent_last_blocked_url', currentUrl); } catch {}
     window.location.href = extensionOverlayUrl;
 
   } catch (error) {

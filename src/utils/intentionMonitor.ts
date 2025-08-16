@@ -378,8 +378,8 @@ export class IntentionMonitor {
         });
         try {
           const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
-            `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
-          console.log('🎯 DoomScrolling: redirecting to overlay', { overlayUrl });
+            `#/overlay?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}`;
+          console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl });
           window.location.href = overlayUrl;
         } catch (e) {
           console.error('❌ DoomScrolling: failed to redirect to overlay', e);
