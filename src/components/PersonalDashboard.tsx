@@ -630,9 +630,11 @@ const PersonalDashboard = () => {
           "radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)",
       }}
     >
+      {/* Header - Previous: animate-in slide-in-from-bottom duration-300 ease-out */}
       <div
-        className="relative p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out"
+        className="relative p-4 border-b border-[#7A4A1E]/20 opacity-0"
         style={{
+          animation: 'slideInUp 0.3s ease-out forwards, fadeIn 0.3s ease-out forwards',
           background:
             "linear-gradient(135deg, #1A1108 0%, #3D2414 50%, #5A3518 100%)",
         }}
@@ -665,9 +667,11 @@ const PersonalDashboard = () => {
         </Button>
       </div>
 
+      {/* Current Site - Previous: animate-in slide-in-from-bottom duration-300 ease-out delay-75 */}
       <div
-        className="p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out delay-75"
+        className="p-4 border-b border-[#7A4A1E]/20 opacity-0"
         style={{
+          animation: 'slideInUp 0.3s ease-out 75ms forwards, fadeIn 0.3s ease-out 75ms forwards',
           background:
             "radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)",
         }}
@@ -706,7 +710,8 @@ const PersonalDashboard = () => {
             "radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)",
         }}
       >
-        <div className="p-4 border-b border-[#7A4A1E]/20 flex items-center justify-between animate-in slide-in-from-bottom duration-300 ease-out delay-150">
+        {/* Blocked Sites Header - Previous: animate-in slide-in-from-bottom duration-300 ease-out delay-150 */}
+        <div className="p-4 border-b border-[#7A4A1E]/20 flex items-center justify-between opacity-0" style={{animation: 'slideInUp 0.3s ease-out 150ms forwards, fadeIn 0.3s ease-out 150ms forwards'}}>
           <div>
             <h3 className="font-bold text-[#F5E6D3] text-sm">Blocked Sites</h3>
             <p className="text-xs text-[#D4C4A8] -mt-0.5">
@@ -724,7 +729,8 @@ const PersonalDashboard = () => {
         </div>
 
         {showAddSite && (
-          <div className="p-4 border-b border-[#7A4A1E]/20 space-y-3 animate-in slide-in-from-bottom duration-200 ease-out">
+          //  Add Site Dropdown - Previous: animate-in slide-in-from-bottom duration-200 ease-out
+          <div className="p-4 border-b border-[#7A4A1E]/20 space-y-3 opacity-0" style={{animation: 'slideInUp 0.2s ease-out forwards, fadeIn 0.2s ease-out forwards'}}>
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="absolute inset-0 bg-[#FF944D]/30 animate-pulse rounded-xl"></div>
@@ -776,10 +782,11 @@ const PersonalDashboard = () => {
                 key={category.id}
                 className="border-b border-[#7A4A1E]/20 last:border-b-0 opacity-0"
                 style={{
+                  // Previous: stagger was 120ms between items (225 + index * 120)
                   animation: `slideInUp 0.3s ease-out ${
-                    225 + index * 120
+                    225 + index * 75
                   }ms forwards, fadeIn 0.3s ease-out ${
-                    225 + index * 120
+                    225 + index * 75
                   }ms forwards`,
                 }}
               >
