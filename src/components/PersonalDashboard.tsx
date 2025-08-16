@@ -35,6 +35,8 @@ import {
   Newspaper,
   Target,
   X,
+  Lock,
+  AlertCircle,
 } from "lucide-react";
 import {
   ENTERTAINMENT_SITES,
@@ -96,6 +98,7 @@ const PersonalDashboard = () => {
 
   const [partnerEmail, setPartnerEmail] = useState("");
   const [partnerEnabled, setPartnerEnabled] = useState(false);
+  const [confirmingPartner, setConfirmingPartner] = useState(false);
 
   useEffect(() => {
     if (accountabilityPartner) {
@@ -115,9 +118,22 @@ const PersonalDashboard = () => {
       return;
     }
     setEmailError("");
+    
+    // First click - show confirmation
+    if (!confirmingPartner) {
+      setConfirmingPartner(true);
+      // Reset confirmation state after 3 seconds if not clicked
+      setTimeout(() => setConfirmingPartner(false), 3000);
+      return;
+    }
+    
+    // Second click - actually save
     try {
       await savePartnerMutation.mutateAsync(partnerEmail);
-    } catch {}
+      setConfirmingPartner(false);
+    } catch {
+      setConfirmingPartner(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -594,61 +610,109 @@ const PersonalDashboard = () => {
             <CardContent className={partnerEnabled ? "space-y-4" : "space-y-0"}>
               {partnerEnabled && (
                 <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-[#F5E6D3]">
-                      Partner Email
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="partner@example.com"
-                      value={partnerEmail}
-                      onChange={(e) => {
-                        const newEmail = e.target.value;
-                        setPartnerEmail(newEmail);
-                        if (!validateEmail(newEmail)) {
-                          setEmailError("Please enter a valid email address");
-                        } else {
-                          setEmailError("");
-                        }
-                      }}
-                      onBlur={(e) => validateEmail(e.target.value)}
-                      className={`bg-[#1E120B]/50 border-[#5A351E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl ${
-                        emailError ? "border-red-500 focus:ring-red-500/20" : ""
-                      }`}
-                    />
-                    {emailError && (
-                      <p className="text-xs text-red-400 mt-1">{emailError}</p>
-                    )}
-                  </div>
-                  <p className="text-xs text-[#D4C4A8]">
-                    Your accountability partner will be notified if the
-                    extension is removed from Chrome. Please note that once a
-                    partner is set up, this action can not be undone.
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10 disabled:opacity-60"
-                      onClick={handleSaveAccountabilityPartner}
-                      disabled={
-                        !!emailError ||
-                        savePartnerMutation.isPending ||
-                        !partnerEmail
-                      }
-                    >
-                      {savePartnerMutation.isPending
-                        ? "Saving..."
-                        : savePartnerMutation.isSuccess
-                        ? "Saved!"
-                        : "Save Settings"}
-                    </Button>
-                    {savePartnerMutation.isError && (
-                      <span className="text-xs text-red-400">
-                        Failed to save
-                      </span>
-                    )}
-                  </div>
+                  {accountabilityPartner?.email ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-[#D4C4A8]/60" />
+                        <label className="text-sm font-medium text-[#D4C4A8]/80">
+                          Partner Email (Locked)
+                        </label>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          type="email"
+                          value={accountabilityPartner.email}
+                          disabled
+                          className="bg-[#1E120B]/30 border-[#5A351E]/40 text-[#D4C4A8]/60 cursor-not-allowed rounded-xl"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Lock className="w-4 h-4 text-[#D4C4A8]/40" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-[#5A351E]/20 rounded-lg">
+                        <AlertCircle className="w-4 h-4 text-[#D4C4A8]/60 flex-shrink-0" />
+                        <p className="text-xs text-[#D4C4A8]/80">
+                          Accountability partner has been set and cannot be changed.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    // No partner yet - show input form
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-[#F5E6D3]">
+                          Partner Email
+                        </label>
+                        <Input
+                          type="email"
+                          placeholder="partner@example.com"
+                          value={partnerEmail}
+                          onChange={(e) => {
+                            const newEmail = e.target.value;
+                            setPartnerEmail(newEmail);
+                            if (!validateEmail(newEmail)) {
+                              setEmailError("Please enter a valid email address");
+                            } else {
+                              setEmailError("");
+                            }
+                            // Reset confirmation if email changes
+                            setConfirmingPartner(false);
+                          }}
+                          onBlur={(e) => validateEmail(e.target.value)}
+                          className={`bg-[#1E120B]/50 border-[#5A351E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl ${
+                            emailError ? "border-red-500 focus:ring-red-500/20" : ""
+                          }`}
+                        />
+                        {emailError && (
+                          <p className="text-xs text-red-400 mt-1">{emailError}</p>
+                        )}
+                      </div>
+                      
+                      {confirmingPartner && (
+                        <div className="flex items-center gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg animate-pulse">
+                          <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                          <p className="text-xs text-red-400 font-medium">
+                            This action cannot be undone! Click again to confirm.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-[#D4C4A8]">
+                        Your accountability partner will be notified if the
+                        extension is removed from Chrome. Once set, the partner
+                        email cannot be changed or removed.
+                      </p>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant={confirmingPartner ? "destructive" : "outline"}
+                          size="sm"
+                          className={`w-full rounded-xl transition-all ${
+                            confirmingPartner 
+                              ? "bg-red-500 hover:bg-red-600 border-red-600 text-white animate-pulse" 
+                              : "border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10"
+                          } disabled:opacity-60`}
+                          onClick={handleSaveAccountabilityPartner}
+                          disabled={
+                            !!emailError ||
+                            savePartnerMutation.isPending ||
+                            !partnerEmail
+                          }
+                        >
+                          {savePartnerMutation.isPending
+                            ? "Saving..."
+                            : confirmingPartner
+                            ? "⚠️ Confirm - This Cannot Be Undone"
+                            : "Add Accountability Partner"}
+                        </Button>
+                        {savePartnerMutation.isError && (
+                          <span className="text-xs text-red-400">
+                            Failed to save
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </CardContent>
