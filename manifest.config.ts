@@ -6,11 +6,7 @@ export default defineManifest({
   name: "Intent",
   short_name: "Intent",
   version: pkg.version,
-  permissions: ["storage", "activeTab", "tabs", "scripting", "identity"],
-  "oauth2": {
-    "client_id": "1048776049646-18k745u1ci7u6fu2qcj3l7kf210tidhv.apps.googleusercontent.com",
-    "scopes": ["openid", "email", "profile"]
-  },
+  permissions: ["storage", "activeTab", "tabs", "scripting"],
   host_permissions: [
     "https://www.google.com/*",
     "https://www.google-analytics.com/*",

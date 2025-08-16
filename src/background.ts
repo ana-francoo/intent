@@ -288,39 +288,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // this is used in the landing page to open the extension
-  if (message.type === "OPEN_POPUP") {
-    try {
-      // Try to open popup first (works in some contexts)
-      chrome.action
-        .openPopup()
-        .then(() => {
-          console.log("[Background] Popup opened successfully");
-          sendResponse({ success: true, method: "popup" });
-        })
-        .catch((popupError) => {
-          console.log(
-            "[Background] Popup failed, opening in new tab:",
-            popupError
-          );
-          // Fallback to opening in a new tab
-          chrome.tabs
-            .create({
-              url: chrome.runtime.getURL("src/popup/index.html#/"),
-            })
-            .then((tab) => {
-              sendResponse({ success: true, method: "tab", tabId: tab.id });
-            })
-            .catch((tabError) => {
-              sendResponse({ success: false, error: String(tabError) });
-            });
-        });
-    } catch (error) {
-      sendResponse({ success: false, error: String(error) });
-    }
-    return true;
-  }
-
   // Handle opening popup with specific route
   if (message.type === "OPEN_POPUP_WITH_ROUTE") {
     const route = message.route || "/";
@@ -401,44 +368,36 @@ chrome.runtime.onMessageExternal.addListener(
       chrome.storage.local.set(sessionData, () => {
         console.log("[Background] Session stored successfully");
 
-        // Close the auth tab
-        if (sender.tab?.id) {
-          chrome.tabs.remove(sender.tab.id).catch(() => {
-            console.log("[Background] Could not close auth tab");
-          });
-        }
-
+        // Don't close the auth tab immediately - let it show success message
         console.log(
-          "[Background] Auth successful, auth page will handle popup creation"
+          "[Background] Auth successful, session stored"
         );
-        sendResponse({ success: true, method: "floating_popup" });
+        sendResponse({ success: true, method: "session_stored" });
       });
 
       return true;
     }
 
-    if (message.type === "OPEN_POPUP") {
-      // Handle OPEN_POPUP from external source
-      console.log("[Background] External OPEN_POPUP request");
-      chrome.action
-        .openPopup()
-        .then(() => {
-          sendResponse({ success: true, method: "popup" });
-        })
-        .catch(() => {
-          chrome.tabs
-            .create({
-              url: chrome.runtime.getURL("src/popup/index.html#/"),
-            })
-            .then(() => {
-              sendResponse({ success: true, method: "tab" });
-            })
-            .catch((error) => {
-              sendResponse({ success: false, error: String(error) });
+    if (message.type === "CLOSE_AUTH_TABS" && message.origin) {
+      // Close all tabs from the same origin except the current one
+      console.log("[Background] Request to close auth tabs from:", message.origin);
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id && 
+              tab.id !== sender.tab?.id && 
+              tab.url && 
+              tab.url.startsWith(message.origin) &&
+              (tab.url.includes('/tour') || tab.url.includes('/welcome') || tab.url.includes('/#'))) {
+            chrome.tabs.remove(tab.id).catch(() => {
+              console.log("[Background] Could not close tab:", tab.id);
             });
+          }
         });
+      });
+      sendResponse({ success: true });
       return true;
     }
+
 
     sendResponse({ success: false, error: "Unknown message type" });
   }

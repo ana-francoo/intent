@@ -570,12 +570,20 @@ const Tour = () => {
       chrome.runtime.onMessage.addListener(handleExtensionClick);
     }
     
+    const handleWindowMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'CREATE_VISUAL_ELEMENT') {
+        handleExtensionClick(event.data);
+      }
+    };
+    window.addEventListener('message', handleWindowMessage);
+    
     return () => {
       document.title = previousTitle;
       if (pollTimer) clearInterval(pollTimer);
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
         chrome.runtime.onMessage.removeListener(handleExtensionClick);
       }
+      window.removeEventListener('message', handleWindowMessage);
       // Remove window message listener if present
       try { window.removeEventListener('message', (window as any)._tourOnMessage); } catch {}
     };
