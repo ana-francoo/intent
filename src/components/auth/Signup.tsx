@@ -50,14 +50,13 @@ export default function Signup({ onGoBack }: SignupProps) {
     setInfo(null);
     setIsLoading(true);
     try {
-      const isExtensionContext = typeof chrome !== 'undefined' && !!chrome.runtime?.id;
       const redirectUrl = getRedirectUrl();
       
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { 
-          emailRedirectTo: isExtensionContext ? `${redirectUrl}?extension=true` : redirectUrl 
+          emailRedirectTo: redirectUrl
         },
       });
       if (signUpError) throw signUpError;

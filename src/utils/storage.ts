@@ -311,21 +311,23 @@ export const getStorageDebugInfo = async () => {
 export const saveBlockedSites = async (urls: string[]) => {
   try {
     
-    // Get the current authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Get the current session (less intrusive than getUser)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (userError) {
-      console.error('❌ Authentication error:', userError);
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
       // In development, this is expected - just log and continue
-      if (userError.message.includes('Auth session missing')) {
+      if (sessionError.message.includes('Auth session missing')) {
         return null;
       }
-      throw new Error('Authentication error: ' + userError.message);
+      throw new Error('Session error: ' + sessionError.message);
     }
     
-    if (!user) {
+    if (!session?.user) {
       return null;
     }
+    
+    const user = session.user;
     
     // First, let's check what's currently in the database for this user
     const { data: existingData, error: fetchError } = await supabase
@@ -376,13 +378,13 @@ export const saveBlockedSites = async (urls: string[]) => {
 export const getBlockedSites = async () => {
   try {
     
-    // Get the current authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Get the current session (less intrusive than getUser)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    if (userError) {
-      console.error('❌ Authentication error:', userError);
+    if (sessionError) {
+      console.error('❌ Session error:', sessionError);
       // In development, this is expected - just log and continue
-      if (userError.message.includes('Auth session missing')) {
+      if (sessionError.message.includes('Auth session missing')) {
         // DEVELOPMENT: Return test blocked sites for development
         const testBlockedSites = [
           'https://instagram.com',
@@ -403,10 +405,10 @@ export const getBlockedSites = async () => {
         console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
         return testBlockedSites;
       }
-      throw new Error('Authentication error: ' + userError.message);
+      throw new Error('Session error: ' + sessionError.message);
     }
     
-    if (!user) {
+    if (!session?.user) {
       console.log('ℹ️ No authenticated user - this is normal in development');
       // DEVELOPMENT: Return test blocked sites for development
       const testBlockedSites = [
@@ -425,6 +427,7 @@ export const getBlockedSites = async () => {
       return testBlockedSites;
     }
     
+    const user = session.user;
     console.log('👤 Fetching blocked sites for user:', user.id);
     
     const { data, error } = await supabase
@@ -554,12 +557,14 @@ export const getBlockedSites = async () => {
  */
 export const deleteBlockedSites = async (urls: string[]) => {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) {
-      if (userError.message.includes('Auth session missing')) return null;
-      throw new Error('Authentication error: ' + userError.message);
+    // Get the current session (less intrusive than getUser)
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      if (sessionError.message.includes('Auth session missing')) return null;
+      throw new Error('Session error: ' + sessionError.message);
     }
-    if (!user) return null;
+    if (!session?.user) return null;
+    const user = session.user;
 
     // Delete matching rows for this user
     const { error } = await supabase

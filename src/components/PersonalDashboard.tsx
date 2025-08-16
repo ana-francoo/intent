@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-// Removed unused imports to fix build warnings
 import quotes from '../utils/quotes';
-import { saveBlockedSites, deleteBlockedSites, getBlockedSites, normalizeUrlToDomain } from '../utils/storage';
-import { checkExistingSession } from '../utils/auth';
+import { normalizeUrlToDomain } from '../utils/storage';
+import { useAuth, useSignOut } from '@/hooks/useAuth';
+import { useAccountabilityPartner, useSaveAccountabilityPartner } from '@/hooks/useAccountabilityPartner';
+import { useBlockedSites, useAddBlockedSites, useRemoveBlockedSites } from '@/hooks/useBlockedSites';
 
 import { 
   Settings, 
@@ -24,9 +24,17 @@ import {
   ShoppingBag,
   Newspaper,
   Target,
-  
 } from 'lucide-react';
 import { ENTERTAINMENT_SITES, SOCIAL_SITES, SHOPPING_SITES, NEWS_SITES } from '@/utils/categoryPresets';
+
+const validateEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) return true;
+  return emailRegex.test(email);
+};
+
+const withHttps = (urlLike: string) =>
+  urlLike.startsWith('http') ? urlLike : `https://${urlLike}`;
 
 interface Site {
   url: string;
@@ -41,415 +49,239 @@ interface SiteCategory {
   expanded: boolean;
 }
 
+
 const PersonalDashboard = () => {
-  const [currentUrl, setCurrentUrl] = useState('https://example.com');
   const [showAccount, setShowAccount] = useState(false);
   const [showAddSite, setShowAddSite] = useState(false);
   const [newSiteUrl, setNewSiteUrl] = useState('');
-  const [accountabilityPartner, setAccountabilityPartner] = useState({
-    enabled: false,
-    email: ''
-  });
-  
   const [emailError, setEmailError] = useState('');
-  const [partnerSaving, setPartnerSaving] = useState(false);
-  const [partnerSaved, setPartnerSaved] = useState(false);
-  const [partnerSaveError, setPartnerSaveError] = useState('');
-  const [enableScroll, setEnableScroll] = useState(false);
-  const [currentQuote, setCurrentQuote] = useState('');
-  const [authChecked, setAuthChecked] = useState(false);
-
-  const getRandomQuote = (): string => {
-    return quotes[Math.floor(Math.random() * quotes.length)];
-  };
   
-  // Set initial random quote
+  const { data: session, isLoading: authLoading, isError: authError } = useAuth();
+  const signOutMutation = useSignOut();
+  const { data: accountabilityPartner } = useAccountabilityPartner();
+  const savePartnerMutation = useSaveAccountabilityPartner();
+  const { data: blockedSites = [] } = useBlockedSites();
+  const addBlockedSitesMutation = useAddBlockedSites();
+  const removeBlockedSitesMutation = useRemoveBlockedSites();
+  
+  const [partnerEmail, setPartnerEmail] = useState('');
+  const [partnerEnabled, setPartnerEnabled] = useState(false);
+
   useEffect(() => {
-    setCurrentQuote(getRandomQuote());
-  }, []);
-
-  // Check authentication status on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      console.log('[PersonalDashboard] Starting auth check...');
-      console.log('[PersonalDashboard] Current URL:', window.location.href);
-      console.log('[PersonalDashboard] Hash:', window.location.hash);
-      console.log('[PersonalDashboard] Search:', window.location.search);
-      console.log('[PersonalDashboard] Pathname:', window.location.pathname);
-      
-      // ALWAYS SKIP AUTH CHECK if we're on tour or welcome pages - no exceptions!
-      const currentUrl = window.location.href;
-      const isOnTourOrWelcomePage = currentUrl.includes('#/tour') || 
-                                   currentUrl.includes('#/welcome') || 
-                                   currentUrl.includes('tour=1') || 
-                                   currentUrl.includes('skipAuth=true');
-      
-      console.log('[PersonalDashboard] Is on tour/welcome page:', isOnTourOrWelcomePage);
-      
-      if (isOnTourOrWelcomePage) {
-        console.log('[PersonalDashboard] ✅ TOUR/WELCOME PAGE DETECTED - SKIPPING ALL AUTH CHECKS');
-        setAuthChecked(true);
-        return;
-      }
-
-      console.log('[PersonalDashboard] Not on tour/welcome page, checking authentication...');
-
-      try {
-        const session = await checkExistingSession();
-        // Do not open new tabs or windows here; just proceed with UI
-        setAuthChecked(true);
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        setAuthChecked(true); // Continue loading even if auth check fails
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // Note: This useEffect is no longer needed since we removed the popup from manifest
-  // and now handle the icon click directly in the background script
-  // Keeping this code for reference in case we need it later
-  /*
-  useEffect(() => {
-    // Check if this is a floating popup to prevent infinite loop
-    const urlParams = new URLSearchParams(window.location.search);
-    const isFloating = urlParams.get('floating') === 'true';
-    
-    if (isFloating) {
-      console.log('🔄 Floating popup detected, skipping POPUP_OPENED message');
-      return;
+    if (accountabilityPartner) {
+      setPartnerEmail(accountabilityPartner.email ?? '');
+      setPartnerEnabled(!!accountabilityPartner.enabled);
     }
-    
-    console.log('🚀 Popup opened, sending message to background script...');
-    // Send message to background script that popup has opened
-    if (typeof chrome !== 'undefined' && chrome?.runtime) {
-      chrome.runtime.sendMessage({ 
-        type: 'POPUP_OPENED',
-        elementType: 'floating-popup',
-        position: { x: 100, y: 100 }
-      }).then(response => {
-        console.log('✅ Background script response:', response);
-      }).catch(error => {
-        console.error('❌ Error sending message to background script:', error);
-      });
-    } else {
-      console.log('❌ Chrome runtime not available');
-    }
-  }, []);
-  */
+  }, [accountabilityPartner]);
 
-  // Enable scrolling after animations complete
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setEnableScroll(true);
-    }, 300); // Increased delay for Account Settings animations (longest delay is 225ms + animation duration + buffer)
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Re-enable scrolling when switching to Account Settings
-  useEffect(() => {
-    if (showAccount) {
-      const timer = setTimeout(() => {
-        setEnableScroll(true);
-      }, 400); // Wait for Account Settings animations to complete
-
-      return () => clearTimeout(timer);
-    }
-  }, [showAccount]);
-
-  // Prefill accountability partner from Supabase if present
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data, error } = await supabase
-          .from('accountability_partners')
-          .select('email')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (error) return; // ignore missing rows
-        if (data?.email) {
-          setAccountabilityPartner(prev => ({ ...prev, email: data.email, enabled: true }));
-        }
-      } catch {
-        // ignore
-      }
-    })();
-  }, []);
+  const currentQuote = useMemo(() => quotes[Math.floor(Math.random() * quotes.length)], []);
 
   const handleSaveAccountabilityPartner = async () => {
-    setPartnerSaveError('');
-    if (!validateEmail(accountabilityPartner.email)) return;
-    try {
-      setPartnerSaving(true);
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('accountability_partners')
-        .upsert({
-          user_id: user.id,
-          email: accountabilityPartner.email,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
-      if (error) throw error;
-
-      setPartnerSaved(true);
-      setTimeout(() => setPartnerSaved(false), 2000);
-    } catch (e: any) {
-      setPartnerSaveError(e?.message || 'Failed to save');
-    } finally {
-      setPartnerSaving(false);
-    }
-  };
-
-  // Email validation function
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      setEmailError('');
-      return true;
-    }
-    if (!emailRegex.test(email)) {
+    if (!validateEmail(partnerEmail)) {
       setEmailError('Please enter a valid email address');
-      return false;
-    }
-    setEmailError('');
-    return true;
-  };
-  
-  const [categories, setCategories] = useState<SiteCategory[]>([
-    {
-      id: 'social',
-      name: 'Social',
-      icon: Users,
-      expanded: false,
-      sites: SOCIAL_SITES.map((url) => ({ url, enabled: true })),
-    },
-    {
-      id: 'entertainment',
-      name: 'Entertainment',
-      icon: Gamepad2,
-      expanded: false,
-      sites: ENTERTAINMENT_SITES.map((url) => ({ url, enabled: true })),
-    },
-    {
-      id: 'shopping',
-      name: 'Shopping',
-      icon: ShoppingBag,
-      expanded: false,
-      sites: SHOPPING_SITES.map((url) => ({ url, enabled: true })),
-    },
-    {
-      id: 'news',
-      name: 'News',
-      icon: Newspaper,
-      expanded: false,
-      sites: NEWS_SITES.map((url) => ({ url, enabled: true })),
-    },
-    {
-      id: 'my-sites',
-      name: 'My Sites',
-      icon: Target,
-      expanded: false,
-      sites: [
-        { url: 'example.com', enabled: false },
-        { url: 'test-site.com', enabled: true }
-      ]
-    }
-  ]);
-
-  useEffect(() => {
-    // In tour mode, hardcode the current URL for display
-    const isTour = typeof window !== 'undefined' && window.location.hash.includes('tour=1');
-    if (isTour) {
-      setCurrentUrl('mycurrenturl.com');
       return;
     }
+    setEmailError('');
+    try {
+      await savePartnerMutation.mutateAsync(partnerEmail);
+    } catch {}
+  };
 
-    // Function to update current URL
-    const updateCurrentUrl = () => {
+
+  const handleLogout = async () => {
+    try {
+      await signOutMutation.mutateAsync();
+      window.location.href = '#/welcome';
+    } catch {}
+  };
+
+  
+  const normalize = (u: string) => `https://${normalizeUrlToDomain(withHttps(u.trim()))}`;
+
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [mySites, setMySites] = useState<string[]>([]);
+
+  const computedCategories = useMemo(() => {
+    const blockedSet = new Set(blockedSites.map(normalize));
+    const rawCategories: SiteCategory[] = [
+      {
+        id: 'social',
+        name: 'Social',
+        icon: Users,
+        expanded: expanded['social'] || false,
+        sites: SOCIAL_SITES.map((url) => ({
+          url,
+          enabled: blockedSet.has(normalize(url)),
+        })),
+      },
+      {
+        id: 'entertainment',
+        name: 'Entertainment',
+        icon: Gamepad2,
+        expanded: expanded['entertainment'] || false,
+        sites: ENTERTAINMENT_SITES.map((url) => ({
+          url,
+          enabled: blockedSet.has(normalize(url)),
+        })),
+      },
+      {
+        id: 'shopping',
+        name: 'Shopping',
+        icon: ShoppingBag,
+        expanded: expanded['shopping'] || false,
+        sites: SHOPPING_SITES.map((url) => ({
+          url,
+          enabled: blockedSet.has(normalize(url)),
+        })),
+      },
+      {
+        id: 'news',
+        name: 'News',
+        icon: Newspaper,
+        expanded: expanded['news'] || false,
+        sites: NEWS_SITES.map((url) => ({
+          url,
+          enabled: blockedSet.has(normalize(url)),
+        })),
+      },
+      {
+        id: 'my-sites',
+        name: 'My Sites',
+        icon: Target,
+        expanded: expanded['my-sites'] || false,
+        sites: mySites.map((url) => ({
+          url,
+          enabled: blockedSet.has(normalize(url)),
+        })),
+      },
+    ];
+    return rawCategories;
+  }, [blockedSites, expanded, mySites]);
+
+  const [currentUrl, setCurrentUrl] = useState<string>('Loading...');
+
+  useEffect(() => {
+    if (typeof chrome !== 'undefined' && chrome?.tabs?.query) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.url) {
-          try {
-            const url = new URL(tabs[0].url);
-            setCurrentUrl(url.hostname);
-          } catch (error) {
-            setCurrentUrl('Unknown site');
-          }
-        } else {
-          setCurrentUrl('No active tab');
+        const raw = tabs[0]?.url;
+        try {
+          setCurrentUrl(raw ? new URL(raw).hostname : 'Unknown site');
+        } catch {
+          setCurrentUrl('Unknown site');
         }
       });
-    };
-
-    // Get initial URL
-    updateCurrentUrl();
-
-    // Listen for tab updates
-    const handleTabUpdate = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
-      if (changeInfo.status === 'complete' && tab.active) {
-        updateCurrentUrl();
-      }
-    };
-
-    const handleTabActivate = (activeInfo: chrome.tabs.TabActiveInfo) => {
-      updateCurrentUrl();
-    };
-
-    // Add listeners
-    chrome.tabs.onUpdated.addListener(handleTabUpdate);
-    chrome.tabs.onActivated.addListener(handleTabActivate);
-
-    // Cleanup listeners
-    return () => {
-      chrome.tabs.onUpdated.removeListener(handleTabUpdate);
-      chrome.tabs.onActivated.removeListener(handleTabActivate);
-    };
+    } else {
+      setCurrentUrl('example.com');
+    }
   }, []);
 
   const toggleCategory = (categoryId: string) => {
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId ? { ...cat, expanded: !cat.expanded } : cat
-    ));
+    setExpanded(prev => ({ ...prev, [categoryId]: !prev[categoryId] }));
   };
 
-  const toggleSite = async (categoryId: string, siteUrl: string) => {
-    const domain = normalizeUrlToDomain(siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`);
-    // Optimistic UI update
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId 
-        ? {
-            ...cat,
-            sites: cat.sites.map(site => 
-              site.url === siteUrl ? { ...site, enabled: !site.enabled } : site
-            )
-          }
-        : cat
-    ));
-
+  const handleToggleSite = async (siteUrl: string, nextEnabled: boolean) => {
+    const full = normalize(siteUrl);
     try {
-      // Reflect in Supabase (inverted semantics):
-      // Default = enabled. If user disables (toggle -> false), INSERT into blocked_sites.
-      // If user enables (toggle -> true), DELETE from blocked_sites.
-      const prevCat = categories.find(c => c.id === categoryId);
-      const prevSite = prevCat?.sites.find(s => s.url === siteUrl);
-      const willDisable = prevSite?.enabled === true; // toggling from true -> false
-      if (willDisable) {
-        await saveBlockedSites([`https://${domain}`]);
+      if (nextEnabled) {
+        await addBlockedSitesMutation.mutateAsync([full]);
       } else {
-        await deleteBlockedSites([`https://${domain}`]);
+        await removeBlockedSitesMutation.mutateAsync([full]);
       }
-    } catch (e) {
-      console.error('Failed to sync blocked site toggle:', e);
-    }
+    } catch {}
   };
 
   const addNewSite = async () => {
     if (newSiteUrl.trim()) {
+      const normalized = normalizeUrlToDomain(withHttps(newSiteUrl.trim()));
+      const full = normalize(newSiteUrl);
       try {
-        // Save to Supabase database as disabled entry
-        const normalized = normalizeUrlToDomain(newSiteUrl.trim().startsWith('http') ? newSiteUrl.trim() : `https://${newSiteUrl.trim()}`);
-        await saveBlockedSites([`https://${normalized}`]);
-        
-        // Add to the 'My Sites' category
-        setCategories(prev => prev.map(cat => 
-          cat.id === 'my-sites' 
-            ? {
-                ...cat,
-                sites: [...cat.sites, { url: normalized, enabled: false }]
-              }
-            : cat
-        ));
+        await addBlockedSitesMutation.mutateAsync([full]);
+        setMySites(prev => [...prev, normalized]);
         setNewSiteUrl('');
         setShowAddSite(false);
-      } catch (error) {
-        console.error('Failed to save blocked site:', error);
-        // Still add to local state even if Supabase save fails
-        setCategories(prev => prev.map(cat => 
-          cat.id === 'my-sites' 
-            ? {
-                ...cat,
-                sites: [...cat.sites, { url: normalizeUrlToDomain(newSiteUrl.trim()), enabled: false }]
-              }
-            : cat
-        ));
-        setNewSiteUrl('');
-        setShowAddSite(false);
+      } catch {
       }
     }
   };
 
   const blockCurrentSite = async () => {
-    if (currentUrl && currentUrl !== 'Loading...' && currentUrl !== 'No active tab' && currentUrl !== 'Unknown site') {
-      try {
-        // Save to Supabase database
-        const normalized = normalizeUrlToDomain(currentUrl.startsWith('http') ? currentUrl : `https://${currentUrl}`);
-        await saveBlockedSites([`https://${normalized}`]);
-        
-        // Add to the 'My Sites' category
-        const domain = normalized;
-        const mySitesCat = categories.find(cat => cat.id === 'my-sites');
-        const siteExists = mySitesCat?.sites.some(site => site.url === domain);
-        
-        if (!siteExists) {
-          setCategories(prev => prev.map(cat => 
-            cat.id === 'my-sites' 
-              ? {
-                  ...cat,
-                  sites: [...cat.sites, { url: domain, enabled: false }]
-                }
-              : cat
-          ));
-        }
-      } catch (error) {
-        console.error('Failed to save blocked site:', error);
-        // Still add to local state even if Supabase save fails
-        const domain = normalizeUrlToDomain(currentUrl);
-        const mySitesCat = categories.find(cat => cat.id === 'my-sites');
-        const siteExists = mySitesCat?.sites.some(site => site.url === domain);
-        
-        if (!siteExists) {
-          setCategories(prev => prev.map(cat => 
-            cat.id === 'my-sites' 
-              ? {
-                  ...cat,
-                  sites: [...cat.sites, { url: domain, enabled: false }]
-                }
-              : cat
-          ));
+    if (currentUrl && !['Loading...', 'Unknown site'].includes(currentUrl)) {
+      const full = normalize(currentUrl);
+      const domain = normalizeUrlToDomain(withHttps(currentUrl));
+      const siteExists = mySites.includes(domain);
+      
+      if (!siteExists) {
+        try {
+          await addBlockedSitesMutation.mutateAsync([full]);
+          setMySites(prev => [...prev, domain]);
+        } catch {
         }
       }
     }
   };
 
-// Removed unused createVisualElement helper (not invoked)
 
-  // Sync initial toggle states from Supabase
+  const SiteRow = ({ site, onChange }: { site: Site; onChange: (checked: boolean) => void }) => (
+    <div className="px-4 py-1.5 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
+      <div className="flex items-center gap-2 flex-1">
+        <div className="w-1 h-1 rounded-full bg-[#FF944D]/40 group-hover:bg-[#FF944D] transition-colors"></div>
+        <span className="text-xs text-[#F5E6D3] truncate font-medium group-hover:text-[#FF944D] transition-colors">
+          {site.url}
+        </span>
+      </div>
+      <Switch
+        checked={site.enabled}
+        onCheckedChange={onChange}
+        className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#7A4A1E]/70 scale-75"
+      />
+    </div>
+  );
+
   useEffect(() => {
-    (async () => {
-      try {
-        const blocked = await getBlockedSites();
-        const blockedDomains = new Set(blocked.map(u => normalizeUrlToDomain(u)));
-        setCategories(prev => prev.map(cat => ({
-          ...cat,
-          sites: cat.sites.map(site => ({
-            ...site,
-            // Default enabled; disable if domain is in the table
-            enabled: !blockedDomains.has(normalizeUrlToDomain(site.url))
-          }))
-        })));
-      } catch (e) {
-        console.warn('Unable to fetch blocked sites; leaving defaults.', e);
-      }
-    })();
-  }, []);
+    if (!authLoading && !session) {
+      window.location.hash = '#/welcome';
+    }
+  }, [authLoading, session]);
 
-  // Render Account/User Settings as the second page
+  if (authLoading) {
+    return (
+      <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center" style={{
+        background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
+      }}>
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-[#FF944D] border-t-transparent rounded-full mx-auto mb-3"></div>
+          <p className="text-[#D4C4A8] text-sm">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center" style={{
+        background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
+      }}>
+        <div className="text-center space-y-4">
+          <div className="text-red-400">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[#F5E6D3] text-sm font-medium">Authentication Error</p>
+            <p className="text-[#D4C4A8] text-xs mt-1">Unable to verify your session</p>
+          </div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-[#FF944D] hover:bg-[#FF944D]/80 text-white rounded-xl text-sm px-4 py-2"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (showAccount) {
     return (
       <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
@@ -475,7 +307,7 @@ const PersonalDashboard = () => {
           </div>
         </div>
 
-        <div className={`p-4 space-y-3 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`} style={{
+        <div className="p-4 space-y-3 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 overflow-y-auto" style={{
           background: 'radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)'
         }}>
           <Card className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-150" style={{
@@ -537,27 +369,29 @@ const PersonalDashboard = () => {
                   </div>
                 </div>
                 <Switch 
-                  checked={accountabilityPartner.enabled}
-                  onCheckedChange={(checked) => 
-                    setAccountabilityPartner(prev => ({ ...prev, enabled: checked }))
-                  }
+                  checked={partnerEnabled}
+                  onCheckedChange={setPartnerEnabled}
                   className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#5A351E]/70 scale-75"
                 />
               </CardTitle>
             </CardHeader>
-            <CardContent className={accountabilityPartner.enabled ? 'space-y-4' : 'space-y-0'}>
-              {accountabilityPartner.enabled && (
+            <CardContent className={partnerEnabled ? 'space-y-4' : 'space-y-0'}>
+              {partnerEnabled && (
                 <>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-[#F5E6D3]">Partner Email</label>
                     <Input
                       type="email"
                       placeholder="partner@example.com"
-                      value={accountabilityPartner.email}
+                      value={partnerEmail}
                       onChange={(e) => {
                         const newEmail = e.target.value;
-                        setAccountabilityPartner(prev => ({ ...prev, email: newEmail }));
-                        validateEmail(newEmail);
+                        setPartnerEmail(newEmail);
+                        if (!validateEmail(newEmail)) {
+                          setEmailError('Please enter a valid email address');
+                        } else {
+                          setEmailError('');
+                        }
                       }}
                       onBlur={(e) => validateEmail(e.target.value)}
                       className={`bg-[#1E120B]/50 border-[#5A351E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl ${
@@ -577,12 +411,12 @@ const PersonalDashboard = () => {
                       size="sm" 
                       className="w-full rounded-xl border-[#FF944D]/30 text-[#FF944D] hover:bg-[#FF944D]/10 disabled:opacity-60"
                       onClick={handleSaveAccountabilityPartner}
-                      disabled={!!emailError || partnerSaving || !accountabilityPartner.email}
+                      disabled={!!emailError || savePartnerMutation.isPending || !partnerEmail}
                     >
-                      {partnerSaving ? 'Saving...' : partnerSaved ? 'Saved!' : 'Save Settings'}
+                      {savePartnerMutation.isPending ? 'Saving...' : savePartnerMutation.isSuccess ? 'Saved!' : 'Save Settings'}
                     </Button>
-                    {partnerSaveError && (
-                      <span className="text-xs text-red-400">{partnerSaveError}</span>
+                    {savePartnerMutation.isError && (
+                      <span className="text-xs text-red-400">Failed to save</span>
                     )}
                   </div>
                 </>
@@ -590,24 +424,15 @@ const PersonalDashboard = () => {
             </CardContent>
           </Card>
 
-          <Button variant="outline" size="sm" className="w-full hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 transition-all duration-200 group rounded-xl">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-600 transition-all duration-200 group rounded-xl"
+            onClick={handleLogout}
+          >
             <LogOut className="w-4 h-4 mr-2 group-hover:animate-pulse" />
             Log Out
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render the dashboard until authentication is checked
-  if (!authChecked) {
-    return (
-      <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex items-center justify-center" style={{
-        background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
-      }}>
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-2 border-[#FF944D] border-t-transparent rounded-full mx-auto mb-3"></div>
-          <p className="text-[#D4C4A8] text-sm">Checking authentication...</p>
         </div>
       </div>
     );
@@ -617,11 +442,9 @@ const PersonalDashboard = () => {
     <div className="w-[400px] h-[600px] shadow-lg overflow-hidden font-['Geist'] flex flex-col" style={{
       background: 'radial-gradient(circle at center, #3D2414 0%, #2A1A0E 40%, #1A1108 100%)'
     }}>
-      {/* Clean Header */}
       <div className="relative p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out" style={{
         background: 'linear-gradient(135deg, #1A1108 0%, #3D2414 50%, #5A3518 100%)'
       }}>
-        {/* Drag handle removed intentionally */}
         <div className="flex items-center gap-3">
           <img src="/src/assets/logo.png" alt="Logo" className="w-6 h-6 object-contain" />
           <h1 className="font-bold text-[#F5E6D3] text-lg tracking-tight">Intent</h1>
@@ -631,17 +454,11 @@ const PersonalDashboard = () => {
             "{currentQuote}"
           </p>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => {
-          // Notify parent (tour overlay) immediately that settings was opened
-          try { window.parent?.postMessage({ type: 'OPEN_ACCOUNT_SETTINGS' }, '*'); } catch {}
-          setShowAccount(true);
-          setEnableScroll(false); // Reset scroll state when entering Account Settings
-        }} className="absolute top-2 right-12 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl p-2">
+        <Button variant="ghost" size="sm" onClick={() => setShowAccount(true)} className="absolute top-2 right-12 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl p-2">
           <Settings className="w-5 h-5" />
         </Button>
       </div>
 
-      {/* Current Site - Clean & Modern */}
       <div className="p-4 border-b border-[#7A4A1E]/20 animate-in slide-in-from-bottom duration-300 ease-out delay-75" style={{
         background: 'radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)'
       }}>
@@ -670,7 +487,6 @@ const PersonalDashboard = () => {
         </div>
       </div>
 
-      {/* Blocked Sites Management */}
       <div className="flex-1 overflow-hidden flex flex-col" style={{
         background: 'radial-gradient(circle at bottom right, #5A3518 0%, #3D2414 30%, #2A1A0E 60%, #1A1108 100%), linear-gradient(135deg, rgba(90, 53, 24, 0.4) 0%, rgba(61, 36, 14, 0.6) 30%, rgba(42, 26, 14, 0.8) 70%, rgba(26, 17, 8, 0.9) 100%)'
       }}>
@@ -707,7 +523,7 @@ const PersonalDashboard = () => {
               placeholder="example.com"
               value={newSiteUrl}
               onChange={(e) => setNewSiteUrl(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addNewSite()}
+              onKeyDown={(e) => e.key === 'Enter' && addNewSite()}
               className="bg-[#1A1108]/50 border-[#7A4A1E]/70 text-[#F5E6D3] placeholder-[#D4C4A8]/50 focus:ring-2 focus:ring-[#FF944D]/30 rounded-xl"
             />
             <div className="flex gap-2">
@@ -721,8 +537,8 @@ const PersonalDashboard = () => {
           </div>
         )}
 
-        <div className={`flex-1 min-h-0 p-4 space-y-2 ${enableScroll ? 'overflow-y-auto' : 'overflow-hidden'}`}>
-          {categories.map((category, index) => {
+        <div className="flex-1 min-h-0 p-4 space-y-2 overflow-y-auto">
+          {computedCategories.map((category, index) => {
             const Icon = category.icon;
             return (
               <div key={category.id} className="border-b border-[#7A4A1E]/20 last:border-b-0 opacity-0" style={{
@@ -755,19 +571,11 @@ const PersonalDashboard = () => {
                 {category.expanded && (
                   <div className="border-t border-[#7A4A1E]/20">
                     {category.sites.map((site) => (
-                      <div key={site.url} className="px-4 py-1.5 flex items-center justify-between border-t border-[#7A4A1E]/10 hover:bg-[#7A4A1E]/10 transition-colors group">
-                        <div className="flex items-center gap-2 flex-1">
-                          <div className="w-1 h-1 rounded-full bg-[#FF944D]/40 group-hover:bg-[#FF944D] transition-colors"></div>
-                          <span className="text-xs text-[#F5E6D3] truncate font-medium group-hover:text-[#FF944D] transition-colors">
-                            {site.url}
-                          </span>
-                        </div>
-                        <Switch
-                          checked={site.enabled}
-                          onCheckedChange={() => toggleSite(category.id, site.url)}
-                          className="data-[state=checked]:bg-[#FF944D] data-[state=unchecked]:bg-[#7A4A1E]/70 scale-75"
-                        />
-                      </div>
+                      <SiteRow
+                        key={site.url}
+                        site={site}
+                        onChange={(checked) => handleToggleSite(site.url, checked)}
+                      />
                     ))}
                   </div>
                 )}

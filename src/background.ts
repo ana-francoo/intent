@@ -398,6 +398,22 @@ chrome.runtime.onMessageExternal.addListener(
       return true;
     }
 
+    if (message.type === "CLOSE_EXTENSION_TABS") {
+      // Close all extension popup tabs
+      console.log("[Background] Request to close extension popup tabs");
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id && tab.url && tab.url.startsWith(`chrome-extension://${chrome.runtime.id}/src/popup/`)) {
+            chrome.tabs.remove(tab.id).catch(() => {
+              console.log("[Background] Could not close extension tab:", tab.id);
+            });
+          }
+        });
+      });
+      sendResponse({ success: true });
+      return true;
+    }
+
 
     sendResponse({ success: false, error: "Unknown message type" });
   }

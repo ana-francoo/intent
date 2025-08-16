@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from '@/components/auth/login'
 import Signup from '@/components/auth/signup'
 import PersonalDashboard from '@/components/PersonalDashboard'
+import TourDashboard from '@/components/TourDashboard'
 import IntentionOverlay from '@/components/overlay'
 import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<PersonalDashboard />} />
+        <Route path="/tour-dashboard" element={<TourDashboard />} />
         <Route path="/overlay" element={<IntentionOverlay />} />
         <Route path="subscription-test" element={<SubscriptionTest />} />
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
