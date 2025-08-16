@@ -318,7 +318,7 @@ export default function IntentionOverlay() {
           <div className="animate-slide-in-up text-center mt-10 max-w-prose px-4 mx-auto">
             {existingIntention && (
               <>
-                <p className="text-2xl leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
+                <p className="text-2xl leading-relaxed break-words overflow-hidden font-medium overlay-intention-text">
                   {existingIntention}
                 </p>
               </>
