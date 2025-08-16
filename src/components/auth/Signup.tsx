@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
-import { saveSessionToStorage } from '@/utils/auth';
 import logo from '@/assets/logo2.png';
 import Flame from '../home/Flame';
 import { Input } from '../ui/input';
@@ -39,11 +38,7 @@ export default function Signup({ onGoBack }: SignupProps) {
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
       if (evt === 'SIGNED_IN' && session) {
-        try { saveSessionToStorage(session); } catch {}
-        handleAuthSuccess();
-      }
-      if (evt === 'SIGNED_IN' && session) {
-        try { saveSessionToStorage(session); } catch {}
+        // Supabase automatically handles session storage
         handleAuthSuccess();
       }
     });

@@ -378,7 +378,6 @@ chrome.runtime.onMessageExternal.addListener(
             refresh_token: message.session.refresh_token,
             user: message.session.user,
           },
-          expiresAt: Date.now() + 60 * 60 * 1000, // 1 hour expiry
         }),
       };
 

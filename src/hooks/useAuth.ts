@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/supabaseClient';
-import { checkExistingSession, clearSessionFromStorage } from '@/utils/auth';
-import { Session } from '@supabase/supabase-js';
+import { checkExistingSession } from '@/utils/auth';
 
 /**
  * React Query hook for managing authentication state
@@ -21,11 +20,8 @@ export function useAuth() {
         queryClient.invalidateQueries({ queryKey: ['subscription-status'] });
       }
       // For token refresh, just update the storage without invalidating queries
-      else if (event === 'TOKEN_REFRESHED' && session) {
-        // Silently update the stored session without causing re-renders
-        import('@/utils/auth').then(({ saveSessionToStorage }) => {
-          saveSessionToStorage(session);
-        });
+      else if (event === 'TOKEN_REFRESHED') {
+        console.log('[Auth] Token refreshed automatically');
       }
     });
 
@@ -72,7 +68,7 @@ export function useSignOut() {
 
   return useMutation({
     mutationFn: async () => {
-      await clearSessionFromStorage();
+      // Supabase handles clearing storage on signOut
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     },
