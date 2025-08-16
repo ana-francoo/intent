@@ -36,6 +36,18 @@ export class IntentionMonitor {
   private wheelEventCount: number = 0;
   private touchMoveEventCount: number = 0;
   private lastCheckedAtMs: number | null = null;
+
+  private isLinkedinHome(url: string): boolean {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.replace(/^www\./, '').toLowerCase();
+      const path = u.pathname;
+      if (host !== 'linkedin.com') return false;
+      return path === '/' || path === '/feed/';
+    } catch {
+      return false;
+    }
+  }
   
   async startMonitoring(): Promise<void> {
     if (this.isMonitoring) {
@@ -186,10 +198,32 @@ export class IntentionMonitor {
         secondsSinceLastCheck: this.lastCheckedAtMs ? Number(((nowMs - this.lastCheckedAtMs) / 1000).toFixed(2)) : null
       });
 
-      // Always run doom-scrolling checks for social/entertainment, even if URL unchanged or no intention
+      // Always run doom-scrolling checks for social/entertainment, with LinkedIn exception
       if (websiteCategory === 'social' || websiteCategory === 'entertainment') {
+        // Custom LinkedIn rule: only consider doom scrolling on home page
+        if (this.isLinkedinHome(currentUrl)) {
+          await this.checkDoomScrolling();
+          previousUrl = currentUrl;
+          this.lastCheckedAtMs = nowMs;
+          return;
+        }
+        // If LinkedIn but not home, run content check instead of doom scrolling
+        try {
+          const urlHost = new URL(currentUrl).hostname.replace(/^www\./, '').toLowerCase();
+          if (urlHost === 'linkedin.com') {
+            console.log('🔎 LinkedIn non-home page — using content check instead of doom-scrolling');
+            if (currentUrl === previousUrl) {
+              console.log('⏸️ URL unchanged on LinkedIn non-home; skipping this tick');
+              return;
+            }
+            previousUrl = currentUrl;
+            this.lastCheckedAtMs = nowMs;
+            await this.checkActivity(currentUrl);
+            return;
+          }
+        } catch {}
+        // Default for other social/entertainment sites: doom scrolling
         await this.checkDoomScrolling();
-        // Update previousUrl tracking but do not block future checks if unchanged
         previousUrl = currentUrl;
         this.lastCheckedAtMs = nowMs;
         return;

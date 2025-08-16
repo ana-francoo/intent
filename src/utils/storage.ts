@@ -383,48 +383,15 @@ export const getBlockedSites = async () => {
     
     if (sessionError) {
       console.error('❌ Session error:', sessionError);
-      // In development, this is expected - just log and continue
       if (sessionError.message.includes('Auth session missing')) {
-        // DEVELOPMENT: Return test blocked sites for development
-        const testBlockedSites = [
-          'https://instagram.com',
-          'https://www.instagram.com',
-          'https://youtube.com',
-          'https://www.youtube.com',
-          'https://linkedin.com',
-          'https://www.linkedin.com',
-          'https://facebook.com',
-          'https://www.facebook.com',
-          'https://twitter.com',
-          'https://www.twitter.com',
-          'https://x.com',
-          'https://www.x.com',
-          'https://tiktok.com',
-          'https://www.tiktok.com'
-        ];
-        console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
-        return testBlockedSites;
+        return [];
       }
       throw new Error('Session error: ' + sessionError.message);
     }
     
     if (!session?.user) {
-      console.log('ℹ️ No authenticated user - this is normal in development');
-      // DEVELOPMENT: Return test blocked sites for development
-      const testBlockedSites = [
-        'https://instagram.com',
-        'https://www.instagram.com',
-        'https://youtube.com',
-        'https://www.youtube.com',
-        'https://facebook.com',
-        'https://www.facebook.com',
-        'https://twitter.com',
-        'https://www.twitter.com',
-        'https://tiktok.com',
-        'https://www.tiktok.com'
-      ];
-      console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
-      return testBlockedSites;
+      console.log('ℹ️ No authenticated user - returning empty blocked sites');
+      return [];
     }
     
     const user = session.user;
@@ -437,25 +404,7 @@ export const getBlockedSites = async () => {
     
     if (error) {
       console.error('❌ Error fetching blocked sites:', error);
-      // In development, return test sites instead of empty array
-      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-        console.log('ℹ️ Development mode - using test blocked sites');
-        const testBlockedSites = [
-          'https://instagram.com',
-          'https://www.instagram.com',
-          'https://youtube.com',
-          'https://www.youtube.com',
-          'https://facebook.com',
-          'https://www.facebook.com',
-          'https://twitter.com',
-          'https://www.twitter.com',
-          'https://tiktok.com',
-          'https://www.tiktok.com'
-        ];
-        console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
-        return testBlockedSites;
-      }
-      throw error;
+      return [];
     }
     
     const urls = data?.map(item => item.url) || [];
@@ -463,24 +412,6 @@ export const getBlockedSites = async () => {
     return urls;
   } catch (error) {
     console.error('❌ Failed to fetch blocked sites:', error);
-    // In development, return test sites instead of empty array
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      console.log('ℹ️ Development mode - using test blocked sites');
-      const testBlockedSites = [
-        'https://instagram.com',
-        'https://www.instagram.com',
-        'https://youtube.com',
-        'https://www.youtube.com',
-        'https://facebook.com',
-        'https://www.facebook.com',
-        'https://twitter.com',
-        'https://www.twitter.com',
-        'https://tiktok.com',
-        'https://www.tiktok.com'
-      ];
-      console.log('🧪 DEVELOPMENT: Using test blocked sites:', testBlockedSites);
-      return testBlockedSites;
-    }
     return [];
   }
 };

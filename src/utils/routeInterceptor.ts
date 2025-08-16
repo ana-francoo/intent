@@ -45,6 +45,21 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       return;
     }
 
+    // Special case: YouTube homepage should not be blocked if an intention already exists
+    try {
+      const urlObj = new URL(currentUrl);
+      const host = urlObj.hostname.replace(/^www\./, '').toLowerCase();
+      const path = urlObj.pathname;
+      const isYouTubeHome = (host === 'youtube.com' || host === 'm.youtube.com') && (path === '/' || path === '/feed/');
+      if (isYouTubeHome) {
+        const ytIntention = await getIntention(currentUrl);
+        if (ytIntention && ytIntention.intention) {
+          console.log('📺 RouteInterceptor: YouTube home with existing intention — skipping overlay');
+          return;
+        }
+      }
+    } catch {}
+
     // For blocked sites, always proceed to intention prompt/monitoring
     // even if custom URL handlers would normally skip checks (e.g., social feeds)
     // const urlHandlerResult = shouldCheckIntentionForUrl(currentUrl);

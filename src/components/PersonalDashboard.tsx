@@ -158,7 +158,7 @@ const PersonalDashboard = () => {
   }, [customSitesList]);
 
   const computedCategories = useMemo(() => {
-    const dbSites = new Set(blockedSites.map(normalize)); // Database contains unblocked presets OR blocked custom sites
+    const dbSites = new Set(blockedSites.map(normalize)); // Database contains UNBLOCKED presets OR BLOCKED custom sites
     
     const presetSites = new Set(
       [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
@@ -179,7 +179,7 @@ const PersonalDashboard = () => {
         expanded: expanded["social"] || false,
         sites: SOCIAL_SITES.map((url) => ({
           url,
-          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
+          // Preset site: toggle ON means blocked by default when NOT in DB (DB presence = unblocked)
           enabled: !dbSites.has(normalize(url)),
         })),
       },
@@ -190,7 +190,6 @@ const PersonalDashboard = () => {
         expanded: expanded["entertainment"] || false,
         sites: ENTERTAINMENT_SITES.map((url) => ({
           url,
-          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
           enabled: !dbSites.has(normalize(url)),
         })),
       },
@@ -201,7 +200,6 @@ const PersonalDashboard = () => {
         expanded: expanded["shopping"] || false,
         sites: SHOPPING_SITES.map((url) => ({
           url,
-          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
           enabled: !dbSites.has(normalize(url)),
         })),
       },
@@ -212,7 +210,6 @@ const PersonalDashboard = () => {
         expanded: expanded["news"] || false,
         sites: NEWS_SITES.map((url) => ({
           url,
-          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
           enabled: !dbSites.has(normalize(url)),
         })),
       },
@@ -223,7 +220,7 @@ const PersonalDashboard = () => {
         expanded: expanded["my-sites"] || false,
         sites: allCustomSites.map((url) => ({
           url,
-          // For custom sites: enabled (toggle ON) = site is blocked = IN database
+          // Custom site: toggle ON means site is blocked only if in DB. If not present, it's allowed
           enabled: dbSites.has(normalize(url)),
         })),
       },

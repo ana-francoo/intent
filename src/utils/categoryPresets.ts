@@ -12,6 +12,7 @@ export const ENTERTAINMENT_SITES: string[] = [
 export const SOCIAL_SITES: string[] = [
   'facebook.com',
   'instagram.com',
+  'linkedin.com',
   "x.com",
   'twitter.com',
   'tiktok.com',
