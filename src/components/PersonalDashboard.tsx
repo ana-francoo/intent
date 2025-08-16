@@ -158,7 +158,7 @@ const PersonalDashboard = () => {
   }, [customSitesList]);
 
   const computedCategories = useMemo(() => {
-    const blockedSet = new Set(blockedSites.map(normalize));
+    const dbSites = new Set(blockedSites.map(normalize)); // Database contains unblocked presets OR blocked custom sites
     
     const presetSites = new Set(
       [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
@@ -179,8 +179,8 @@ const PersonalDashboard = () => {
         expanded: expanded["social"] || false,
         sites: SOCIAL_SITES.map((url) => ({
           url,
-          // Enabled = not in blocked list → default enabled for all
-          enabled: !blockedSet.has(normalize(url)),
+          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
+          enabled: !dbSites.has(normalize(url)),
         })),
       },
       {
@@ -190,7 +190,8 @@ const PersonalDashboard = () => {
         expanded: expanded["entertainment"] || false,
         sites: ENTERTAINMENT_SITES.map((url) => ({
           url,
-          enabled: !blockedSet.has(normalize(url)),
+          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
+          enabled: !dbSites.has(normalize(url)),
         })),
       },
       {
@@ -200,7 +201,8 @@ const PersonalDashboard = () => {
         expanded: expanded["shopping"] || false,
         sites: SHOPPING_SITES.map((url) => ({
           url,
-          enabled: !blockedSet.has(normalize(url)),
+          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
+          enabled: !dbSites.has(normalize(url)),
         })),
       },
       {
@@ -210,7 +212,8 @@ const PersonalDashboard = () => {
         expanded: expanded["news"] || false,
         sites: NEWS_SITES.map((url) => ({
           url,
-          enabled: !blockedSet.has(normalize(url)),
+          // For preset sites: enabled (toggle ON) = site is blocked (default) = NOT in database
+          enabled: !dbSites.has(normalize(url)),
         })),
       },
       {
@@ -220,7 +223,8 @@ const PersonalDashboard = () => {
         expanded: expanded["my-sites"] || false,
         sites: allCustomSites.map((url) => ({
           url,
-          enabled: !blockedSet.has(normalize(url)),
+          // For custom sites: enabled (toggle ON) = site is blocked = IN database
+          enabled: dbSites.has(normalize(url)),
         })),
       },
     ];
@@ -250,13 +254,34 @@ const PersonalDashboard = () => {
 
   const handleToggleSite = async (siteUrl: string, nextEnabled: boolean) => {
     const full = normalize(siteUrl);
+    const normalizedDomain = normalizeUrlToDomain(withHttps(siteUrl.trim()));
+    
+    // Check if this is a preset site
+    const presetSites = new Set(
+      [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
+        .map(url => normalizeUrlToDomain(withHttps(url.trim())))
+    );
+    const isPresetSite = presetSites.has(normalizedDomain);
+    
     try {
-      if (!nextEnabled) {
-        // User turned OFF the toggle → request to block, unless already unblocked override exists
-        await addBlockedSitesMutation.mutateAsync([full]);
+      if (isPresetSite) {
+        // For preset sites: database stores UNBLOCKED sites
+        if (nextEnabled) {
+          // User turned ON the toggle → site should be blocked (default) → REMOVE from database
+          await removeBlockedSitesMutation.mutateAsync([full]);
+        } else {
+          // User turned OFF the toggle → site should be unblocked → ADD to database
+          await addBlockedSitesMutation.mutateAsync([full]);
+        }
       } else {
-        // User turned ON the toggle → remove from blocked list
-        await removeBlockedSitesMutation.mutateAsync([full]);
+        // For custom sites: database stores BLOCKED sites
+        if (nextEnabled) {
+          // User turned ON the toggle → site should be blocked → ADD to database
+          await addBlockedSitesMutation.mutateAsync([full]);
+        } else {
+          // User turned OFF the toggle → site should be unblocked → REMOVE from database
+          await removeBlockedSitesMutation.mutateAsync([full]);
+        }
       }
     } catch {}
   };
@@ -265,10 +290,21 @@ const PersonalDashboard = () => {
     if (newSiteUrl.trim()) {
       const normalized = normalizeUrlToDomain(withHttps(newSiteUrl.trim()));
       const full = normalize(newSiteUrl);
+      
+      const presetSites = new Set(
+        [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
+          .map(url => normalizeUrlToDomain(withHttps(url.trim())))
+      );
+      const isPresetSite = presetSites.has(normalized);
+      
       try {
-        await addBlockedSitesMutation.mutateAsync([full]);
-        if (!customSitesList.includes(normalized)) {
-          setCustomSitesList(prev => [...prev, normalized]);
+        // For custom sites, add to database means block it
+        // For preset sites, we shouldn't be adding them through this function
+        if (!isPresetSite) {
+          await addBlockedSitesMutation.mutateAsync([full]);
+          if (!customSitesList.includes(normalized)) {
+            setCustomSitesList(prev => [...prev, normalized]);
+          }
         }
         setExpanded(prev => ({ ...prev, "my-sites": true }));
         setNewSiteUrl("");
@@ -281,12 +317,29 @@ const PersonalDashboard = () => {
     if (currentUrl && !["Loading...", "Unknown site"].includes(currentUrl)) {
       const normalized = normalizeUrlToDomain(withHttps(currentUrl));
       const full = normalize(currentUrl);
+      
+      // Check if this is a preset site
+      const presetSites = new Set(
+        [...SOCIAL_SITES, ...ENTERTAINMENT_SITES, ...SHOPPING_SITES, ...NEWS_SITES]
+          .map(url => normalizeUrlToDomain(withHttps(url.trim())))
+      );
+      const isPresetSite = presetSites.has(normalized);
+      
       try {
-        await addBlockedSitesMutation.mutateAsync([full]);
-        if (!customSitesList.includes(normalized)) {
-          setCustomSitesList(prev => [...prev, normalized]);
+        if (isPresetSite) {
+          // For preset sites: remove from database to ensure it's blocked (return to default blocked state)
+          await removeBlockedSitesMutation.mutateAsync([full]);
+        } else {
+          // For custom sites: add to database to block
+          await addBlockedSitesMutation.mutateAsync([full]);
+          if (!customSitesList.includes(normalized)) {
+            setCustomSitesList(prev => [...prev, normalized]);
+          }
         }
-        setExpanded(prev => ({ ...prev, "my-sites": true }));
+        // Only expand my-sites if it's a custom site
+        if (!isPresetSite) {
+          setExpanded(prev => ({ ...prev, "my-sites": true }));
+        }
       } catch {}
     }
   };
@@ -295,6 +348,7 @@ const PersonalDashboard = () => {
     const normalized = normalizeUrlToDomain(withHttps(siteUrl));
     // Remove from custom sites list (localStorage)
     setCustomSitesList(prev => prev.filter(url => url !== normalized));
+    // Also remove from database (unblock the custom site)
     const full = normalize(siteUrl);
     removeBlockedSitesMutation.mutateAsync([full]).catch(() => {});
   };

@@ -504,18 +504,31 @@ export const getBlockedSites = async () => {
         // Ignore URL parse errors and continue with regular checks
       }
 
+      // DUAL-PURPOSE DATABASE LOGIC:
+      // The "blocked_sites" table serves two purposes:
+      // 1. For PRESET sites (social, entertainment, etc): stores UNBLOCKED sites (exceptions to default blocking)
+      // 2. For CUSTOM sites (user-added): stores BLOCKED sites
+      
+      // 1) Build default-blocked domain list from presets
+      let defaultBlockedDomains: string[] = [];
+      try {
+        defaultBlockedDomains = [
+          ...ENTERTAINMENT_SITES,
+          ...SOCIAL_SITES,
+          ...SHOPPING_SITES,
+          ...NEWS_SITES
+        ]
+          .filter(Boolean)
+          .map(d => d.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, ''));
+      } catch {}
 
-      // SMOOOOOOOOCH
-      //! CHANGED: Simplified blocking logic
-      //! Original logic treated database entries as "unblocked overrides" for default-blocked preset sites
-      //! New logic: database entries are blocked sites, matching UI expectations
-      
       const currentDomain = new URL(currentUrl).hostname.replace(/^www\./, '').toLowerCase();
-      
-      const blockedSites = await getBlockedSites();
-      console.log('📋 User blocked sites (from blocked_sites table):', blockedSites);
-      
-      const blockedDomains = (blockedSites || [])
+      const isPresetSite = defaultBlockedDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
+
+      // 2) Fetch database entries (dual purpose: unblocked presets OR blocked custom sites)
+      const dbEntries = await getBlockedSites();
+      console.log('📋 Database entries (unblocked presets OR blocked custom):', dbEntries);
+      const dbDomains = (dbEntries || [])
         .map(url => {
           try { 
             const normalized = normalizeUrlToDomain(url);
@@ -525,13 +538,21 @@ export const getBlockedSites = async () => {
           }
         })
         .filter(Boolean) as string[];
-      
-      const isBlocked = blockedDomains.some(domain => 
-        currentDomain === domain || currentDomain.endsWith(`.${domain}`)
-      );
-      
-      console.log(`🔍 URL ${currentUrl} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
-      return isBlocked;
+
+      const isInDatabase = dbDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
+
+      // 3) Determine blocking based on site type
+      if (isPresetSite) {
+        // PRESET SITE: blocked by default, database entry = unblocked
+        const isBlocked = !isInDatabase;
+        console.log('📚 Preset site', { currentDomain, isInDatabase, isBlocked });
+        return isBlocked;
+      } else {
+        // CUSTOM SITE: allowed by default, database entry = blocked
+        const isBlocked = isInDatabase;
+        console.log(`🎯 Custom site ${currentUrl} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+        return isBlocked;
+      }
     } catch (error) {
       console.error('❌ Error checking if URL is blocked:', error);
       return false;

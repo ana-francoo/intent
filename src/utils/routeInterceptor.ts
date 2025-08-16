@@ -47,7 +47,15 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
 
     // For blocked sites, always proceed to intention prompt/monitoring
     // even if custom URL handlers would normally skip checks (e.g., social feeds)
-
+    // const urlHandlerResult = shouldCheckIntentionForUrl(currentUrl);
+    // console.log('🎯 RouteInterceptor: URL handler result', urlHandlerResult);
+    
+    // if (!urlHandlerResult.shouldCheckIntention) {
+    //   console.log('✅ RouteInterceptor: URL handler says no intention needed', { 
+    //     reason: urlHandlerResult.reason 
+    //   });
+    //   return; // Allow access without intention prompt
+    // }
     // Check if there's an existing intention for this URL
     const intentionData = await getIntention(currentUrl);
     console.log('🧠 RouteInterceptor: intention lookup', {
