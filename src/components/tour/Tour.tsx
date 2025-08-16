@@ -23,7 +23,9 @@ function EmbeddedSignupCard() {
   };
 
   useEffect(() => {
+    const isTour = typeof window !== 'undefined' && window.location.hash.includes('tour');
     const { data: listener } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (isTour) return; // Do not show signed-in banner during tour
       if (session) {
         setInfo('Signed in successfully.');
       }

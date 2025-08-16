@@ -164,24 +164,7 @@ export default function Signup({ onGoBack }: SignupProps) {
           </div>
         </form>
 
-<<<<<<< Updated upstream
-=======
-        {/* <div className="mt-3 flex w-full max-w-md items-center gap-3">
-          <div className="h-px flex-1 bg-white/15" />
-          <span className="text-xs text-white/70">or</span>
-          <div className="h-px flex-1 bg-white/15" />
-        </div>
 
-        <Button
-          type="button"
-          onClick={handleGoogle}
-          disabled={isLoading}
-          variant="outline"
-          className="w-full max-w-md"
-        >
-          Continue with Google
-        </Button> */}
->>>>>>> Stashed changes
 
         <div className="mt-2 text-sm text-white/80">
           Already have an account?{' '}

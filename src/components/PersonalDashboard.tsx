@@ -179,7 +179,8 @@ const PersonalDashboard = () => {
         expanded: expanded["social"] || false,
         sites: SOCIAL_SITES.map((url) => ({
           url,
-          enabled: blockedSet.has(normalize(url)),
+          // Enabled = not in blocked list → default enabled for all
+          enabled: !blockedSet.has(normalize(url)),
         })),
       },
       {
@@ -189,7 +190,7 @@ const PersonalDashboard = () => {
         expanded: expanded["entertainment"] || false,
         sites: ENTERTAINMENT_SITES.map((url) => ({
           url,
-          enabled: blockedSet.has(normalize(url)),
+          enabled: !blockedSet.has(normalize(url)),
         })),
       },
       {
@@ -199,7 +200,7 @@ const PersonalDashboard = () => {
         expanded: expanded["shopping"] || false,
         sites: SHOPPING_SITES.map((url) => ({
           url,
-          enabled: blockedSet.has(normalize(url)),
+          enabled: !blockedSet.has(normalize(url)),
         })),
       },
       {
@@ -209,7 +210,7 @@ const PersonalDashboard = () => {
         expanded: expanded["news"] || false,
         sites: NEWS_SITES.map((url) => ({
           url,
-          enabled: blockedSet.has(normalize(url)),
+          enabled: !blockedSet.has(normalize(url)),
         })),
       },
       {
@@ -219,7 +220,7 @@ const PersonalDashboard = () => {
         expanded: expanded["my-sites"] || false,
         sites: allCustomSites.map((url) => ({
           url,
-          enabled: blockedSet.has(normalize(url)),
+          enabled: !blockedSet.has(normalize(url)),
         })),
       },
     ];
@@ -250,9 +251,11 @@ const PersonalDashboard = () => {
   const handleToggleSite = async (siteUrl: string, nextEnabled: boolean) => {
     const full = normalize(siteUrl);
     try {
-      if (nextEnabled) {
+      if (!nextEnabled) {
+        // User turned OFF the toggle → request to block, unless already unblocked override exists
         await addBlockedSitesMutation.mutateAsync([full]);
       } else {
+        // User turned ON the toggle → remove from blocked list
         await removeBlockedSitesMutation.mutateAsync([full]);
       }
     } catch {}
