@@ -333,8 +333,9 @@ const TourDashboard = () => {
         }}
       >
         <div
-          className="p-4 border-b border-[#5A351E]/20 animate-in slide-in-from-top duration-300 ease-out"
+          className="p-4 border-b border-[#5A351E]/20 opacity-0"
           style={{
+            animation: 'slideInUp 0.3s ease-out forwards, fadeIn 0.3s ease-out forwards',
             background:
               "linear-gradient(135deg, #1E120B 0%, #2D1B11 50%, #3E2718 100%)",
           }}
@@ -366,17 +367,19 @@ const TourDashboard = () => {
         </div>
 
         <div
-          className={`p-4 space-y-3 flex-1 animate-in slide-in-from-top duration-300 ease-out delay-75 ${
+          className={`p-4 space-y-3 flex-1 opacity-0 ${
             enableScroll ? "overflow-y-auto" : "overflow-hidden"
           }`}
           style={{
+            animation: 'slideInUp 0.3s ease-out 75ms forwards, fadeIn 0.3s ease-out 75ms forwards',
             background:
               "radial-gradient(circle at bottom right, #3E2718 0%, #2D1B11 30%, #1E120B 60%, #0F0905 100%), linear-gradient(135deg, rgba(62, 39, 24, 0.4) 0%, rgba(45, 27, 17, 0.6) 30%, rgba(30, 18, 11, 0.8) 70%, rgba(15, 9, 5, 0.9) 100%)",
           }}
         >
           <Card
-            className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-150"
+            className="rounded-xl backdrop-blur-sm opacity-0"
             style={{
+              animation: 'slideInUp 0.3s ease-out 150ms forwards, fadeIn 0.3s ease-out 150ms forwards',
               background:
                 "linear-gradient(135deg, rgba(90, 53, 30, 0.8) 0%, rgba(58, 35, 21, 0.9) 30%, rgba(30, 18, 11, 0.95) 60%, rgba(90, 53, 30, 0.7) 100%)",
               boxShadow:
@@ -429,8 +432,9 @@ const TourDashboard = () => {
           </Card>
 
           <Card
-            className="rounded-xl backdrop-blur-sm animate-in slide-in-from-bottom duration-300 ease-out delay-225"
+            className="rounded-xl backdrop-blur-sm opacity-0"
             style={{
+              animation: 'slideInUp 0.3s ease-out 225ms forwards, fadeIn 0.3s ease-out 225ms forwards',
               background:
                 "linear-gradient(135deg, rgba(90, 53, 30, 0.8) 0%, rgba(58, 35, 21, 0.9) 30%, rgba(30, 18, 11, 0.95) 60%, rgba(90, 53, 30, 0.7) 100%)",
               boxShadow:
@@ -737,10 +741,11 @@ const TourDashboard = () => {
                 key={category.id}
                 className="border-b border-[#7A4A1E]/20 last:border-b-0 opacity-0"
                 style={{
+                  // Previous: stagger was 120ms between items (225 + index * 120)
                   animation: `slideInUp 0.3s ease-out ${
-                    225 + index * 120
+                    225 + index * 75
                   }ms forwards, fadeIn 0.3s ease-out ${
-                    225 + index * 120
+                    225 + index * 75
                   }ms forwards`,
                 }}
               >
