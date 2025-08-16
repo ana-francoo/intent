@@ -13,6 +13,10 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     try {
       const prevTracked = sessionStorage.getItem('intent_current_url');
       if (prevTracked) {
+        const prevPrevTracked = sessionStorage.getItem('intent_prev_url');
+        if (prevPrevTracked) {
+          sessionStorage.setItem('intent_prev_prev_url', prevPrevTracked);
+        }
         sessionStorage.setItem('intent_prev_url', prevTracked);
       }
       sessionStorage.setItem('intent_current_url', currentUrl);

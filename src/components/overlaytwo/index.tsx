@@ -315,13 +315,12 @@ export default function IntentionOverlay() {
 
         {/* Existing intention summary for mismatch */}
         {mismatchMode && (
-          <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
+          <div className="animate-slide-in-up text-center mt-10 max-w-prose px-4 mx-auto">
             {existingIntention && (
               <>
-                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
+                <p className="text-2xl leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
                   {existingIntention}
                 </p>
-                <p className="text-sm text-muted-foreground">Your current intention for {domain}</p>
               </>
             )}
           </div>
@@ -339,13 +338,24 @@ export default function IntentionOverlay() {
               className="overlay-back-horizontal top-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-white/80 hover:text-white hover:bg-white/10"
               onClick={() => {
                 try {
-                  // Prefer last safe URL that did not trigger overlay; if missing, use the URL before current blocked URL
-                  const safe = sessionStorage.getItem('intent_last_safe_url');
+                  // If the last URL equals the triggering URL, go back two steps
+                  const triggering = targetUrl || sessionStorage.getItem('intent_last_blocked_url') || '';
                   const prev = sessionStorage.getItem('intent_prev_url');
-                  if (safe) {
+                  const prevPrev = sessionStorage.getItem('intent_prev_prev_url');
+                  const safe = sessionStorage.getItem('intent_last_safe_url');
+
+                  if (safe && safe !== triggering) {
                     window.location.href = safe;
                     return;
                   }
+
+                  if (prev && new URL(prev).href === new URL(triggering).href) {
+                    if (prevPrev) {
+                      window.location.href = prevPrev;
+                      return;
+                    }
+                  }
+
                   if (prev) {
                     window.location.href = prev;
                     return;
