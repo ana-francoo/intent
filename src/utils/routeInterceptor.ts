@@ -1,6 +1,7 @@
 import { getIntention, normalizeUrlToDomain, isUrlBlocked } from './storage';
 // import { shouldCheckIntentionForUrl } from './urlHandlers';
 import { hasExtensionAccess } from './subscription';
+import { checkExistingSession } from './auth';
 import { markNewIntentionSet } from './intentionMonitor';
 
 export const initializeRouteInterceptor = async (): Promise<void> => {
@@ -23,7 +24,12 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       return;
     }
 
-    // Check if user has access to extension features
+    // Ensure Supabase session is restored in this page context before access check
+    try {
+      await checkExistingSession();
+    } catch {}
+
+    // Check if user has access to extension features (trial/active)
     const hasAccess = await hasExtensionAccess();
     console.log('🔐 RouteInterceptor: hasExtensionAccess', { hasAccess });
     if (!hasAccess) {

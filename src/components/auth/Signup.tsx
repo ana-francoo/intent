@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
+import { saveSessionToStorage } from '@/utils/auth';
 import logo from '@/assets/logo2.png';
 import Flame from '../home/Flame';
 import { Input } from '../ui/input';
@@ -37,7 +38,10 @@ export default function Signup({ onGoBack }: SignupProps) {
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
-      if (evt === 'SIGNED_IN' && session) handleAuthSuccess();
+      if (evt === 'SIGNED_IN' && session) {
+        try { saveSessionToStorage(session); } catch {}
+        handleAuthSuccess();
+      }
     });
     return () => {
       listener.subscription.unsubscribe();
@@ -160,6 +164,24 @@ export default function Signup({ onGoBack }: SignupProps) {
           </div>
         </form>
 
+<<<<<<< Updated upstream
+=======
+        {/* <div className="mt-3 flex w-full max-w-md items-center gap-3">
+          <div className="h-px flex-1 bg-white/15" />
+          <span className="text-xs text-white/70">or</span>
+          <div className="h-px flex-1 bg-white/15" />
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleGoogle}
+          disabled={isLoading}
+          variant="outline"
+          className="w-full max-w-md"
+        >
+          Continue with Google
+        </Button> */}
+>>>>>>> Stashed changes
 
         <div className="mt-2 text-sm text-white/80">
           Already have an account?{' '}

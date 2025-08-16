@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 // import App from './views/App.tsx'
 import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
+import { checkExistingSession } from '../utils/auth'
 import { initializeRouteInterceptor } from '../utils/routeInterceptor'
 import { startIntentionMonitoring } from '../utils/intentionMonitor'
 import { hasExtensionAccess } from '../utils/subscription'
@@ -57,7 +58,8 @@ const initializeInterceptor = async () => {
 };
 
 // Initialize route interceptor immediately
-initializeInterceptor();
+// Ensure session is hydrated in this page context before intercepting
+checkExistingSession().finally(() => initializeInterceptor());
 
 // Check if we should start monitoring (after successful intention setting)
 if (sessionStorage.getItem('intent_start_monitoring') === 'true') {
