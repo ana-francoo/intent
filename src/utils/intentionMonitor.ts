@@ -262,7 +262,7 @@ export class IntentionMonitor {
         this.stopMonitoring();
         try {
           const overlayUrl = chrome.runtime.getURL('src/popup/index.html') +
-            `#/overlay?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
+            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
           console.log('🎯 Intention mismatch: redirecting to overlay', { overlayUrl });
           window.location.href = overlayUrl;
         } catch (e) {
@@ -378,7 +378,7 @@ export class IntentionMonitor {
         });
         try {
           const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
-            `#/overlay?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}`;
+            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}`;
           console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl });
           window.location.href = overlayUrl;
         } catch (e) {

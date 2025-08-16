@@ -1,9 +1,10 @@
 import { Routes, Route } from 'react-router-dom'
-import Login from '@/components/auth/login'
-import Signup from '@/components/auth/signup'
+import Login from '@/components/auth/Login'
+import Signup from '@/components/auth/Signup'
 import PersonalDashboard from '@/components/PersonalDashboard'
 import TourDashboard from '@/components/TourDashboard'
-import IntentionOverlay from '@/components/overlay'
+import OverlayOne from '@/components/overlayone'
+import OverlayTwo from '@/components/overlaytwo'
 import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
 import Home from '@/components/home/Home'
@@ -21,7 +22,10 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<PersonalDashboard />} />
         <Route path="/tour-dashboard" element={<TourDashboard />} />
-        <Route path="/overlay" element={<IntentionOverlay />} />
+        <Route path="/overlay-one" element={<OverlayOne />} />
+        <Route path="/overlay-two" element={<OverlayTwo />} />
+        {/* Back-compat: keep /overlay pointing to overlay-two (mismatch style) */}
+        <Route path="/overlay" element={<OverlayTwo />} />
         {/* <Route path="subscription-test" element={<SubscriptionTest />} /> */}
         {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
         {/* I don't think these routes are being used, confirming before can be removed */}

@@ -5,7 +5,7 @@ import { PenLine, Loader2, Clock } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { normalizeUrlToDomain, saveIntention, getIntention } from "@/utils/storage";
+import { normalizeUrlToDomain, saveIntention } from "@/utils/storage";
 import { getWebsiteCategory } from "@/utils/domainCategories";
 import { useEffect, useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
@@ -229,7 +229,6 @@ function TimeSelector({ domain, customMinutes, setCustomMinutes }: {
 export default function IntentionOverlay() {
   const [searchParams] = useSearchParams();
   const targetUrl = searchParams.get('targetUrl');
-  const mismatchMode = searchParams.get('intentionMismatch') === 'true';
   const domain = normalizeUrlToDomain(targetUrl || '');
   const category = targetUrl ? getWebsiteCategory(targetUrl) : 'other';
   const isTimeBasedCategory = category === 'entertainment' || category === 'shopping';
@@ -242,7 +241,6 @@ export default function IntentionOverlay() {
   const [customMinutes, setCustomMinutes] = useState("");
   const [shakeKey, setShakeKey] = useState(0);
   const [intentionText, setIntentionText] = useState('');
-  const [existingIntention, setExistingIntention] = useState<string | null>(null);
 
   //! ADJUST TIMEOUT BEFORE REDIRECT
   useEffect(() => {
@@ -260,16 +258,6 @@ export default function IntentionOverlay() {
     }
   }, [state.success]);
 
-  // When launched due to mismatch, fetch the existing intention to display
-  useEffect(() => {
-    (async () => {
-      if (mismatchMode && targetUrl) {
-        const prev = await getIntention(targetUrl);
-        setExistingIntention(prev?.intention || null);
-      }
-    })();
-  }, [mismatchMode, targetUrl]);
-
   useEffect(() => {
     if (state.error) {
       setShakeKey(prev => prev + 1);
@@ -284,26 +272,19 @@ export default function IntentionOverlay() {
 
   return (
     <div className="min-h-screen w-full relative bg-background">
-      <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", (state.success || mismatchMode) && "from-orange-900/20")} />
-      {/* Layout: if mismatch, space elements top/bottom; otherwise keep default */}
-      <div className={cn(
-        "relative w-full max-w-lg mx-auto flex flex-col min-h-screen",
-        mismatchMode ? "justify-between pt-24 pb-8" : "items-center space-y-8 pt-[450px]",
-        state.success && "animate-slide-out-up delay-1500"
-      )}>
-        {/* Logo + Flame */}
-        <div className="overlay-hero" style={{ ['--overlay-hero-top' as any]: mismatchMode ? '20vh' : '30vh' }}> 
-          <div className="relative flex justify-center"> 
-            <div className="absolute left-1/2 -translate-x-1/2 bottom-18">
+      <div className={cn("absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-stone-900 to-transparent to-70% transition-colors duration-1000", state.success && "from-orange-900/20")} />
+      {/* ! ADJUST DELAY FOR HOW LONG INTENTION SHOWS BEFORE SLIDING UP */}
+        <div className={cn("relative space-y-8 w-full max-w-lg mx-auto flex flex-col items-center min-h-screen pt-[450px]", state.success && "animate-slide-out-up delay-1500")}>
+          <div className="flex justify-center relative animate-slide-in-up">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
               <Flame className={cn(
-                mismatchMode ? "scale-60 scale-x-80" : "scale-35 scale-x-45",
-                mismatchMode ? "animate-flame-ignition" : (state.success ? "animate-flame-ignition" : "opacity-0 scale-0")
+                "scale-35 scale-x-45",
+                state.success ? "animate-flame-ignition" : "opacity-0 scale-0"
               )}/>
             </div>
             <img src={logo} alt="Logo" className={cn(
-              mismatchMode ? "size-36" : "size-24",
-              "opacity-80 transition-all duration-500",
-              (state.success || mismatchMode) && [
+              "size-24 opacity-80 transition-all duration-500",
+              state.success && [
                 "rounded-full",
                 "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-orange-400)_15%,transparent)_60%,transparent_100%)]",
                 "shadow-[0_0_40px_10px_var(--color-orange-400),0_0_0_4px_color-mix(in_srgb,var(--color-orange-400)_8%,transparent)]",
@@ -311,101 +292,52 @@ export default function IntentionOverlay() {
               ]
             )} />
           </div>
-        </div>
-
-        {/* Existing intention summary for mismatch */}
-        {mismatchMode && (
-          <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
-            {existingIntention && (
-              <>
-                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
-                  {existingIntention}
-                </p>
-                <p className="text-sm text-muted-foreground">Your current intention for {domain}</p>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Input area (bottom in mismatch) with back control aligned to input */}
-        <form action={handleFormAction} className={cn("w-full", mismatchMode && "mt-auto")}> 
-          <input type="hidden" name="targetUrl" value={targetUrl || ''} />
-          <div className="relative">
-            {/* Back button vertically centered to the input, anchored to the left edge */}
-            <Button
-              variant="ghost"
-              size="sm"
-              type="button"
-              className="overlay-back-horizontal top-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-white/80 hover:text-white hover:bg-white/10"
-              onClick={() => {
-                try {
-                  // Prefer last safe URL that did not trigger overlay; if missing, use the URL before current blocked URL
-                  const safe = sessionStorage.getItem('intent_last_safe_url');
-                  const prev = sessionStorage.getItem('intent_prev_url');
-                  if (safe) {
-                    window.location.href = safe;
-                    return;
-                  }
-                  if (prev) {
-                    window.location.href = prev;
-                    return;
-                  }
-                } catch {}
-                // Fallbacks
-                if (targetUrl) {
-                  window.location.href = targetUrl;
-                } else {
-                  try { window.history.back(); } catch {}
-                }
-              }}
-              aria-label="Go back"
-            >
-              &lt;
-            </Button>
-            <div className="pl-8">
-              {!(state.success && !mismatchMode) ? (
-                <InputContainer shakeKey={shakeKey} state={state}>
-                  {!isTimeBasedCategory && !mismatchMode && (
-                    <div className='absolute top-0 flex w-full justify-center'>
-                      <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
-                    </div>
-                  )}
-                  {isTimeBasedCategory ? (
-                    <TimeSelector
-                      domain={domain}
-                      customMinutes={customMinutes}
-                      setCustomMinutes={setCustomMinutes}
+          <form action={handleFormAction} className="space-y-1 w-full">
+            <input type="hidden" name="targetUrl" value={targetUrl || ''} />
+            
+            {!state.success ? (
+              <InputContainer shakeKey={shakeKey} state={state}>
+                {!isTimeBasedCategory && (
+                  <div className='absolute top-0 flex w-full justify-center'>
+                    <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
+                  </div>
+                )}
+                
+                {isTimeBasedCategory ? (
+                  <TimeSelector
+                    domain={domain}
+                    customMinutes={customMinutes}
+                    setCustomMinutes={setCustomMinutes}
+                  />
+                ) : (
+                  <>
+                    <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
+                    <TextareaWithStatus 
+                      domain={domain} 
+                      intentionText={intentionText}
+                      setIntentionText={setIntentionText}
                     />
-                  ) : (
-                    <>
-                      {!mismatchMode && <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />}
-                      <TextareaWithStatus 
-                        domain={domain} 
-                        intentionText={intentionText}
-                        setIntentionText={setIntentionText}
-                      />
-                    </>
-                  )}
-                </InputContainer>
-              ) : (
-                <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
-                  <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
-                    {state.intention?.startsWith('block:') 
-                      ? `Blocked for ${state.intention.replace('block:', '')} minutes`
-                      : state.intention
-                    }
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {state.intention?.startsWith('block:') 
-                      ? `Intent blocked on ${domain}`
-                      : `Your intention for ${domain}`
-                    }
-                  </p>
-                </div>
-              )}
-              {state.error && <div className="text-red-900 text-sm mt-2">{state.error}</div>}
-            </div>
-          </div>
+                  </>
+                )}
+              </InputContainer>
+            ) : (
+              <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
+                <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
+                  {state.intention?.startsWith('block:') 
+                    ? `Blocked for ${state.intention.replace('block:', '')} minutes`
+                    : state.intention
+                  }
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {state.intention?.startsWith('block:') 
+                    ? `Intent blocked on ${domain}`
+                    : `Your intention for ${domain}`
+                  }
+                </p>
+              </div>
+            )}
+            
+            {state.error && <div className="text-red-900 text-sm">{state.error}</div>}
         </form>
       </div>
     </div>

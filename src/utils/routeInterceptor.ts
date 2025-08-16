@@ -46,6 +46,35 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       return;
     }
 
+    // Allow-list: Instagram DMs should NOT be blocked
+    try {
+      const urlObj = new URL(currentUrl);
+      const host = urlObj.hostname.replace(/^www\./, '').toLowerCase();
+      const path = urlObj.pathname.toLowerCase();
+      const isInstagram = host === 'instagram.com' || host.endsWith('.instagram.com');
+      if (isInstagram && path.startsWith('/direct/inbox')) {
+        console.log('✉️ RouteInterceptor: Instagram DMs detected — allowing access');
+        try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
+        return;
+      }
+    } catch {}
+
+    // Edge case: Instagram stories should immediately show second overlay
+    try {
+      const urlObj = new URL(currentUrl);
+      const host = urlObj.hostname.replace(/^www\./, '').toLowerCase();
+      const path = urlObj.pathname.toLowerCase();
+      const isInstagram = host === 'instagram.com' || host.endsWith('.instagram.com');
+      const isStories = path.startsWith('/stories/');
+      const isHighlights = path.startsWith('/stories/highlights/');
+      if (isInstagram && isStories && !isHighlights) {
+        const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
+        console.log('📸 RouteInterceptor: Instagram stories detected — redirecting to overlay-two', { overlayUrl });
+        window.location.href = overlayUrl;
+        return;
+      }
+    } catch {}
+
     // Check if URL is blocked
     const isBlocked = await isUrlBlocked(currentUrl);
     console.log('🧱 RouteInterceptor: isUrlBlocked', { isBlocked, url: currentUrl });
@@ -118,9 +147,8 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       }
     }
 
-    // Redirect to extension overlay page with the target URL
-    // Use the standard overlay for setting/refining intention
-    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay?targetUrl=${encodeURIComponent(currentUrl)}`;
+    // Redirect to first overlay page for setting/refining intention
+    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-one?targetUrl=${encodeURIComponent(currentUrl)}`;
     console.log('🎯 RouteInterceptor: prompting overlay', { extensionOverlayUrl });
     try { sessionStorage.setItem('intent_last_blocked_url', currentUrl); } catch {}
     window.location.href = extensionOverlayUrl;

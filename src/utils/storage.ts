@@ -423,6 +423,37 @@ export const getBlockedSites = async () => {
     try {
       console.log('🔍 Checking if URL is blocked:', currentUrl);
       
+      // Allow-list: Instagram DMs should not be blocked
+      try {
+        const urlObj = new URL(currentUrl);
+        const host = urlObj.hostname.toLowerCase().replace(/^www\./, '');
+        const path = urlObj.pathname.toLowerCase();
+        const isInstagram = host === 'instagram.com' || host.endsWith('.instagram.com');
+        if (isInstagram && path.startsWith('/direct/inbox')) {
+          console.log('✉️ isUrlBlocked: Instagram DMs detected — not blocked');
+          return false;
+        }
+      } catch (e) {
+        console.log('⚠️ Error parsing URL for Instagram DMs check:', e);
+      }
+
+      // Hard block: Instagram Stories (except Highlights) should always be treated as blocked
+      try {
+        const urlObj = new URL(currentUrl);
+        const host = urlObj.hostname.toLowerCase().replace(/^www\./, '');
+        const path = urlObj.pathname.toLowerCase();
+        const isInstagram = host === 'instagram.com' || host.endsWith('.instagram.com');
+        const isStories = path.startsWith('/stories/');
+        const isHighlights = path.startsWith('/stories/highlights/');
+        if (isInstagram && isStories && !isHighlights) {
+          console.log('⛔ isUrlBlocked: Instagram Stories (non-highlights) detected — always blocked');
+          return true;
+        }
+      } catch (e) {
+        console.log('⚠️ Error parsing URL for Instagram Stories check:', e);
+        // Ignore URL parse errors and continue with regular checks
+      }
+
       // Hard block: YouTube Shorts should always be treated as blocked
       try {
         const urlObj = new URL(currentUrl);
