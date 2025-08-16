@@ -488,6 +488,7 @@ export const getBlockedSites = async () => {
   export const isUrlBlocked = async (currentUrl: string) => {
     try {
       console.log('🔍 Checking if URL is blocked:', currentUrl);
+      
       // Hard block: YouTube Shorts should always be treated as blocked
       try {
         const urlObj = new URL(currentUrl);
@@ -502,50 +503,35 @@ export const getBlockedSites = async () => {
       } catch (e) {
         // Ignore URL parse errors and continue with regular checks
       }
-      // New logic: default-blocked via category presets, with user overrides to UNBLOCK
-      // 1) Build default-blocked domain list from presets
-      let defaultBlockedDomains: string[] = [];
-      try {
-        defaultBlockedDomains = [
-          ...ENTERTAINMENT_SITES,
-          ...SOCIAL_SITES,
-          ...SHOPPING_SITES,
-          ...NEWS_SITES
-        ]
-          .filter(Boolean)
-          .map(d => d.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, ''));
-      } catch {}
 
+
+      // SMOOOOOOOOCH
+      //! CHANGED: Simplified blocking logic
+      //! Original logic treated database entries as "unblocked overrides" for default-blocked preset sites
+      //! New logic: database entries are blocked sites, matching UI expectations
+      
       const currentDomain = new URL(currentUrl).hostname.replace(/^www\./, '').toLowerCase();
-      const isDefaultBlocked = defaultBlockedDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
-
-      // 2) Fetch user's unblocked overrides
-      const userOverrides = await getBlockedSites();
-      console.log('📋 User unblocked overrides (from blocked_sites table):', userOverrides);
-      const unblockedDomains = (userOverrides || [])
+      
+      const blockedSites = await getBlockedSites();
+      console.log('📋 User blocked sites (from blocked_sites table):', blockedSites);
+      
+      const blockedDomains = (blockedSites || [])
         .map(url => {
-          try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return null; }
+          try { 
+            const normalized = normalizeUrlToDomain(url);
+            return normalized.toLowerCase().replace(/^www\./, '');
+          } catch { 
+            return null; 
+          }
         })
         .filter(Boolean) as string[];
-
-      const isExplicitlyUnblocked = unblockedDomains.some(domain => currentDomain === domain || currentDomain.endsWith(`.${domain}`));
-
-      // 3) Final decision: blocked by default unless explicitly unblocked
-      const finalBlocked = isDefaultBlocked && !isExplicitlyUnblocked;
-      if (isDefaultBlocked) {
-        console.log('📚 Default-blocked category match', { currentDomain, isExplicitlyUnblocked, finalBlocked });
-      }
-      if (isExplicitlyUnblocked) {
-        console.log('✅ User override: domain explicitly unblocked', { currentDomain });
-      }
-      if (isDefaultBlocked || isExplicitlyUnblocked) {
-        console.log(`🔍 URL ${currentUrl} is ${finalBlocked ? 'BLOCKED' : 'NOT BLOCKED'} (default+override logic)`);
-        return finalBlocked;
-      }
-
-      // 4) If not in defaults and no overrides, treat as not blocked
-      console.log(`🔍 URL ${currentUrl} is NOT BLOCKED (no default match and no override)`);
-      return false;
+      
+      const isBlocked = blockedDomains.some(domain => 
+        currentDomain === domain || currentDomain.endsWith(`.${domain}`)
+      );
+      
+      console.log(`🔍 URL ${currentUrl} is ${isBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+      return isBlocked;
     } catch (error) {
       console.error('❌ Error checking if URL is blocked:', error);
       return false;
