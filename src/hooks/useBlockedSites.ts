@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getBlockedSites, saveBlockedSites as saveSites, deleteBlockedSites as deleteSites, normalizeUrlToDomain } from '@/utils/storage';
+import { getBlockedSites, saveBlockedSites as saveSites, deleteBlockedSites as deleteSites } from '@/utils/storage';
 
 /**
  * Fetch blocked sites

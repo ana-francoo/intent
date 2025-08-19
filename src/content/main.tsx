@@ -1,5 +1,3 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
 // import App from './views/App.tsx'
 import { isUrlBlocked, cleanupExpiredIntentions, getBlockedSites } from '../utils/storage'
 import { checkExistingSession } from '../utils/auth'

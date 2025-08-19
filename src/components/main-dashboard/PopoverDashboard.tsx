@@ -231,7 +231,7 @@ const PopoverDashboard: React.FC = () => {
                   </button>
                 )}
               </>
-            ) : subscriptionStatus.planType === 'yearly' ? (
+            ) : subscriptionStatus.planType === 'monthly' ? (
               <div className="pro-badge">
                 <span className="pro-icon">⭐</span>
                 <span>Intent Pro</span>

@@ -65,8 +65,6 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
-let isCreatingTab = false;
-
 // Listen for when extension icon is clicked (only fires when no popup is defined in manifest)
 chrome.action.onClicked?.addListener(async (tab) => {
   console.log("🎯 Extension icon clicked, checking authentication...");
@@ -176,71 +174,7 @@ chrome.action.onClicked?.addListener(async (tab) => {
       }
     }
   } else {
-    if (isCreatingTab) {
-      console.log("Already creating a tab, skipping duplicate request...");
-      return;
-    }
-    
-    isCreatingTab = true;
-    console.log("Cannot inject into this page, creating new tab with popup...");
-    
-    chrome.tabs.create(
-      { url: "https://www.google.com", active: true },
-      async (newTab) => {
-        if (newTab.id) {
-          const tabId = newTab.id;
-
-          const waitForTabLoad = () => {
-            return new Promise<void>((resolve) => {
-              const listener = (
-                tabIdUpdated: number,
-                changeInfo: chrome.tabs.TabChangeInfo
-              ) => {
-                if (
-                  tabIdUpdated === tabId &&
-                  changeInfo.status === "complete"
-                ) {
-                  chrome.tabs.onUpdated.removeListener(listener);
-                  resolve();
-                }
-              };
-              chrome.tabs.onUpdated.addListener(listener);
-              setTimeout(() => {
-                chrome.tabs.onUpdated.removeListener(listener);
-                resolve();
-              }, 5000);
-            });
-          };
-
-          await waitForTabLoad();
-          console.log("Tab loaded, injecting content script...");
-
-          try {
-            await chrome.scripting.executeScript({
-              target: { tabId: tabId },
-              files: ["src/content/main.tsx-loader.js"],
-            });
-
-            await new Promise((resolve) => setTimeout(resolve, 300));
-
-            await chrome.tabs.sendMessage(tabId, {
-              type: "CREATE_VISUAL_ELEMENT",
-              elementType: "floating-popup",
-              position: { x: 100, y: 100 },
-            });
-
-            console.log("✅ Popup created on new tab");
-          } catch (error) {
-            console.error("Failed to create popup on new tab:", error);
-          } finally {
-            // Reset the flag after we're done
-            isCreatingTab = false;
-          }
-        } else {
-          isCreatingTab = false;
-        }
-      }
-    );
+    console.log("Cannot inject into this page (restricted URL). Extension cannot run on chrome://, edge://, about:, or file:// pages.");
   }
 
   // Also send message to popup if it's open (for Tour component)

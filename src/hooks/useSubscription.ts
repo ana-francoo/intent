@@ -1,13 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getSubscriptionStatus, SubscriptionStatus } from '@/utils/subscription';
-import { supabase } from '@/supabaseClient';
+import { getSubscriptionStatus } from '@/utils/subscription';
 
 /**
  * React Query hook for fetching and caching subscription status
  */
 export function useSubscriptionStatus() {
-  const queryClient = useQueryClient();
-
   return useQuery({
     queryKey: ['subscription-status'],
     queryFn: getSubscriptionStatus,
