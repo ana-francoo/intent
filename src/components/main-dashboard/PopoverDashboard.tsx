@@ -80,7 +80,7 @@ const PopoverDashboard: React.FC = () => {
   }, []);
 
   const handleReenterIntention = () => {
-    console.log('Re-enter Intention clicked');
+    // console.log('Re-enter Intention clicked');
     // TODO: Open modal or trigger intention overlay
   };
 
@@ -91,7 +91,7 @@ const PopoverDashboard: React.FC = () => {
         return;
       }
 
-      console.log('Blocking current site:', currentSiteDomain);
+      // console.log('Blocking current site:', currentSiteDomain);
       
       // Add the current site to blocked sites
       await saveBlockedSites([currentTabUrl]);
@@ -106,7 +106,7 @@ const PopoverDashboard: React.FC = () => {
         if (tabs[0]?.id) {
           try {
             await chrome.tabs.sendMessage(tabs[0].id, { type: 'SHOW_OVERLAY' });
-            console.log('Successfully triggered intention overlay');
+            // console.log('Successfully triggered intention overlay');
             
             // Close the popup after a short delay to allow the message to be sent
             setTimeout(() => {
@@ -122,18 +122,18 @@ const PopoverDashboard: React.FC = () => {
         }
       }
       
-      console.log('Successfully blocked site:', currentSiteDomain);
+      // console.log('Successfully blocked site:', currentSiteDomain);
     } catch (error) {
       console.error('Failed to block site:', error);
     }
   };
 
   const handleMyAccount = () => {
-    console.log('My Account clicked');
+    // console.log('My Account clicked');
   };
 
   const handleSettings = () => {
-    console.log('Settings clicked');
+    // console.log('Settings clicked');
   };
 
   const handleLevelUp = async () => {
@@ -155,7 +155,7 @@ const PopoverDashboard: React.FC = () => {
       const newUrl = urls[urls.length - 1];
       if (newUrl && !blockedSites.includes(newUrl)) {
         await saveBlockedSites([newUrl]);
-        console.log('Successfully saved URL:', newUrl);
+        // console.log('Successfully saved URL:', newUrl);
         
         // Add the new URL to the top of the current list for immediate feedback
         setBlockedSites(prev => [newUrl, ...prev]);
@@ -169,7 +169,7 @@ const PopoverDashboard: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      console.log('Logging out...');
+      // console.log('Logging out...');
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -177,7 +177,7 @@ const PopoverDashboard: React.FC = () => {
         return;
       }
       
-      console.log('Successfully logged out');
+      // console.log('Successfully logged out');
       
       // The Home component will automatically redirect to the home page
       // when the session state changes due to the useEffect that checks auth

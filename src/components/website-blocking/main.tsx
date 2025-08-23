@@ -5,7 +5,7 @@ import '@/index.css'
 
 // Mock handlers for standalone page
 const handleSave = () => {
-  console.log('Website blocking settings saved');
+  // console.log('Website blocking settings saved');
 };
 
 createRoot(document.getElementById('root')!).render(

@@ -12,7 +12,7 @@ const ExtensionPointer = ({ onComplete }: ExtensionPointerProps) => {
     // Listen for when the extension icon is clicked
     const handleExtensionClick = (message: any) => {
       if (message.type === 'CREATE_VISUAL_ELEMENT' && message.elementType === 'floating-popup') {
-        console.log('🎯 Extension icon clicked, hiding arrow and text');
+        // console.log('🎯 Extension icon clicked, hiding arrow and text');
         setExtensionClicked(true);
       }
     };

@@ -15,7 +15,7 @@ export default function PopupLauncher() {
     const isInsideIframe = window.parent !== window;
     
     if (isInsideIframe) {
-      console.log('[PopupLauncher] Already inside floating popup iframe, navigating to dashboard');
+      // console.log('[PopupLauncher] Already inside floating popup iframe, navigating to dashboard');
       navigate('/dashboard');
       return;
     }
@@ -26,10 +26,10 @@ export default function PopupLauncher() {
     
     const isOnTourPage = location.href.includes('#/tour') || location.href.includes('tour=1');
     
-    console.log('[PopupLauncher] Auth check:', { session: !!session, isPopupWindow, isOnTourPage });
+    // console.log('[PopupLauncher] Auth check:', { session: !!session, isPopupWindow, isOnTourPage });
     
     if (!session && isPopupWindow && !isOnTourPage) {
-      console.log('[PopupLauncher] Not authenticated in popup window, opening welcome page in new tab');
+      // console.log('[PopupLauncher] Not authenticated in popup window, opening welcome page in new tab');
       chrome.tabs.create({
         url: chrome.runtime.getURL('src/popup/index.html#/welcome'),
         active: true
@@ -39,11 +39,11 @@ export default function PopupLauncher() {
     }
     
     if (isExtensionUrl && typeof chrome !== 'undefined' && chrome.tabs) {
-      console.log('[PopupLauncher] Opening popup in current context');
+      // console.log('[PopupLauncher] Opening popup in current context');
       createFloatingPopup({ route: '/dashboard', draggable: true });
     } else {
       // Regular web page - just create the popup here
-      console.log('[PopupLauncher] Creating floating popup on current page');
+      // console.log('[PopupLauncher] Creating floating popup on current page');
       createFloatingPopup({ 
         route: '/dashboard', 
         draggable: true 

@@ -142,7 +142,7 @@ const TourDashboard = () => {
 
   const handleLogout = () => {
     // In tour mode, logout just shows a message or does nothing
-    console.log("Logout clicked in tour mode");
+    // console.log("Logout clicked in tour mode");
   };
 
   // Email validation function

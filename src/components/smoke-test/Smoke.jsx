@@ -2,7 +2,7 @@ import React from 'react';
 import smokeImage from '@/assets/smoke1.png';
 
 const SmokeEffect = () => {
-  console.log('Smoke image path:', smokeImage);
+  // console.log('Smoke image path:', smokeImage);
   
   return (
     <div style={styles.container}>

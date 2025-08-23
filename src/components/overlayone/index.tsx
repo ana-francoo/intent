@@ -56,7 +56,7 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
   }
 
   try {
-    console.log('🔍 Starting intention validation for:', intention);
+    // console.log('🔍 Starting intention validation for:', intention);
     
     // Fast client-side validation first
     const clientSideValid = await validateIntentionClientSide(intention);
@@ -64,18 +64,18 @@ async function submitIntention(_: FormState, formData: FormData): Promise<FormSt
       return { error: 'Please write a more targeted intention', success: false };
     }
     
-    console.log('🔍 Calling validateIntention with:', intention);
+    // console.log('🔍 Calling validateIntention with:', intention);
     const isValid = await validateIntention(intention);
-    console.log('📊 Validation result:', { isValid });
+    // console.log('📊 Validation result:', { isValid });
     
     if (!isValid) {
-      console.log('❌ Intention validation failed');
+      // console.log('❌ Intention validation failed');
       return { error: 'Please write a more targeted intention', success: false };
     }
     
-    console.log('✅ Intention validation passed, saving intention...');
+    // console.log('✅ Intention validation passed, saving intention...');
     await saveIntention(targetUrl, intention);
-    console.log('💾 Intention saved successfully');
+    // console.log('💾 Intention saved successfully');
     return { success: true, error: null, intention };
     
   } catch (error) {
