@@ -157,6 +157,16 @@ const PersonalDashboard = () => {
     localStorage.setItem('intent_custom_sites', JSON.stringify(customSitesList));
   }, [customSitesList]);
 
+  // Silence temporary unused warnings while Accountability Partner is disabled
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void emailError;
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void handleSaveAccountabilityPartner;
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void Lock;
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  void AlertCircle;
+
   const computedCategories = useMemo(() => {
     const dbSites = new Set(blockedSites.map(normalize)); // Database contains UNBLOCKED presets OR BLOCKED custom sites
     
@@ -624,6 +634,7 @@ const PersonalDashboard = () => {
             </CardContent>
           </Card>
 
+          {/*
           <Card
             className="rounded-xl backdrop-blur-sm opacity-0"
             style={{
@@ -696,7 +707,6 @@ const PersonalDashboard = () => {
                       </div>
                     </div>
                   ) : (
-                    // No partner yet - show input form
                     <>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-[#F5E6D3]">
@@ -714,7 +724,6 @@ const PersonalDashboard = () => {
                             } else {
                               setEmailError("");
                             }
-                            // Reset confirmation if email changes
                             setConfirmingPartner(false);
                           }}
                           onBlur={(e) => validateEmail(e.target.value)}
@@ -726,7 +735,6 @@ const PersonalDashboard = () => {
                           <p className="text-xs text-red-400 mt-1">{emailError}</p>
                         )}
                       </div>
-                      
                       {confirmingPartner && (
                         <div className="flex items-center gap-2 p-2 bg-red-500/10 border border-red-500/30 rounded-lg animate-pulse">
                           <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -735,13 +743,11 @@ const PersonalDashboard = () => {
                           </p>
                         </div>
                       )}
-                      
                       <p className="text-xs text-[#D4C4A8]">
                         Your accountability partner will be notified if the
                         extension is removed from Chrome. Once set, the partner
                         email cannot be changed or removed.
                       </p>
-                      
                       <div className="flex items-center gap-2">
                         <Button
                           variant={confirmingPartner ? "destructive" : "outline"}
@@ -775,6 +781,53 @@ const PersonalDashboard = () => {
                 </>
               )}
             </CardContent>
+          </Card>
+          */}
+
+          {/* Temporary placeholder card: Accountability Partner (disabled) */}
+          <Card
+            className="rounded-xl backdrop-blur-sm opacity-30"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(120,70,35,0.10) 0%, rgba(95,55,28,0.12) 30%, rgba(70,40,22,0.14) 60%, rgba(120,70,35,0.08) 100%)",
+              boxShadow:
+                "0 4px 20px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.35)",
+              border: "1px solid rgba(140, 80, 40, 0.12)",
+              animation: 'slideInUp 0.3s ease-out 225ms forwards, fadeIn 0.3s ease-out 225ms forwards'
+            }}
+          >
+            <CardHeader
+              className="rounded-t-xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(120,70,35,0.16) 0%, rgba(95,55,28,0.18) 30%, rgba(70,40,22,0.20) 60%, rgba(120,70,35,0.12) 100%)",
+              }}
+            >
+              <CardTitle className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-[#7A4A1E]/15 animate-pulse rounded-xl"></div>
+                    <div className="relative bg-gradient-to-br from-[#5A351E]/50 to-[#3A2315]/50 p-1.5 rounded-xl border border-[#7A4A1E]/25">
+                      <Users className="w-4 h-4 text-[#CEA274]" />
+                    </div>
+                  </div>
+                  <div className="opacity-50">
+                    <span className="text-[#E9D2BA]">
+                      Accountability Partner
+                    </span>
+                    <p className="text-xs text-[#D7B391] -mt-0.5 opacity-60">
+                      Coming Soon
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={partnerEnabled}
+                  disabled
+                  className="opacity-40 data-[state=checked]:bg-[#B77F56] data-[state=unchecked]:bg-[#724C2F]/50 scale-75"
+                />
+              </CardTitle>
+            </CardHeader>
+            {/* Intentionally no interactive content while feature is disabled */}
           </Card>
 
           <Button
