@@ -8,6 +8,7 @@ import { Input } from '../ui/input';
 
 import logo from '@/assets/logo2.png';
 import Flame from '@/components/home/Flame';
+import PinOpen from '@/assets/pin-open.png';
 
 function EmbeddedSignupCard() {
   const [email, setEmail] = useState('');
@@ -136,10 +137,30 @@ const Tour = () => {
 
     // Intentionally no resize/orientation listeners: positions are frozen
     
-    // Listen for when the extension icon is clicked
-    const handleExtensionClick = (message: any) => {
+    // Check if we're opened as a popup on Tour step 2
+    const checkIfPopupOnTour = () => {
+      const isPopupWindow = window.outerWidth <= 500 && window.outerHeight <= 700;
+      const isOnTour = window.location.hash.includes('#/tour');
+      
+      if (isPopupWindow && isOnTour && !extensionClicked) {
+        console.log('🎯 Detected popup opened on Tour step 2, redirecting to tab and creating floating popup');
+        
+        // Send message to open Tour in tab and create floating popup
+        chrome.runtime.sendMessage({ 
+          type: 'OPEN_TOUR_WITH_FLOATING_POPUP' 
+        }, () => {
+          window.close();
+        });
+      }
+    };
+    
+    // Check immediately
+    checkIfPopupOnTour();
+    
+    // Listen for when the extension creates a visual element (for non-popup scenarios)
+    const handlePopupOpened = (message: any) => {
       if (message.type === 'CREATE_VISUAL_ELEMENT' && message.elementType === 'floating-popup') {
-        console.log('🎯 Extension icon clicked, hiding arrow and text, creating floating popup');
+        console.log('🎯 Extension clicked, creating floating popup');
         setExtensionClicked(true);
         
         // Create the floating popup iframe with the tour-specific dashboard
@@ -573,12 +594,12 @@ const Tour = () => {
     };
 
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-      chrome.runtime.onMessage.addListener(handleExtensionClick);
+      chrome.runtime.onMessage.addListener(handlePopupOpened);
     }
     
     const handleWindowMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'CREATE_VISUAL_ELEMENT') {
-        handleExtensionClick(event.data);
+        handlePopupOpened(event.data);
       }
     };
     window.addEventListener('message', handleWindowMessage);
@@ -587,7 +608,7 @@ const Tour = () => {
       document.title = previousTitle;
       if (pollTimer) clearInterval(pollTimer);
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-        chrome.runtime.onMessage.removeListener(handleExtensionClick);
+        chrome.runtime.onMessage.removeListener(handlePopupOpened);
       }
       window.removeEventListener('message', handleWindowMessage);
       // Remove window message listener if present
@@ -684,11 +705,7 @@ const Tour = () => {
             </>
           )}
           <img
-            src={
-              typeof chrome !== 'undefined' && chrome.runtime
-                ? chrome.runtime.getURL('src/assets/pin-open.png')
-                : 'src/assets/pin-open.png'
-            }
+            src={PinOpen}
             alt="Step 1: Pin the Intent extension, Step 2: Click it to open"
             style={{ display: 'block', width: '100%', height: 'auto' }}
           />

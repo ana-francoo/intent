@@ -45,7 +45,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     console.log("[Background] Opening welcome page...");
     chrome.tabs
       .create({
-        url: chrome.runtime.getURL("src/popup/index.html#/welcome"),
+        url: chrome.runtime.getURL("src/popup/landing.html#/welcome"),
       })
       .then((tab) => {
         console.log("[Background] Welcome page tab created:", tab);
@@ -65,28 +65,31 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
-// Listen for when extension icon is clicked (only fires when no popup is defined in manifest)
-chrome.action.onClicked?.addListener(async (tab) => {
-  console.log("🎯 Extension icon clicked, checking authentication...");
+// Note: chrome.action.onClicked won't fire since we have default_popup defined
+// The PopupLauncher component handles creating the floating iframe instead
+/* chrome.action.onClicked?.addListener(async (tab) => {
+  console.log("🎯 Extension icon clicked");
   console.log("🔍 Current tab URL:", tab.url);
   
-  const session = await checkExistingSession();
-  const isAuthenticated = !!session;
-  
+  // Check if we're on the tour page
   const isOnTourPage = tab.url && (tab.url.includes('#/tour') || tab.url.includes('tour=1'));
   
-  console.log("🔐 User authenticated:", isAuthenticated);
-  console.log("🎯 On tour page:", isOnTourPage);
-  
-  if (!isAuthenticated && !isOnTourPage) {
-    console.log("🚀 User not authenticated and not on tour, opening welcome page in new tab...");
-    chrome.tabs.create({
-      url: chrome.runtime.getURL("src/popup/index.html#/welcome"),
-      active: true
-    });
-    return;
+  // Only check session if not on tour page
+  if (!isOnTourPage) {
+    const session = await checkExistingSession();
+    const isAuthenticated = !!session;
+    
+    if (!isAuthenticated) {
+      console.log("🚀 User not authenticated, opening welcome page in new tab...");
+      chrome.tabs.create({
+        url: chrome.runtime.getURL("src/popup/landing.html#/welcome"),
+        active: true
+      });
+      return;
+    }
   }
 
+  // Check if we can inject into this tab
   const canInject =
     tab.id &&
     tab.url &&
@@ -96,35 +99,15 @@ chrome.action.onClicked?.addListener(async (tab) => {
     !tab.url.startsWith("dia://") &&
     !tab.url.startsWith("arc://") &&
     !tab.url.startsWith("about:") &&
-    !tab.url.startsWith("file://");
+    !tab.url.startsWith("file://") &&
+    !tab.url.includes("chrome.google.com/webstore");
 
-  // Special handling for our own extension pages (welcome/tour)
-  const isOwnExtensionPage = tab.url && tab.url.includes(chrome.runtime.id) && 
-    (tab.url.includes('#/welcome') || tab.url.includes('#/tour') || tab.url.includes('tour=1'));
-
-  console.log("🔍 Can inject:", canInject);
-  console.log("🔍 Is own extension page:", isOwnExtensionPage);
-
-  // Handle clicks on our own extension pages (welcome/tour) - create floating popup without content script injection
-  if (isOwnExtensionPage && tab.id) {
-    console.log("🎯 Extension clicked from our own extension pages, creating floating popup directly");
-    
-    // Send message to the current page (which should be able to receive it since it's our extension page)
-    try {
-      await chrome.tabs.sendMessage(tab.id, {
-        type: "CREATE_VISUAL_ELEMENT",
-        elementType: "floating-popup", 
-        position: { x: 100, y: 100 },
-        skipAuth: true, // Always skip auth for our own pages
-      });
-      console.log("✅ Floating popup message sent to extension page");
-    } catch (error) {
-      console.log("❌ Failed to send message to extension page:", error);
-    }
+  if (!canInject) {
+    console.log("❌ Cannot inject into this page type");
     return;
   }
 
-  if (canInject && tab.id) {
+  if (tab.id) {
     try {
       await chrome.tabs.sendMessage(tab.id, { type: "PING" });
 
@@ -147,10 +130,16 @@ chrome.action.onClicked?.addListener(async (tab) => {
       console.log("Content script not loaded, injecting it now...");
 
       try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ["src/content/main.tsx-loader.js"],
-        });
+        // Get the actual content script file from the manifest
+        const contentScriptFile = chrome.runtime.getManifest().content_scripts?.[1]?.js?.[0];
+        if (contentScriptFile) {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: [contentScriptFile],
+          });
+        } else {
+          console.error("Could not find content script file in manifest");
+        }
 
         await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -187,6 +176,48 @@ chrome.action.onClicked?.addListener(async (tab) => {
     console.log("✅ Extension icon clicked message sent to popup");
   } catch (error) {
     console.log("Could not send message to popup (popup might not be open)");
+  }
+}); */
+
+// Handle Tour page extension click through message passing
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "OPEN_TOUR_WITH_FLOATING_POPUP") {
+    // Open Tour in a tab and trigger floating popup
+    console.log("🎯 Opening Tour in tab with floating popup");
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const currentTab = tabs[0];
+      if (currentTab?.url?.includes('#/tour')) {
+        // Already on Tour page, just create floating popup
+        chrome.tabs.sendMessage(currentTab.id!, {
+          type: "CREATE_VISUAL_ELEMENT",
+          elementType: "floating-popup",
+          position: { x: 100, y: 100 },
+          route: "/tour-dashboard",
+          skipAuth: true,
+        });
+      } else {
+        // Open Tour in new tab
+        const tab = await chrome.tabs.create({
+          url: chrome.runtime.getURL("src/popup/landing.html#/tour"),
+          active: true
+        });
+        
+        // Wait a bit for the page to load, then send message
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tab.id!, {
+            type: "CREATE_VISUAL_ELEMENT",
+            elementType: "floating-popup",
+            position: { x: 100, y: 100 },
+            route: "/tour-dashboard",
+            skipAuth: true,
+          });
+        }, 1000);
+      }
+    });
+    
+    sendResponse({ success: true });
+    return true;
   }
 });
 
@@ -247,7 +278,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ? route
         : `/${route}`;
       const url = chrome.runtime.getURL(
-        `src/popup/index.html#${normalizedRoute}`
+        `landing.html#${normalizedRoute}`
       );
       chrome.tabs
         .create({ url })
@@ -263,6 +294,166 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Handle creating floating iframe on specific tab
+  if (message.type === "CREATE_FLOATING_IFRAME_ON_SPECIFIC_TAB") {
+    console.log("[Background] Request to create floating iframe on specific tab:", message.tabId);
+    
+    const tabId = message.tabId;
+    if (!tabId) {
+      sendResponse({ success: false, error: "No tab ID provided" });
+      return true;
+    }
+    
+    chrome.tabs.get(tabId, async (tab) => {
+      if (!tab?.url) {
+        sendResponse({ success: false, error: "Tab not found" });
+        return;
+      }
+      
+      // Check if we can inject into this tab
+      const canInject = !tab.url.startsWith("chrome://") &&
+                       !tab.url.startsWith("edge://") &&
+                       !tab.url.startsWith("brave://") &&
+                       !tab.url.startsWith("about:") &&
+                       !tab.url.startsWith("file://") &&
+                       !tab.url.includes("chrome.google.com/webstore");
+      
+      if (!canInject) {
+        console.log("[Background] Cannot inject into restricted page:", tab.url);
+        sendResponse({ success: false, error: "Cannot inject into this page" });
+        return;
+      }
+      
+      // Try to send message to existing content script
+      try {
+        await chrome.tabs.sendMessage(tabId, {
+          type: "CREATE_VISUAL_ELEMENT",
+          elementType: "floating-popup",
+          position: { x: 100, y: 100 },
+          route: message.route || "/dashboard",
+          skipAuth: message.skipAuth
+        });
+        console.log("[Background] Sent message to existing content script");
+        sendResponse({ success: true });
+      } catch (error) {
+        console.log("[Background] Content script not loaded, injecting it now...");
+        
+        try {
+          // Get the content script file from manifest
+          const manifest = chrome.runtime.getManifest();
+          const contentScript = manifest.content_scripts?.[1]?.js?.[0];
+          
+          if (contentScript) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tabId },
+              files: [contentScript]
+            });
+            
+            // Wait a bit for script to initialize
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Now send the message
+            await chrome.tabs.sendMessage(tabId, {
+              type: "CREATE_VISUAL_ELEMENT",
+              elementType: "floating-popup",
+              position: { x: 100, y: 100 },
+              route: message.route || "/dashboard",
+              skipAuth: message.skipAuth
+            });
+            
+            console.log("[Background] Injected script and sent message");
+            sendResponse({ success: true });
+          } else {
+            sendResponse({ success: false, error: "Content script not found in manifest" });
+          }
+        } catch (injectError) {
+          console.error("[Background] Failed to inject content script:", injectError);
+          sendResponse({ success: false, error: String(injectError) });
+        }
+      }
+    });
+    
+    return true; // Keep message channel open for async response
+  }
+
+  // Handle creating floating iframe on current tab (from popup)
+  if (message.type === "CREATE_FLOATING_IFRAME_ON_TAB") {
+    console.log("[Background] Request to create floating iframe on current tab");
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+      const tab = tabs[0];
+      if (!tab?.id || !tab?.url) {
+        sendResponse({ success: false, error: "No active tab found" });
+        return;
+      }
+      
+      // Check if we can inject into this tab
+      const canInject = !tab.url.startsWith("chrome://") &&
+                       !tab.url.startsWith("edge://") &&
+                       !tab.url.startsWith("brave://") &&
+                       !tab.url.startsWith("about:") &&
+                       !tab.url.startsWith("file://") &&
+                       !tab.url.includes("chrome.google.com/webstore");
+      
+      if (!canInject) {
+        console.log("[Background] Cannot inject into restricted page:", tab.url);
+        sendResponse({ success: false, error: "Cannot inject into this page" });
+        return;
+      }
+      
+      // Try to send message to existing content script
+      try {
+        await chrome.tabs.sendMessage(tab.id, {
+          type: "CREATE_VISUAL_ELEMENT",
+          elementType: "floating-popup",
+          position: { x: 100, y: 100 },
+          route: message.route || "/dashboard",
+          skipAuth: message.skipAuth
+        });
+        console.log("[Background] Sent message to existing content script");
+        sendResponse({ success: true });
+      } catch (error) {
+        console.log("[Background] Content script not loaded, injecting it now...");
+        
+        try {
+          // Get the content script file from manifest
+          const manifest = chrome.runtime.getManifest();
+          const contentScript = manifest.content_scripts?.[1]?.js?.[0];
+          
+          if (contentScript) {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: [contentScript]
+            });
+            
+            // Wait a bit for script to initialize
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Now send the message
+            await chrome.tabs.sendMessage(tab.id, {
+              type: "CREATE_VISUAL_ELEMENT",
+              elementType: "floating-popup",
+              position: { x: 100, y: 100 },
+              route: message.route || "/dashboard",
+              skipAuth: message.skipAuth
+            });
+            
+            console.log("[Background] Content script injected and floating popup created");
+            sendResponse({ success: true });
+          } else {
+            console.error("[Background] Could not find content script in manifest");
+            sendResponse({ success: false, error: "Content script not found" });
+          }
+        } catch (injectError) {
+          console.error("[Background] Failed to inject content script:", injectError);
+          sendResponse({ success: false, error: String(injectError) });
+        }
+      }
+    });
+    
+    return true; // Keep message channel open for async response
+  }
+  
   // Handle creating visual elements on current page
   if (message.type === "CREATE_VISUAL_ELEMENT") {
     try {

@@ -7,6 +7,7 @@ import manifest from './manifest.config.js';
 import { name, version } from './package.json';
 import path from "path";
 import tailwindcss from '@tailwindcss/vite'
+import buildPopupPlugin from './vite-plugin-build-popup'
 
 
 export default defineConfig(({ mode }) => {
@@ -14,11 +15,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   console.log('Environment mode:', mode);
-  console.log('OpenRouter API Key configured:', !!env.OPENROUTER_API_KEY);
+  console.log('OpenRouter Proxy URL configured:', !!env.OPENROUTER_PROXY_URL);
   console.log('Supabase URL configured:', !!env.VITE_SUPABASE_URL);
   console.log('Supabase Key configured:', !!env.VITE_SUPABASE_ANON_KEY);
   
   return {
+    base: './',
     resolve: {
       alias: {
         '@': `${path.resolve(__dirname, './src')}`,
@@ -27,6 +29,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       crx({ manifest }),
+      buildPopupPlugin(),
       zip({ outDir: 'release', outFileName: `crx-${name}-${version}.zip` }),
       tailwindcss()
     ],
@@ -45,9 +48,7 @@ export default defineConfig(({ mode }) => {
     // Define global constants for the extension
     define: {
       // Make environment variables available to the extension
-      'process.env.OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY || ''),
-      'process.env.SITE_URL': JSON.stringify(env.SITE_URL || 'https://intent-extension.com'),
-      'process.env.SITE_NAME': JSON.stringify(env.SITE_NAME || 'Intent Extension'),
+      'process.env.OPENROUTER_PROXY_URL': JSON.stringify(env.OPENROUTER_PROXY_URL || 'https://useintent.app/api/openrouter'),
       'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'mistralai/mistral-small-3.2-24b-instruct:free'),
       'process.env.INTENTION_CONFIDENCE_THRESHOLD': JSON.stringify(env.INTENTION_CONFIDENCE_THRESHOLD || '0.7'),
       'process.env.VITE_STRIPE_YEARLY_PRICE_ID': JSON.stringify(env.VITE_STRIPE_YEARLY_PRICE_ID || ''),

@@ -72,7 +72,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       const isStories = path.startsWith('/stories/');
       const isHighlights = path.startsWith('/stories/highlights/');
       if (isInstagram && isStories && !isHighlights) {
-        const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
+        const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
         console.log('📸 RouteInterceptor: Instagram stories detected — redirecting to overlay-two', { overlayUrl });
         window.location.href = overlayUrl;
         return;
@@ -152,7 +152,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     }
 
     // Redirect to first overlay page for setting/refining intention
-    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-one?targetUrl=${encodeURIComponent(currentUrl)}`;
+    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-one?targetUrl=${encodeURIComponent(currentUrl)}`;
     console.log('🎯 RouteInterceptor: prompting overlay', { extensionOverlayUrl });
     try { sessionStorage.setItem('intent_last_blocked_url', currentUrl); } catch {}
     window.location.href = extensionOverlayUrl;

@@ -102,8 +102,8 @@ if (window.chrome && chrome.runtime && chrome.runtime.onMessage) {
     }
     
     if (msg && msg.type === 'CREATE_VISUAL_ELEMENT') {
-      console.log('🎯 Creating visual element:', msg.elementType, msg.position, 'skipAuth:', msg.skipAuth);
-      createVisualElement(msg.elementType, msg.position, msg.skipAuth);
+      console.log('🎯 Creating visual element:', msg.elementType, msg.position, 'skipAuth:', msg.skipAuth, 'route:', msg.route);
+      createVisualElement(msg.elementType, msg.position, msg.skipAuth, msg.route);
     }
   });
 }
@@ -122,7 +122,7 @@ window.addEventListener('message', (event) => {
 });
 
 // Function to create visual elements on the page
-function createVisualElement(elementType: string, position: { x: number, y: number }, skipAuth?: boolean) {
+function createVisualElement(elementType: string, position: { x: number, y: number }, skipAuth?: boolean, route?: string) {
   const element = document.createElement('div');
   
   switch (elementType) {
@@ -159,8 +159,8 @@ function createVisualElement(elementType: string, position: { x: number, y: numb
       break;
       
     case 'floating-popup':
-      const route = skipAuth ? '/?skipAuth=true' : '';
-      createFloatingPopup({ draggable: true, route });
+      const popupRoute = route || (skipAuth ? '/?skipAuth=true' : '');
+      createFloatingPopup({ draggable: true, route: popupRoute });
       return;
       
     default:

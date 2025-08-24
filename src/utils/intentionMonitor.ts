@@ -261,7 +261,7 @@ export class IntentionMonitor {
         console.warn('🚫 Intention mismatch detected — redirecting to overlay');
         this.stopMonitoring();
         try {
-          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') +
+          const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') +
             `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
           console.log('🎯 Intention mismatch: redirecting to overlay', { overlayUrl });
           window.location.href = overlayUrl;
@@ -377,7 +377,7 @@ export class IntentionMonitor {
           reason: distanceTrigger ? 'distance>=2screens' : (this.wheelEventCount >= wheelCountThreshold ? 'wheelCount' : 'fallbackDistance'),
         });
         try {
-          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
+          const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + 
             `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}`;
           console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl });
           window.location.href = overlayUrl;
@@ -414,7 +414,7 @@ export class IntentionMonitor {
   }
   
   // private async triggerDoomScrollingIntervention(): Promise<void> { // unused helper kept for future
-  //   const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
+  //   const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + 
   //     `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
   //   window.location.href = overlayUrl;
   // }

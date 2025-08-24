@@ -31,9 +31,7 @@ const getEnvNumber = (key: string, defaultValue: number): number => {
 export const CONFIG = {
   // OpenRouter AI Configuration
   OPENROUTER: {
-    API_KEY: getEnvVar('OPENROUTER_API_KEY', ''),
-    SITE_URL: getEnvVar('SITE_URL', 'https://intent-extension.com'),
-    SITE_NAME: getEnvVar('SITE_NAME', 'Intent Extension'),
+    PROXY_URL: getEnvVar('OPENROUTER_PROXY_URL', 'https://useintent.app/api/openrouter'),
     DEFAULT_MODEL: getEnvVar('OPENROUTER_MODEL', 'mistralai/mistral-small-3.2-24b-instruct:free'),
     MAX_TOKENS: 12,
     TEMPERATURE: 0.0,
@@ -66,23 +64,15 @@ export const CONFIG = {
 
 // Helper function to check if AI features are available
 export const isAIFeaturesEnabled = (): boolean => {
-  return !!CONFIG.OPENROUTER.API_KEY;
+  return !!CONFIG.OPENROUTER.PROXY_URL;
 };
-
-// Helper function to get OpenRouter headers
-export const getOpenRouterHeaders = () => ({
-  'Authorization': `Bearer ${CONFIG.OPENROUTER.API_KEY}`,
-  'HTTP-Referer': CONFIG.OPENROUTER.SITE_URL,
-  'X-Title': CONFIG.OPENROUTER.SITE_NAME,
-  'Content-Type': 'application/json',
-});
 
 // Helper function to validate configuration
 export const validateConfig = (): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
   
-  if (!CONFIG.OPENROUTER.API_KEY) {
-    errors.push('OPENROUTER_API_KEY is not configured. Please add it to your .env.local file.');
+  if (!CONFIG.OPENROUTER.PROXY_URL) {
+    errors.push('OPENROUTER_PROXY_URL is not configured.');
   }
   
   if (CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD < 0 || CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD > 1) {

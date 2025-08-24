@@ -8,7 +8,7 @@ import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { Switch } from "./ui/switch";
-
+import logo from "@/assets/logo.png";
 import {
   ENTERTAINMENT_SITES,
   NEWS_SITES,
@@ -576,7 +576,7 @@ const TourDashboard = () => {
       >
         <div className="flex items-center gap-3">
           <img
-            src="/src/assets/logo.png"
+            src={logo}
             alt="Logo"
             className="w-6 h-6 object-contain"
           />

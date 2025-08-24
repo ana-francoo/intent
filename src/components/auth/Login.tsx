@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../supabaseClient';
-import logo from '@/assets/logo2.png';
-import Flame from '../home/Flame';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
+import logo from "@/assets/logo2.png";
+import Flame from "../home/Flame";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 
 interface LoginProps {
   onGoBack?: () => void;
@@ -12,66 +12,87 @@ interface LoginProps {
 
 const getRedirectUrl = () => {
   const isDev = import.meta.env.DEV;
-  return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
+  return isDev
+    ? "http://localhost:5173/auth-callback"
+    : "https://useintent.app/auth-callback";
 };
 
 export default function Login({ onGoBack }: LoginProps) {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAuthSuccess = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((evt, session) => {
-      if (evt === 'SIGNED_IN' && session) {
-        // Supabase automatically handles session storage
-        handleAuthSuccess();
+
+  const handleLogin = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setInfo(null);
+      setIsLoading(true);
+      try {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) throw signInError;
+        
+        // Close current tab and create Google tab with overlay immediately
+        chrome.tabs.getCurrent((currentTab) => {
+          if (currentTab?.id) {
+            chrome.tabs.remove(currentTab.id);
+          }
+          
+          // Create Google tab with overlay
+          chrome.tabs.create(
+            { url: "https://www.google.com", active: true },
+            (newTab) => {
+              if (!newTab.id) return;
+              
+              // Since the tab is active, we can use the simpler CREATE_VISUAL_ELEMENT
+              chrome.runtime.sendMessage({
+                type: 'CREATE_VISUAL_ELEMENT',
+                elementType: "floating-popup",
+                position: { x: 100, y: 100 },
+                route: "/dashboard",
+                skipAuth: false,
+              });
+            }
+          );
+        });
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      } finally {
+        setIsLoading(false);
       }
-    });
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [handleAuthSuccess]);
-
-  const handleLogin = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setInfo(null);
-    setIsLoading(true);
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
-      handleAuthSuccess();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [email, password, handleAuthSuccess]);
-
+    },
+    [email, password]
+  );
 
   const handleForgotPassword = useCallback(async () => {
     if (!email) {
-      setError('Enter your email to reset your password');
+      setError("Enter your email to reset your password");
       return;
     }
     setError(null);
     setInfo(null);
     setIsLoading(true);
     try {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: getRedirectUrl(),
-      }); 
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: getRedirectUrl(),
+        }
+      );
       if (resetError) throw resetError;
-      setInfo('Password reset email sent. Check your inbox.');
+      setInfo("Password reset email sent. Check your inbox.");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email');
+      setError(
+        err instanceof Error ? err.message : "Failed to send reset email"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +105,15 @@ export default function Login({ onGoBack }: LoginProps) {
           onClick={onGoBack}
           className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-md p-2 text-white/60 transition hover:bg-white/5 hover:text-white/90"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="m12 19-7-7 7-7" />
             <path d="M19 12H5" />
           </svg>
@@ -111,23 +140,27 @@ export default function Login({ onGoBack }: LoginProps) {
             {error}
           </div>
         )}
-        
+
         {info && (
           <div className="animate-slide-in-up duration-75! mt-2 w-full rounded-md border border-green-500/25 bg-green-500/50 p-2 text-center text-xs text-green-500">
             {info}
           </div>
         )}
-        
+
         <form onSubmit={handleLogin} className="space-y-1 w-full">
           <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm">
-            <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
-              <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
+            <div className="absolute top-0 left-0 right-0 flex justify-center pointer-events-none">
+              <div className="h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000" />
             </div>
 
-            <h2 className="text-xl font-semibold text-white mb-4">Log in to Intent</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">
+              Log in to Intent
+            </h2>
 
             <div className="grid gap-1.5 mb-2">
-              <label htmlFor="email" className="text-sm text-white/85">Email</label>
+              <label htmlFor="email" className="text-sm text-white/85">
+                Email
+              </label>
               <Input
                 id="email"
                 type="email"
@@ -139,7 +172,9 @@ export default function Login({ onGoBack }: LoginProps) {
             </div>
 
             <div className="grid gap-1.5 mb-2">
-              <label htmlFor="password" className="text-sm text-white/85">Password</label>
+              <label htmlFor="password" className="text-sm text-white/85">
+                Password
+              </label>
               <Input
                 id="password"
                 type="password"
@@ -150,8 +185,12 @@ export default function Login({ onGoBack }: LoginProps) {
               />
             </div>
 
-            <Button type="submit" disabled={!email || !password || isLoading} className="mt-1 w-full">
-              {isLoading ? 'Logging in…' : 'Log in'}
+            <Button
+              type="submit"
+              disabled={!email || !password || isLoading}
+              className="mt-1 w-full"
+            >
+              {isLoading ? "Logging in…" : "Log in"}
             </Button>
 
             <button
@@ -164,11 +203,10 @@ export default function Login({ onGoBack }: LoginProps) {
           </div>
         </form>
 
-
         <div className="mt-2 text-sm text-white/80">
-          Don't have an account?{' '}
-          <button 
-            onClick={() => navigate('/signup')} 
+          Don't have an account?{" "}
+          <button
+            onClick={() => navigate("/signup")}
             className="text-[var(--primary)] hover:underline"
           >
             Sign up

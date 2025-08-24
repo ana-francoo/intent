@@ -1,6 +1,6 @@
 export default function Main() {
   const handleBlockClick = () => {
-    const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-one?targetUrl=${encodeURIComponent(window.location.href)}`;
+    const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-one?targetUrl=${encodeURIComponent(window.location.href)}`;
     window.location.href = overlayUrl;
   };
 

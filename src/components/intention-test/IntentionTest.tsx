@@ -55,17 +55,27 @@ export default function IntentionTest() {
         const mockCheckIntentionMatch = async (intention: string, content: string) => {
           // We need to access the private function, so we'll recreate the logic
           const CONFIG = (await import('../../utils/config')).CONFIG;
-          const getOpenRouterHeaders = (await import('../../utils/config')).getOpenRouterHeaders;
+          const { supabase } = await import('../../supabaseClient');
         
-        if (!CONFIG.OPENROUTER.API_KEY) {
-          throw new Error('OpenRouter API key not configured');
+        if (!CONFIG.OPENROUTER.PROXY_URL) {
+          throw new Error('OpenRouter proxy URL not configured');
+        }
+
+        // Get the current user's session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          throw new Error('Authentication required. Please sign in to test AI features.');
         }
 
         const prompt = `Intention:${intention},Content:${content}`;
         
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetch(CONFIG.OPENROUTER.PROXY_URL, {
           method: 'POST',
-          headers: getOpenRouterHeaders(),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
           body: JSON.stringify({
             model: CONFIG.OPENROUTER.DEFAULT_MODEL,
             messages: [

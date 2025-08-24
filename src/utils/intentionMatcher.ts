@@ -4,7 +4,8 @@
 
 // Removed unused PageContent import
 import { getIntention } from './storage';
-import { CONFIG, getOpenRouterHeaders } from './config';
+import { CONFIG } from './config';
+import { supabase } from '../supabaseClient';
 
 
 export interface IntentionMatchResult {
@@ -102,21 +103,33 @@ const analyzeIntentionWithAI = async (
   pageContent: string,
   options: IntentionMatchOptions
 ): Promise<{ match: boolean }> => {
-  if (!CONFIG.OPENROUTER.API_KEY) {
-    throw new Error('OpenRouter API key not configured');
+  if (!CONFIG.OPENROUTER.PROXY_URL) {
+    throw new Error('OpenRouter proxy URL not configured');
+  }
+
+  // Get the current user's session token
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session) {
+    console.error('❌ No active session for OpenRouter request:', sessionError);
+    throw new Error('Authentication required. Please sign in to use AI features.');
   }
 
   const prompt = createAnalysisPrompt(userIntention, pageContent);
   console.log('🧠 AI prompt length', { promptLength: prompt.length });
+  console.log('🔐 Using auth token for user:', session.user?.email || session.user?.id);
   
   // Create abort controller for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), CONFIG.INTENTION_MATCHING.ANALYSIS_TIMEOUT);
   
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(CONFIG.OPENROUTER.PROXY_URL, {
       method: 'POST',
-      headers: getOpenRouterHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({
         model: options.model,
         messages: [
@@ -146,7 +159,23 @@ Reply only with:
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please sign in again to continue using AI features.');
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      } else if (response.status === 500) {
+        throw new Error('Server error. The AI service is temporarily unavailable.');
+      }
+      
+      throw new Error(`OpenRouter proxy error: ${errorData.error || errorText}`);
     }
 
     const data = await response.json();
@@ -215,7 +244,7 @@ export const getIntentionSummary = async (url: string): Promise<string | null> =
  * Check if intention matching is available (API key configured)
  */
 export const isIntentionMatchingAvailable = (): boolean => {
-  return !!CONFIG.OPENROUTER.API_KEY;
+  return !!CONFIG.OPENROUTER.PROXY_URL;
 }; 
 
 
@@ -227,15 +256,25 @@ export const isIntentionMatchingAvailable = (): boolean => {
 // Validate an intention statement. Returns [isValid, reason].
 export const validateIntention = async (intentionText: string): Promise<(boolean)> => {
   console.log('🔍 validateIntention called with:', intentionText);
-  console.log('🔑 API Key configured:', !!CONFIG.OPENROUTER.API_KEY);
+  console.log('🔑 Proxy URL configured:', !!CONFIG.OPENROUTER.PROXY_URL);
   
-  if (!CONFIG.OPENROUTER.API_KEY) {
-    console.log('❌ No API key configured, returning invalid');
+  if (!CONFIG.OPENROUTER.PROXY_URL) {
+    console.log('❌ No proxy URL configured, returning invalid');
+    return (false);
+  }
+
+  // Get the current user's session token
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  
+  if (sessionError || !session) {
+    console.error('❌ No active session for intention validation:', sessionError);
+    console.log('⚠️ User not authenticated, returning invalid');
     return (false);
   }
 
   try {
-    console.log('🌐 Making API request to OpenRouter...');
+    console.log('🌐 Making API request to proxy endpoint...');
+    console.log('🔐 Using auth token for user:', session.user?.email || session.user?.id);
     const requestBody = {
       model: CONFIG.OPENROUTER.DEFAULT_MODEL,
       messages: [
@@ -257,17 +296,27 @@ export const validateIntention = async (intentionText: string): Promise<(boolean
     };
     console.log('📤 Request body:', requestBody);
     
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(CONFIG.OPENROUTER.PROXY_URL, {
       method: 'POST',
-      headers: getOpenRouterHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify(requestBody),
     });
 
     console.log('📡 Response status:', response.status);
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ API response error:', errorText);
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorText}`);
+      console.error('❌ Proxy response error:', errorText);
+      
+      // Handle specific error cases
+      if (response.status === 401) {
+        console.log('⚠️ Authentication failed, returning invalid');
+        return (false);
+      }
+      
+      throw new Error(`Proxy error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();

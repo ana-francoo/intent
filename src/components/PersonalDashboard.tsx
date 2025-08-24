@@ -7,6 +7,7 @@ import { Badge } from "./ui/badge";
 import quotes from "../utils/quotes";
 import { normalizeUrlToDomain } from "../utils/storage";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
+import logo from "@/assets/logo.png";
 import {
   useAccountabilityPartner,
   useSaveAccountabilityPartner,
@@ -863,7 +864,7 @@ const PersonalDashboard = () => {
       >
         <div className="flex items-center gap-3">
           <img
-            src="/src/assets/logo.png"
+            src={logo}
             alt="Logo"
             className="w-6 h-6 object-contain"
           />

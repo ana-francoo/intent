@@ -11,26 +11,25 @@ export default defineManifest({
     "https://www.google.com/*",
     "https://www.google-analytics.com/*",
   ],
-  optional_host_permissions: ["https://*/src/popup/index#/tour"],
   externally_connectable: {
     matches: ["http://localhost:5173/*", "https://useintent.app/*"],
   },
   icons: {
-    48: "public/logo.png",
+    48: "logo.png",
   },
   action: {
     default_icon: {
-      48: "public/logo.png",
+      48: "logo.png",
     },
     default_title: "Intent",
+    default_popup: "src/popup/landing.html",
   },
   web_accessible_resources: [
     {
       resources: [
         "src/assets/logo2.png",
-        "public/logo.png",
-        "src/landing.html",
-        "src/landing.js",
+        "src/assets/pin-open.png",
+        "src/popup/landing.html",
         "vendor/*",
       ],
       matches: ["https://*/*"],
