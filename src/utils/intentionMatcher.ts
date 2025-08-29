@@ -52,13 +52,9 @@ export const checkIntentionMatch = async ( //FYI - logic of only processing cont
       };
     }
 
-    // Scrape current page content
-// // 
-//     let urlCategory = getWebsiteCategory(currentUrl);
-
-//     if (currentUrl )
-    const { scrapeCurrentPage } = await import('./scraper');
-    const contentForAnalysis = scrapeCurrentPage(); //dynamically returns content depending on w
+    // Scrape current page content with retry logic for SPAs
+    const { scrapeCurrentPageWithRetry } = await import('./scraper');
+    const contentForAnalysis = await scrapeCurrentPageWithRetry();
     const contentPreview = contentForAnalysis?.content?.slice(0, 300) || '';
     console.log('📝 Scraped content (preview, len):', {
       length: contentForAnalysis?.content?.length || 0,

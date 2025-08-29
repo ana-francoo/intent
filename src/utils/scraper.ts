@@ -1,22 +1,10 @@
-// Web scraping utilities for extracting relevant page content
 import { getWebsiteCategory } from './domainCategories';
-//there should be parent scraper function, that redirects to the correct scraper based on the url
 
 export interface PageContent {
   content: string;
 }
 
-/**
- * Extract the most relevant content from the current page
- * Uses semantic weighting to prioritize important content blocks
- * Filters out browser noise and focuses on meaningful content
- */
-
-
-
-
 export function extractRelevantContentFromPage(): string {
-  // 1. Collect metadata with noise filtering
   const metadata = [
     document.title,
     (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content,
@@ -25,7 +13,6 @@ export function extractRelevantContentFromPage(): string {
     (document.querySelector('meta[name="twitter:description"]') as HTMLMetaElement)?.content
   ].filter(Boolean);
 
-  // 2. Define tag weights (semantic signal)
   const tagPriority: Record<string, number> = {
     MAIN: 4,
     ARTICLE: 4,
@@ -42,7 +29,6 @@ export function extractRelevantContentFromPage(): string {
     SPAN: 0.5
   };
 
-  // 3. Get visible, long-enough elements with better filtering
   const blocks = Array.from(document.querySelectorAll('main, article, section, aside, div, p, h1, h2, h3, h4, h5, h6, span'))
     .map(el => {
       const style = window.getComputedStyle(el);
@@ -65,15 +51,10 @@ export function extractRelevantContentFromPage(): string {
     .slice(0, 8) // Top 8 longest + high-weight blocks
     .map(el => el.text);
 
-  // 4. Merge content and truncate
   const combined = [...metadata, ...blocks].join('\n\n');
-  return combined.slice(0, 5000); // Limit to ~5k characters for token efficiency
+  return combined.slice(0, 5000);
 }
 
-/**
- * Extract comprehensive content from the current page
- * Returns structured data with relevant text content
- */
 type CustomScraper = (url: URL) => string;
 
 interface ScraperEntry {
@@ -104,6 +85,17 @@ function findCustomScraper(urlObj: URL): ScraperEntry | null {
   return customScrapers.find(entry => entry.matches(urlObj)) || null;
 }
 
+interface ScrapeCache {
+  url: string;
+  title: string;
+  metaDescription: string;
+  content: string;
+  contentLength: number;
+  timestamp: number;
+}
+
+let previousScrapeCache: ScrapeCache | null = null;
+
 export const scrapeCurrentPage = (): PageContent => { // certain categories may skip scraping; identified before
   const href = window.location.href;
   const urlObj = new URL(href);
@@ -112,7 +104,6 @@ export const scrapeCurrentPage = (): PageContent => { // certain categories may 
   let usedScraper: string = 'generic';
   let content = '';
 
-  // 1) Prefer site-specific custom scrapers
   const custom = findCustomScraper(urlObj);
   if (custom) {
     try {
@@ -125,7 +116,6 @@ export const scrapeCurrentPage = (): PageContent => { // certain categories may 
     }
   }
 
-  // 2) Category-specific handling if no content from custom scraper
   if (!content) {
     if (category === 'news') {
       usedScraper = 'newsTitle';
@@ -137,7 +127,6 @@ export const scrapeCurrentPage = (): PageContent => { // certain categories may 
     }
   }
 
-  // 3) Generic fallback
   if (!content) {
     usedScraper = 'generic-fallback';
     content = extractRelevantContentFromPage();
@@ -156,19 +145,111 @@ export const scrapeCurrentPage = (): PageContent => { // certain categories may 
   return { content };
 };
 
+const extractPageMetadata = (): { title: string; metaDescription: string } => {
+  const title = document.title || '';
+  const metaDescription = (document.querySelector('meta[name="description"]') as HTMLMetaElement)?.content || 
+                          (document.querySelector('meta[property="og:description"]') as HTMLMetaElement)?.content || '';
+  return { title, metaDescription };
+};
 
-
-
-
-
-// TODO: add scrapers for each category
-
-
-
-
-
-
-
+export const scrapeCurrentPageWithRetry = async (maxRetries: number = 3): Promise<PageContent> => {
+  const href = window.location.href;
+  console.log('🔄 scrapeCurrentPageWithRetry: starting', { url: href, maxRetries });
+  
+  const urlChanged = previousScrapeCache && previousScrapeCache.url !== href;
+  
+  if (urlChanged) {
+    console.log('⏳ URL changed, waiting 500ms for DOM to update...');
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  let attempt = 0;
+  const waitTimes = [500, 750, 1000];
+  
+  while (attempt < maxRetries) {
+    attempt++;
+    console.log(`🔍 Scrape attempt ${attempt}/${maxRetries}`);
+    
+    const result = scrapeCurrentPage();
+    const content = result.content || '';
+    const metadata = extractPageMetadata();
+    
+    const isContentEmpty = !content || content === 'blank' || content.length < 50;
+    
+    const isMetadataStale = urlChanged && 
+                           previousScrapeCache && 
+                           previousScrapeCache.title === metadata.title && 
+                           previousScrapeCache.metaDescription === metadata.metaDescription &&
+                           previousScrapeCache.url !== href;
+    
+    const contentLengthChange = previousScrapeCache ? 
+      Math.abs(content.length - previousScrapeCache.contentLength) / previousScrapeCache.contentLength : 0;
+    const isDrasticallyDifferent = contentLengthChange > 0.5;
+    
+    if (urlChanged && previousScrapeCache) {
+      console.log('📊 Comparing with previous scrape:', {
+        prevUrl: previousScrapeCache.url.split('?')[0], // Log without query params for clarity
+        prevTitle: previousScrapeCache.title.slice(0, 50),
+        currTitle: metadata.title.slice(0, 50),
+        titleMatch: previousScrapeCache.title === metadata.title,
+        descMatch: previousScrapeCache.metaDescription === metadata.metaDescription,
+        lengthChange: `${(contentLengthChange * 100).toFixed(1)}%`
+      });
+    }
+    
+    const shouldRetry = isContentEmpty || (isMetadataStale && !isDrasticallyDifferent);
+    
+    if (shouldRetry) {
+      console.log(`⚠️ Stale content detected`, { 
+        empty: isContentEmpty,
+        metadataStale: isMetadataStale,
+        drasticallyDifferent: isDrasticallyDifferent,
+        contentLength: content.length 
+      });
+      
+      if (attempt < maxRetries) {
+        const waitTime = waitTimes[attempt - 1] || 1000;
+        console.log(`⏳ Waiting ${waitTime}ms before retry (exponential backoff)...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+    }
+    
+    previousScrapeCache = {
+      url: href,
+      title: metadata.title,
+      metaDescription: metadata.metaDescription,
+      content: content,
+      contentLength: content.length,
+      timestamp: Date.now()
+    };
+    
+    console.log('✅ Scraping successful', { 
+      attempt, 
+      contentLength: content.length,
+      title: metadata.title.slice(0, 50),
+      preview: content.slice(0, 100) 
+    });
+    
+    return result;
+  }
+  
+  // Max retries reached - update cache anyway to prevent infinite loops
+  const finalResult = scrapeCurrentPage();
+  const finalMetadata = extractPageMetadata();
+  
+  previousScrapeCache = {
+    url: href,
+    title: finalMetadata.title,
+    metaDescription: finalMetadata.metaDescription,
+    content: finalResult.content || '',
+    contentLength: (finalResult.content || '').length,
+    timestamp: Date.now()
+  };
+  
+  console.warn('⚠️ Max retries reached, accepting current content');
+  return finalResult;
+};
 
 /**
  * Get a summary of the page content for quick analysis
@@ -261,21 +342,62 @@ export const extractContentWithFilters = (options: {
 ////////////////CUSTOM SCRAPERS//////////////////////
 
 //Youtube specific scraper
-//TODO TEST
 export function extractYouTubeMetadata(): string {
   console.log('🧩 extractYouTubeMetadata: invoked');
-  // Validate that we're on the correct YouTube URL
-  const title =
-    document.querySelector('meta[name="title"]')?.getAttribute('content') ||
-    document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
-    document.title || 'No title found';
+  
+  // Try to get title from various sources (DOM elements are more reliable for SPAs)
+  let title = '';
+  
+  // 1. Try YouTube's video title element (most reliable for current video)
+  const titleElement = document.querySelector('h1.ytd-video-primary-info-renderer') ||
+                      document.querySelector('h1.title') ||
+                      document.querySelector('yt-formatted-string.ytd-video-primary-info-renderer') ||
+                      document.querySelector('#title h1') ||
+                      document.querySelector('h1[class*="title"]');
+  
+  if (titleElement) {
+    title = titleElement.textContent?.trim() || '';
+    console.log('📺 Found YouTube title from DOM element:', title.slice(0, 50));
+  }
+  
+  // 2. Fallback to meta tags if DOM elements not found
+  if (!title) {
+    title = document.querySelector('meta[name="title"]')?.getAttribute('content') ||
+           document.querySelector('meta[property="og:title"]')?.getAttribute('content') ||
+           document.title || '';
+    console.log('📺 Using meta/title tag:', title.slice(0, 50));
+  }
+  
+  // Try to get description
+  let description = '';
+  
+  // 1. Try to get from video description area (expandable section)
+  const descElement = document.querySelector('#description-inline-expander') ||
+                     document.querySelector('ytd-expander.ytd-video-secondary-info-renderer') ||
+                     document.querySelector('#description');
+  
+  if (descElement) {
+    description = descElement.textContent?.trim() || '';
+    console.log('📺 Found description from DOM:', description.slice(0, 50));
+  }
+  
+  // 2. Fallback to meta description
+  if (!description) {
+    description = document.querySelector('meta[name="description"]')?.getAttribute('content') ||
+                 document.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
+                 '';
+  }
+  
+  // Get channel name if available
+  const channelElement = document.querySelector('#channel-name a') ||
+                        document.querySelector('ytd-channel-name a') ||
+                        document.querySelector('a.ytd-video-owner-renderer');
+  const channel = channelElement?.textContent?.trim() || '';
 
-  const description =
-    document.querySelector('meta[name="description"]')?.getAttribute('content') ||
-    document.querySelector('meta[property="og:description"]')?.getAttribute('content') ||
-    '';
-
-  return `title: ${title.trim()}\ndescription: ${description.trim()}`;
+  const result = `title: ${title.trim()}${channel ? `\nchannel: ${channel}` : ''}\ndescription: ${description.trim()}`;
+  
+  console.log('📺 YouTube scrape result length:', result.length);
+  return result || 'blank';
 }
 
 //Reddit specific scraper
@@ -338,9 +460,3 @@ export function extractPinterestSearchQuery(): string {
 
   return search ? `search: ${search}` : 'blank';
 }
-
-
-
-
-//instagram specific scraper
-// this is a SCAPER. however, i dont think we should scrape contnet, instead just check for scroll acitivty
