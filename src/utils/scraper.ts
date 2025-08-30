@@ -176,11 +176,21 @@ export const scrapeCurrentPageWithRetry = async (maxRetries: number = 3): Promis
     
     const isContentEmpty = !content || content === 'blank' || content.length < 50;
     
-    const isMetadataStale = urlChanged && 
-                           previousScrapeCache && 
-                           previousScrapeCache.title === metadata.title && 
-                           previousScrapeCache.metaDescription === metadata.metaDescription &&
-                           previousScrapeCache.url !== href;
+    // for some reason the title may change, but the metadata does not 
+    // so this is an indication that the new page is still loading and the metadata is stale
+    const prevTitleGeneric = previousScrapeCache && (
+      previousScrapeCache.title === 'YouTube' ||
+      previousScrapeCache.title.length < 20
+    );
+    
+    const isMetadataStale = urlChanged && previousScrapeCache && (
+      (previousScrapeCache.title === metadata.title && 
+       previousScrapeCache.metaDescription === metadata.metaDescription &&
+       previousScrapeCache.url !== href) ||
+      (prevTitleGeneric && 
+       href.includes(new URL(previousScrapeCache.url).hostname) &&
+       previousScrapeCache.url !== href)
+    );
     
     const contentLengthChange = previousScrapeCache ? 
       Math.abs(content.length - previousScrapeCache.contentLength) / previousScrapeCache.contentLength : 0;
@@ -193,11 +203,14 @@ export const scrapeCurrentPageWithRetry = async (maxRetries: number = 3): Promis
         currTitle: metadata.title.slice(0, 50),
         titleMatch: previousScrapeCache.title === metadata.title,
         descMatch: previousScrapeCache.metaDescription === metadata.metaDescription,
-        lengthChange: `${(contentLengthChange * 100).toFixed(1)}%`
+        lengthChange: `${(contentLengthChange * 100).toFixed(1)}%`,
+        prevTitleGeneric: prevTitleGeneric
       });
     }
     
-    const shouldRetry = isContentEmpty || (isMetadataStale && !isDrasticallyDifferent);
+    const shouldRetry = isContentEmpty || 
+                       (isMetadataStale && attempt < 2) ||  // Always retry at least once if metadata is stale
+                       (isMetadataStale && !isDrasticallyDifferent);  // Continue retrying if not drastically different
     
     if (shouldRetry) {
       console.log(`⚠️ Stale content detected`, { 
