@@ -1,8 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { PenLine, Loader2, Clock } from "lucide-react";
-import { Textarea } from "../ui/textarea";
+import { Loader2, Clock } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { normalizeUrlToDomain, saveIntention } from "@/utils/storage";
@@ -13,6 +12,7 @@ import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
 import { validateIntention } from '../../utils/intentionMatcher';
 import './overlay.css';
+import IntentionTextarea from '@/components/intention/IntentionTextarea';
 import { markNewIntentionSet } from '../../utils/intentionMonitor';
 
 interface FormState {
@@ -151,34 +151,6 @@ function InputContainer({
 //   );
 // }
 
-function TextareaWithStatus({ domain, intentionText, setIntentionText }: { 
-  domain: string;
-  intentionText: string;
-  setIntentionText: (value: string) => void;
-}) {
-  const { pending } = useFormStatus();
-  
-  return (
-    <Textarea 
-      name="intention"
-      value={intentionText}
-      onChange={(e) => setIntentionText(e.target.value)}
-      className="p-4 text-lg focus-visible:ring-0 border-border focus-visible:border-border resize-none focus:outline-none rounded-xl shadow-lg pl-10 pr-10" 
-      placeholder={`What is your intention for ${domain}?`}
-      required
-      // minLength={10}
-      disabled={pending}
-      aria-describedby="intention-help"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          const form = e.currentTarget.closest('form');
-          form?.requestSubmit();
-        }
-      }}
-    />
-  );
-}
 
 function TimeSelector({ domain, customMinutes, setCustomMinutes }: { 
   domain: string;
@@ -311,11 +283,10 @@ export default function IntentionOverlay() {
                   />
                 ) : (
                   <>
-                    <PenLine className="absolute left-4 top-4.5 size-4 text-muted-foreground z-10" />
-                    <TextareaWithStatus 
-                      domain={domain} 
-                      intentionText={intentionText}
-                      setIntentionText={setIntentionText}
+                    <IntentionTextarea
+                      domain={domain}
+                      value={intentionText}
+                      onChange={setIntentionText}
                     />
                   </>
                 )}
