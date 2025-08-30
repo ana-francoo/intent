@@ -288,31 +288,97 @@ export default function IntentionOverlay() {
           "absolute inset-0 z-0 bg-radial-[ellipse_80%_60%_at_50%_0%] from-orange-900/20 to-transparent to-70% transition-colors duration-1000"
         )}
       />
-      {/* Layout: if mismatch, space elements top/bottom; otherwise keep default */}
+      <Button
+        onClick={() => {
+          try {
+            const decodedTargetUrl = targetUrl
+              ? decodeURIComponent(targetUrl)
+              : "";
+            const triggering =
+              decodedTargetUrl ||
+              sessionStorage.getItem("intent_last_blocked_url") ||
+              "";
+            const prev = sessionStorage.getItem("intent_prev_url");
+            const prevPrev = sessionStorage.getItem("intent_prev_prev_url");
+            const safeFromSession = sessionStorage.getItem(
+              "intent_last_safe_url"
+            );
+            const safeFromParam = passedLastSafeUrl
+              ? decodeURIComponent(passedLastSafeUrl)
+              : "";
+            const safe = safeFromParam || safeFromSession || "";
+
+            console.log("🔙 Back button logic:", {
+              targetUrl,
+              decodedTargetUrl,
+              triggering,
+              safe,
+              safeFromParam,
+              safeFromSession,
+              prev,
+              prevPrev,
+            });
+
+            // If we have a safe URL and it's different from the triggering URL, go to safe
+            if (safe && safe !== triggering) {
+              console.log("✅ Redirecting to safe URL:", safe);
+              window.location.href = safe;
+              return;
+            }
+
+            if (prev && new URL(prev).href === new URL(triggering).href) {
+              if (prevPrev) {
+                console.log("↩️ Redirecting to prevPrev URL:", prevPrev);
+                window.location.href = prevPrev;
+                return;
+              }
+            }
+
+            // Go to previous URL if available
+            if (prev) {
+              console.log("↩️ Redirecting to prev URL:", prev);
+              window.location.href = prev;
+              return;
+            }
+          } catch (error) {
+            console.error("❌ Error in back button logic:", error);
+          }
+          // Fallbacks
+          if (targetUrl) {
+            console.log("🔄 Fallback: redirecting to targetUrl:", targetUrl);
+            window.location.href = targetUrl;
+          } else {
+            try {
+              console.log("🔄 Fallback: using browser back");
+              window.history.back();
+            } catch {}
+          }
+        }}
+        variant="ghost"
+        size="sm"
+        aria-label="Go back"
+        className="text-muted-foreground fixed left-6 top-6 pl-2 group gap-1 inline-flex items-center justify-center overflow-hidden"
+      >
+        <div className="mr-0 w-0 -translate-x-[100%] opacity-0 transition-all duration-200 group-hover:mr-0 group-hover:w-4 group-hover:translate-x-0 group-hover:opacity-100">
+          <ChevronLeftIcon className="size-4" />
+        </div>
+        <span>Back</span>
+      </Button>
       <div
         className={cn(
-          "relative w-full max-w-lg mx-auto flex flex-col items-center min-h-screen space-y-8 pt-[450px]",
+          "relative w-full max-w-lg mx-auto flex flex-col items-center min-h-screen space-y-12 pt-[350px]",
           state.success && "animate-slide-out-up delay-1500"
         )}
       >
         <div className="flex justify-center relative animate-slide-in-up">
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
-            <Flame
-              className={cn(
-                "scale-35 scale-x-45",
-                mismatchMode
-                  ? "animate-flame-ignition"
-                  : state.success
-                  ? "animate-flame-ignition"
-                  : "opacity-0 scale-0"
-              )}
-            />
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-16">
+            <Flame className="scale-60 scale-x-80 animate-flame-ignition" />
           </div>
           <img
             src={logo}
             alt="Logo"
             className={cn(
-              "size-24 opacity-80 transition-all duration-500",
+              "size-36 opacity-80 transition-all duration-500",
               (state.success || mismatchMode) && [
                 "rounded-full",
                 "bg-[radial-gradient(circle,color-mix(in_srgb,var(--color-orange-400)_15%,transparent)_60%,transparent_100%)]",
@@ -322,8 +388,7 @@ export default function IntentionOverlay() {
             )}
           />
         </div>
-
-        {mismatchMode && (
+        <div className="flex flex-col w-full gap-4">
           <div className="animate-slide-in-up text-center mt-4 max-w-prose px-4 mx-auto space-y-2">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/5 px-2 py-0.5 text-amber-200/70">
               <AlertTriangle className="size-3 opacity-80" />
@@ -337,144 +402,62 @@ export default function IntentionOverlay() {
               </p>
             )}
           </div>
-        )}
-
-        <Button
-          onClick={() => {
-            try {
-              const decodedTargetUrl = targetUrl
-                ? decodeURIComponent(targetUrl)
-                : "";
-              const triggering =
-                decodedTargetUrl ||
-                sessionStorage.getItem("intent_last_blocked_url") ||
-                "";
-              const prev = sessionStorage.getItem("intent_prev_url");
-              const prevPrev = sessionStorage.getItem(
-                "intent_prev_prev_url"
-              );
-              const safeFromSession = sessionStorage.getItem(
-                "intent_last_safe_url"
-              );
-              const safeFromParam = passedLastSafeUrl
-                ? decodeURIComponent(passedLastSafeUrl)
-                : "";
-              const safe = safeFromParam || safeFromSession || "";
-
-              console.log("🔙 Back button logic:", {
-                targetUrl,
-                decodedTargetUrl,
-                triggering,
-                safe,
-                safeFromParam,
-                safeFromSession,
-                prev,
-                prevPrev,
-              });
-
-              // If we have a safe URL and it's different from the triggering URL, go to safe
-              if (safe && safe !== triggering) {
-                console.log("✅ Redirecting to safe URL:", safe);
-                window.location.href = safe;
-                return;
-              }
-
-              if (prev && new URL(prev).href === new URL(triggering).href) {
-                if (prevPrev) {
-                  console.log("↩️ Redirecting to prevPrev URL:", prevPrev);
-                  window.location.href = prevPrev;
-                  return;
-                }
-              }
-
-              // Go to previous URL if available
-              if (prev) {
-                console.log("↩️ Redirecting to prev URL:", prev);
-                window.location.href = prev;
-                return;
-              }
-            } catch (error) {
-              console.error("❌ Error in back button logic:", error);
-            }
-            // Fallbacks
-            if (targetUrl) {
-              console.log(
-                "🔄 Fallback: redirecting to targetUrl:",
-                targetUrl
-              );
-              window.location.href = targetUrl;
-            } else {
-              try {
-                console.log("🔄 Fallback: using browser back");
-                window.history.back();
-              } catch {}
-            }
-          }}
-          variant="ghost"
-          size="sm"
-          aria-label="Go back"
-          className="text-muted-foreground fixed left-6 top-6 pl-2 group gap-1 inline-flex items-center justify-center overflow-hidden"
-        >
-          <div className="mr-0 w-0 -translate-x-[100%] opacity-0 transition-all duration-200 group-hover:mr-0 group-hover:w-4 group-hover:translate-x-0 group-hover:opacity-100">
-            <ChevronLeftIcon className="size-4" />
-          </div>
-          <span>Back</span>
-        </Button>
-        <form action={handleFormAction} className={cn("w-full")}>
-          <input type="hidden" name="targetUrl" value={targetUrl || ""} />
-          <div className="relative">
-            <div className="pl-8">
-              {!(state.success && !mismatchMode) ? (
-                <InputContainer shakeKey={shakeKey} state={state}>
-                  {!isTimeBasedCategory && (
-                    <div className="absolute top-0 flex w-full justify-center">
-                      <div className="h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000" />
-                    </div>
-                  )}
-                  {isTimeBasedCategory ? (
-                    <TimeSelector
-                      domain={domain}
-                      customMinutes={customMinutes}
-                      setCustomMinutes={setCustomMinutes}
-                    />
-                  ) : (
-                    <>
-                      <IntentionTextarea
+          <form action={handleFormAction} className={cn("w-full")}>
+            <input type="hidden" name="targetUrl" value={targetUrl || ""} />
+            <div className="relative">
+              <div className="pl-8">
+                {!(state.success && !mismatchMode) ? (
+                  <InputContainer shakeKey={shakeKey} state={state}>
+                    {!isTimeBasedCategory && (
+                      <div className="absolute top-0 flex w-full justify-center">
+                        <div className="h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000" />
+                      </div>
+                    )}
+                    {isTimeBasedCategory ? (
+                      <TimeSelector
                         domain={domain}
-                        value={intentionText}
-                        onChange={setIntentionText}
-                        placeholder={
-                          mismatchMode
-                            ? `Update your intention for ${domain}`
-                            : undefined
-                        }
+                        customMinutes={customMinutes}
+                        setCustomMinutes={setCustomMinutes}
                       />
-                    </>
-                  )}
-                </InputContainer>
-              ) : (
-                <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
-                  <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
-                    {state.intention?.startsWith("block:")
-                      ? `Blocked for ${state.intention.replace(
-                          "block:",
-                          ""
-                        )} minutes`
-                      : state.intention}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {state.intention?.startsWith("block:")
-                      ? `Intent blocked on ${domain}`
-                      : `Your intention for ${domain}`}
-                  </p>
-                </div>
-              )}
-              {state.error && (
-                <div className="text-red-900 text-sm mt-2">{state.error}</div>
-              )}
+                    ) : (
+                      <>
+                        <IntentionTextarea
+                          domain={domain}
+                          value={intentionText}
+                          onChange={setIntentionText}
+                          placeholder={
+                            mismatchMode
+                              ? `Update your intention for ${domain}`
+                              : undefined
+                          }
+                        />
+                      </>
+                    )}
+                  </InputContainer>
+                ) : (
+                  <div className="animate-slide-in-up text-center mt-6 max-w-prose px-4 mx-auto">
+                    <p className="text-lg leading-relaxed break-words overflow-hidden font-medium text-orange-500/80">
+                      {state.intention?.startsWith("block:")
+                        ? `Blocked for ${state.intention.replace(
+                            "block:",
+                            ""
+                          )} minutes`
+                        : state.intention}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {state.intention?.startsWith("block:")
+                        ? `Intent blocked on ${domain}`
+                        : `Your intention for ${domain}`}
+                    </p>
+                  </div>
+                )}
+                {state.error && (
+                  <div className="text-red-900 text-sm mt-2">{state.error}</div>
+                )}
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
