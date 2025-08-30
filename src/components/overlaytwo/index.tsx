@@ -229,6 +229,7 @@ function TimeSelector({ domain, customMinutes, setCustomMinutes }: {
 export default function IntentionOverlay() {
   const [searchParams] = useSearchParams();
   const targetUrl = searchParams.get('targetUrl');
+  const passedLastSafeUrl = searchParams.get('lastSafeUrl');
   const mismatchMode = searchParams.get('intentionMismatch') === 'true';
   const domain = normalizeUrlToDomain(targetUrl || '');
   const category = targetUrl ? getWebsiteCategory(targetUrl) : 'other';
@@ -338,34 +339,58 @@ export default function IntentionOverlay() {
               className="overlay-back-horizontal top-1/2 -translate-y-1/2 rounded-full px-3 py-1 text-white/80 hover:text-white hover:bg-white/10"
               onClick={() => {
                 try {
-                  // If the last URL equals the triggering URL, go back two steps
-                  const triggering = targetUrl || sessionStorage.getItem('intent_last_blocked_url') || '';
+                  const decodedTargetUrl = targetUrl ? decodeURIComponent(targetUrl) : '';
+                  const triggering = decodedTargetUrl || sessionStorage.getItem('intent_last_blocked_url') || '';
                   const prev = sessionStorage.getItem('intent_prev_url');
                   const prevPrev = sessionStorage.getItem('intent_prev_prev_url');
-                  const safe = sessionStorage.getItem('intent_last_safe_url');
+                  const safeFromSession = sessionStorage.getItem('intent_last_safe_url');
+                  const safeFromParam = passedLastSafeUrl ? decodeURIComponent(passedLastSafeUrl) : '';
+                  const safe = safeFromParam || safeFromSession || '';
 
+                  console.log('🔙 Back button logic:', {
+                    targetUrl,
+                    decodedTargetUrl,
+                    triggering,
+                    safe,
+                    safeFromParam,
+                    safeFromSession,
+                    prev,
+                    prevPrev
+                  });
+
+                  // If we have a safe URL and it's different from the triggering URL, go to safe
                   if (safe && safe !== triggering) {
+                    console.log('✅ Redirecting to safe URL:', safe);
                     window.location.href = safe;
                     return;
                   }
 
                   if (prev && new URL(prev).href === new URL(triggering).href) {
                     if (prevPrev) {
+                      console.log('↩️ Redirecting to prevPrev URL:', prevPrev);
                       window.location.href = prevPrev;
                       return;
                     }
                   }
 
+                  // Go to previous URL if available
                   if (prev) {
+                    console.log('↩️ Redirecting to prev URL:', prev);
                     window.location.href = prev;
                     return;
                   }
-                } catch {}
+                } catch (error) {
+                  console.error('❌ Error in back button logic:', error);
+                }
                 // Fallbacks
                 if (targetUrl) {
+                  console.log('🔄 Fallback: redirecting to targetUrl:', targetUrl);
                   window.location.href = targetUrl;
                 } else {
-                  try { window.history.back(); } catch {}
+                  try {
+                    console.log('🔄 Fallback: using browser back');
+                    window.history.back();
+                  } catch {}
                 }
               }}
               aria-label="Go back"

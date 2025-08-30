@@ -72,8 +72,9 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       const isStories = path.startsWith('/stories/');
       const isHighlights = path.startsWith('/stories/highlights/');
       if (isInstagram && isStories && !isHighlights) {
-        const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
-        console.log('📸 RouteInterceptor: Instagram stories detected — redirecting to overlay-two', { overlayUrl });
+        const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
+        const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}` + (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
+        console.log('📸 RouteInterceptor: Instagram stories detected — redirecting to overlay-two', { overlayUrl, lastSafeUrl: lastSafeUrl || null });
         window.location.href = overlayUrl;
         return;
       }
@@ -124,7 +125,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     
     if (intentionData && intentionData.intention) {
       console.log('📡 RouteInterceptor: intention exists — starting monitoring');
-      try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
+      // Do not overwrite last safe here; the monitor will update it on successful matches
       sessionStorage.setItem('intent_monitoring_active', 'true');
       const { startIntentionMonitoring } = await import('./intentionMonitor');
       await startIntentionMonitoring();

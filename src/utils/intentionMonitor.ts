@@ -71,6 +71,12 @@ export class IntentionMonitor {
       console.log('🆕 New intention detected - performing immediate check');
       sessionStorage.removeItem(NEW_INTENTION_FLAG_KEY);
       await this.performImmediateCheck();
+    } else {
+      const currentUrl = window.location.href;
+      if (!sessionStorage.getItem('intent_last_safe_url')) {
+        sessionStorage.setItem('intent_last_safe_url', currentUrl);
+        console.log('💾 Stored initial safe URL on monitoring start:', currentUrl);
+      }
     }
 
     console.log('🧭 IntentionMonitor: initial activity check');
@@ -156,6 +162,8 @@ export class IntentionMonitor {
       if (websiteCategory === 'social' || websiteCategory === 'entertainment') {
         // For social/entertainment sites, skip immediate content check; monitor doom scrolling instead
         console.log('📱 Social/Entertainment site detected - skipping immediate content check');
+        sessionStorage.setItem('intent_last_safe_url', currentUrl);
+        console.log('💾 Stored initial safe URL (social/entertainment):', currentUrl);
         return;
       } else {
         // For non-social sites, perform immediate content check
@@ -259,18 +267,26 @@ export class IntentionMonitor {
       if (result.match == false){
         // User is doing something different than intended
         console.warn('🚫 Intention mismatch detected — redirecting to overlay');
+        const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
         this.stopMonitoring();
         try {
           const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') +
-            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}`;
-          console.log('🎯 Intention mismatch: redirecting to overlay', { overlayUrl });
+            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}` +
+            (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
+          console.log('🎯 Intention mismatch: redirecting to overlay', { 
+            overlayUrl,
+            currentMismatchedUrl: currentUrl,
+            lastSafeUrl: lastSafeUrl || null
+          });
           window.location.href = overlayUrl;
         } catch (e) {
           console.error('❌ Failed to redirect to overlay on mismatch', e);
         }
       } else {
-        // User is still on track, keep monitoring
+        // User is still on track, keep monitoring and update safe URL
         console.log('✅ Intention matches — continuing monitoring');
+        sessionStorage.setItem('intent_last_safe_url', currentUrl);
+        console.log('💾 Stored safe URL:', currentUrl);
       }
       console.log('🔍 checkCurrentActivity completed successfully');
     } catch (error) {
@@ -377,9 +393,11 @@ export class IntentionMonitor {
           reason: distanceTrigger ? 'distance>=2screens' : (this.wheelEventCount >= wheelCountThreshold ? 'wheelCount' : 'fallbackDistance'),
         });
         try {
+          const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
           const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + 
-            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}`;
-          console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl });
+            `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}` +
+            (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
+          console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl, lastSafeUrl: lastSafeUrl || null });
           window.location.href = overlayUrl;
         } catch (e) {
           console.error('❌ DoomScrolling: failed to redirect to overlay', e);
