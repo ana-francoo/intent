@@ -176,6 +176,12 @@ export const scrapeCurrentPageWithRetry = async (maxRetries: number = 3): Promis
     
     const isContentEmpty = !content || content === 'blank' || content.length < 50;
     
+    const currTitleGeneric = metadata.title === 'YouTube' || 
+                            metadata.title === 'Reddit' ||
+                            metadata.title === 'Twitter' ||
+                            metadata.title === 'X' ||
+                            metadata.title.length < 20;
+    
     // for some reason the title may change, but the metadata does not 
     // so this is an indication that the new page is still loading and the metadata is stale
     const prevTitleGeneric = previousScrapeCache && (
@@ -209,12 +215,14 @@ export const scrapeCurrentPageWithRetry = async (maxRetries: number = 3): Promis
     }
     
     const shouldRetry = isContentEmpty || 
+                       currTitleGeneric ||  // Retry if current title is generic (page still loading)
                        (isMetadataStale && attempt < 2) ||  // Always retry at least once if metadata is stale
                        (isMetadataStale && !isDrasticallyDifferent);  // Continue retrying if not drastically different
     
     if (shouldRetry) {
       console.log(`⚠️ Stale content detected`, { 
         empty: isContentEmpty,
+        currTitleGeneric: currTitleGeneric,
         metadataStale: isMetadataStale,
         drasticallyDifferent: isDrasticallyDifferent,
         contentLength: content.length 
