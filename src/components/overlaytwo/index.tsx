@@ -339,92 +339,90 @@ export default function IntentionOverlay() {
           </div>
         )}
 
-        {/* Input area (bottom in mismatch) with back control aligned to input */}
+        <Button
+          onClick={() => {
+            try {
+              const decodedTargetUrl = targetUrl
+                ? decodeURIComponent(targetUrl)
+                : "";
+              const triggering =
+                decodedTargetUrl ||
+                sessionStorage.getItem("intent_last_blocked_url") ||
+                "";
+              const prev = sessionStorage.getItem("intent_prev_url");
+              const prevPrev = sessionStorage.getItem(
+                "intent_prev_prev_url"
+              );
+              const safeFromSession = sessionStorage.getItem(
+                "intent_last_safe_url"
+              );
+              const safeFromParam = passedLastSafeUrl
+                ? decodeURIComponent(passedLastSafeUrl)
+                : "";
+              const safe = safeFromParam || safeFromSession || "";
+
+              console.log("🔙 Back button logic:", {
+                targetUrl,
+                decodedTargetUrl,
+                triggering,
+                safe,
+                safeFromParam,
+                safeFromSession,
+                prev,
+                prevPrev,
+              });
+
+              // If we have a safe URL and it's different from the triggering URL, go to safe
+              if (safe && safe !== triggering) {
+                console.log("✅ Redirecting to safe URL:", safe);
+                window.location.href = safe;
+                return;
+              }
+
+              if (prev && new URL(prev).href === new URL(triggering).href) {
+                if (prevPrev) {
+                  console.log("↩️ Redirecting to prevPrev URL:", prevPrev);
+                  window.location.href = prevPrev;
+                  return;
+                }
+              }
+
+              // Go to previous URL if available
+              if (prev) {
+                console.log("↩️ Redirecting to prev URL:", prev);
+                window.location.href = prev;
+                return;
+              }
+            } catch (error) {
+              console.error("❌ Error in back button logic:", error);
+            }
+            // Fallbacks
+            if (targetUrl) {
+              console.log(
+                "🔄 Fallback: redirecting to targetUrl:",
+                targetUrl
+              );
+              window.location.href = targetUrl;
+            } else {
+              try {
+                console.log("🔄 Fallback: using browser back");
+                window.history.back();
+              } catch {}
+            }
+          }}
+          variant="ghost"
+          size="sm"
+          aria-label="Go back"
+          className="text-muted-foreground fixed left-6 top-6 pl-2 group gap-1 inline-flex items-center justify-center overflow-hidden"
+        >
+          <div className="mr-0 w-0 -translate-x-[100%] opacity-0 transition-all duration-200 group-hover:mr-0 group-hover:w-4 group-hover:translate-x-0 group-hover:opacity-100">
+            <ChevronLeftIcon className="size-4" />
+          </div>
+          <span>Back</span>
+        </Button>
         <form action={handleFormAction} className={cn("w-full")}>
           <input type="hidden" name="targetUrl" value={targetUrl || ""} />
           <div className="relative">
-            <Button
-              onClick={() => {
-                try {
-                  const decodedTargetUrl = targetUrl
-                    ? decodeURIComponent(targetUrl)
-                    : "";
-                  const triggering =
-                    decodedTargetUrl ||
-                    sessionStorage.getItem("intent_last_blocked_url") ||
-                    "";
-                  const prev = sessionStorage.getItem("intent_prev_url");
-                  const prevPrev = sessionStorage.getItem(
-                    "intent_prev_prev_url"
-                  );
-                  const safeFromSession = sessionStorage.getItem(
-                    "intent_last_safe_url"
-                  );
-                  const safeFromParam = passedLastSafeUrl
-                    ? decodeURIComponent(passedLastSafeUrl)
-                    : "";
-                  const safe = safeFromParam || safeFromSession || "";
-
-                  console.log("🔙 Back button logic:", {
-                    targetUrl,
-                    decodedTargetUrl,
-                    triggering,
-                    safe,
-                    safeFromParam,
-                    safeFromSession,
-                    prev,
-                    prevPrev,
-                  });
-
-                  // If we have a safe URL and it's different from the triggering URL, go to safe
-                  if (safe && safe !== triggering) {
-                    console.log("✅ Redirecting to safe URL:", safe);
-                    window.location.href = safe;
-                    return;
-                  }
-
-                  if (prev && new URL(prev).href === new URL(triggering).href) {
-                    if (prevPrev) {
-                      console.log("↩️ Redirecting to prevPrev URL:", prevPrev);
-                      window.location.href = prevPrev;
-                      return;
-                    }
-                  }
-
-                  // Go to previous URL if available
-                  if (prev) {
-                    console.log("↩️ Redirecting to prev URL:", prev);
-                    window.location.href = prev;
-                    return;
-                  }
-                } catch (error) {
-                  console.error("❌ Error in back button logic:", error);
-                }
-                // Fallbacks
-                if (targetUrl) {
-                  console.log(
-                    "🔄 Fallback: redirecting to targetUrl:",
-                    targetUrl
-                  );
-                  window.location.href = targetUrl;
-                } else {
-                  try {
-                    console.log("🔄 Fallback: using browser back");
-                    window.history.back();
-                  } catch {}
-                }
-              }}
-              variant="ghost"
-              size="sm"
-              aria-label="Go back"
-              className="text-muted-foreground fixed left-6 top-6 pl-2 group gap-1 inline-flex items-center justify-center overflow-hidden"
-            >
-              <div className="mr-0 w-0 -translate-x-[100%] opacity-0 transition-all duration-200 group-hover:mr-0 group-hover:w-4 group-hover:translate-x-0 group-hover:opacity-100">
-                <ChevronLeftIcon className="size-4" />
-              </div>
-              <span>Back</span>
-            </Button>
-
             <div className="pl-8">
               {!(state.success && !mismatchMode) ? (
                 <InputContainer shakeKey={shakeKey} state={state}>
