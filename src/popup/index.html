@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
+      /* Default: Hide popup when iframe can be injected */
       html, body {
         width: 0px;
         height: 0px;
@@ -11,6 +12,13 @@
         padding: 0;
         overflow-x: hidden;
         background-color: transparent;
+      }
+      
+      /* Show popup when iframe cannot be injected (e.g., chrome:// pages) */
+      html.show-popup, html.show-popup body {
+        width: 400px;
+        height: 600px;
+        overflow: auto;
       }
       
       /* Override styles when opened as a tab (for Tour/Welcome) */

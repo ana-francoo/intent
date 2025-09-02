@@ -14,7 +14,6 @@ export default function PopupLauncher() {
     const isInsideIframe = window.parent !== window;
     
     if (isInsideIframe) {
-      // Already inside floating popup iframe, navigate to dashboard
       navigate('/dashboard');
       return;
     }
@@ -22,16 +21,13 @@ export default function PopupLauncher() {
     const isExtensionUrl = location.href.includes('chrome-extension://');
     const isPopupWindow = isExtensionUrl && window.outerWidth <= 500 && window.outerHeight <= 700;
     
-    // If we're in a popup window, check the active tab to make decisions
     if (isPopupWindow) {
-      // Query the active tab to check if we're on the tour page
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTabUrl = tabs[0]?.url || '';
         const isOnTourPage = activeTabUrl.includes('#/tour') || activeTabUrl.includes('tour=1');
+        const isRestrictedPage = activeTabUrl.startsWith('chrome://')
         
-        // Check auth and tour page status
         if (!session && !isOnTourPage) {
-          // Not authenticated and not on tour - open welcome page in new tab
           chrome.tabs.create({
             url: chrome.runtime.getURL('src/popup/index.html#/welcome'),
             active: true
@@ -40,19 +36,29 @@ export default function PopupLauncher() {
           return;
         }
         
-        // Has session OR on tour page - create floating iframe on the actual webpage
+        if (isRestrictedPage) {
+          document.documentElement.classList.add('show-popup');
+          navigate(isOnTourPage ? '/tour-dashboard' : '/dashboard');
+          return;
+        }
+        
         chrome.runtime.sendMessage({
           type: 'CREATE_FLOATING_IFRAME_ON_TAB',
           route: isOnTourPage ? '/tour-dashboard' : '/dashboard',
           skipAuth: isOnTourPage
-        }, () => {
-          window.close();
+        }, (response) => {
+          if (response?.success) {
+            window.close();
+          } else {
+            console.log('Cannot inject iframe, showing popup instead:', response?.error);
+            document.documentElement.classList.add('show-popup');
+            navigate(isOnTourPage ? '/tour-dashboard' : '/dashboard');
+          }
         });
       });
       return;
     }
     
-   // Not in popup window or extension tab - just navigate normally
     navigate('/dashboard');
   }, [navigate, session, isLoading]);
 
