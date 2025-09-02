@@ -5,14 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       html, body {
-        width: 400px;
-        min-width: 400px;
-        max-width: 450px;
-        height: 600px;
+        width: 0px;
+        height: 0px;
         margin: 0;
         padding: 0;
-        
         overflow-x: hidden;
+        background-color: transparent;
+      }
+      
+      /* Override styles when opened as a tab (for Tour/Welcome) */
+      @media (min-width: 451px) {
+        html, body {
+          width: 100%;
+          min-width: unset;
+          max-width: unset;
+          height: 100vh;
+        }
       }
     </style>
   </head>

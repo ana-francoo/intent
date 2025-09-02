@@ -33,7 +33,7 @@ export default function PopupLauncher() {
         if (!session && !isOnTourPage) {
           // Not authenticated and not on tour - open welcome page in new tab
           chrome.tabs.create({
-            url: chrome.runtime.getURL('src/popup/landing.html#/welcome'),
+            url: chrome.runtime.getURL('src/popup/index.html#/welcome'),
             active: true
           });
           window.close();

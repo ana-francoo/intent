@@ -45,7 +45,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     console.log("[Background] Opening welcome page...");
     chrome.tabs
       .create({
-        url: chrome.runtime.getURL("src/popup/landing.html#/welcome"),
+        url: chrome.runtime.getURL("src/popup/index.html#/welcome"),
       })
       .then((tab) => {
         console.log("[Background] Welcome page tab created:", tab);
@@ -82,7 +82,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     if (!isAuthenticated) {
       console.log("🚀 User not authenticated, opening welcome page in new tab...");
       chrome.tabs.create({
-        url: chrome.runtime.getURL("src/popup/landing.html#/welcome"),
+        url: chrome.runtime.getURL("src/popup/index.html#/welcome"),
         active: true
       });
       return;
@@ -131,7 +131,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
       try {
         // Get the actual content script file from the manifest
-        const contentScriptFile = chrome.runtime.getManifest().content_scripts?.[1]?.js?.[0];
+        const contentScriptFile = chrome.runtime.getManifest().content_scripts?.[0]?.js?.[0];
         if (contentScriptFile) {
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
@@ -199,7 +199,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } else {
         // Open Tour in new tab
         const tab = await chrome.tabs.create({
-          url: chrome.runtime.getURL("src/popup/landing.html#/tour"),
+          url: chrome.runtime.getURL("src/popup/index.html#/tour"),
           active: true
         });
         
@@ -278,7 +278,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         ? route
         : `/${route}`;
       const url = chrome.runtime.getURL(
-        `landing.html#${normalizedRoute}`
+        `index.html#${normalizedRoute}`
       );
       chrome.tabs
         .create({ url })
@@ -341,7 +341,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         try {
           // Get the content script file from manifest
           const manifest = chrome.runtime.getManifest();
-          const contentScript = manifest.content_scripts?.[1]?.js?.[0];
+          const contentScript = manifest.content_scripts?.[0]?.js?.[0];
           
           if (contentScript) {
             await chrome.scripting.executeScript({
@@ -418,7 +418,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         try {
           // Get the content script file from manifest
           const manifest = chrome.runtime.getManifest();
-          const contentScript = manifest.content_scripts?.[1]?.js?.[0];
+          const contentScript = manifest.content_scripts?.[0]?.js?.[0];
           
           if (contentScript) {
             await chrome.scripting.executeScript({

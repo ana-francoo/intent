@@ -226,7 +226,7 @@ export function createFloatingPopup(options: FloatingPopupOptions = {}) {
     background: transparent;
   `;
   
-  const url = chrome.runtime.getURL('src/popup/landing.html');
+  const url = chrome.runtime.getURL('src/popup/index.html');
   iframe.src = `${url}#${route || '/'}`;
   
   element.appendChild(iframe);

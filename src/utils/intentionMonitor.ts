@@ -270,7 +270,7 @@ export class IntentionMonitor {
         const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
         this.stopMonitoring();
         try {
-          const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') +
+          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') +
             `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}` +
             (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
           console.log('🎯 Intention mismatch: redirecting to overlay', { 
@@ -394,7 +394,7 @@ export class IntentionMonitor {
         });
         try {
           const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
-          const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + 
+          const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
             `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(window.location.href)}` +
             (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
           console.log('🎯 DoomScrolling: redirecting to mismatch overlay', { overlayUrl, lastSafeUrl: lastSafeUrl || null });
@@ -432,7 +432,7 @@ export class IntentionMonitor {
   }
   
   // private async triggerDoomScrollingIntervention(): Promise<void> { // unused helper kept for future
-  //   const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + 
+  //   const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + 
   //     `#/overlay?doomScrolling=true&targetUrl=${encodeURIComponent(window.location.href)}`;
   //   window.location.href = overlayUrl;
   // }

@@ -58,29 +58,4 @@ export const CONFIG = {
     AUTO_CHECK_ON_NAVIGATION: true,
     CHECK_INTERVAL: 5000, // 5 seconds between checks
   }
-};
-
-// Configuration loaded
-
-// Helper function to check if AI features are available
-export const isAIFeaturesEnabled = (): boolean => {
-  return !!CONFIG.OPENROUTER.PROXY_URL;
-};
-
-// Helper function to validate configuration
-export const validateConfig = (): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-  
-  if (!CONFIG.OPENROUTER.PROXY_URL) {
-    errors.push('OPENROUTER_PROXY_URL is not configured.');
-  }
-  
-  if (CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD < 0 || CONFIG.INTENTION_MATCHING.CONFIDENCE_THRESHOLD > 1) {
-    errors.push('INTENTION_CONFIDENCE_THRESHOLD must be between 0 and 1.');
-  }
-  
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
 }; 

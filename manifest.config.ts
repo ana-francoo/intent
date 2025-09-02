@@ -23,15 +23,14 @@ export default defineManifest({
       48: "logo.png",
     },
     default_title: "Intent",
-    default_popup: "src/popup/landing.html",
+    default_popup: "src/popup/index.html",
   },
   web_accessible_resources: [
     {
       resources: [
         "src/assets/logo2.png",
         "src/assets/pin-open.png",
-        "src/popup/landing.html",
-        "vendor/*",
+        "src/popup/index.html",
       ],
       matches: ["https://*/*"],
     },
@@ -40,11 +39,6 @@ export default defineManifest({
     service_worker: "src/background.ts",
   },
   content_scripts: [
-    {
-      js: ["src/content/earlyInterceptor.ts"],
-      matches: ["https://*/*"],
-      run_at: "document_start",
-    },
     {
       js: ["src/content/main.tsx"],
       matches: ["https://*/*"],

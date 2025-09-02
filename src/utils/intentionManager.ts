@@ -169,36 +169,6 @@ export const checkIntentionStatus = async (url: string): Promise<{
   return { action: 'show_conflict', activeIntention, domain };
 };
 
-/**
- * Get time remaining for active intention
- */
-export const getTimeRemaining = async (): Promise<number> => {
-  const activeIntention = await getActiveIntention();
-  if (!activeIntention) {
-    return 0;
-  }
-  
-  const now = Date.now();
-  return Math.max(0, activeIntention.expiresAt - now);
-};
-
-/**
- * Extend the current intention timer (for AI matching success)
- */
-export const extendIntentionTimer = async (additionalMs: number = 60 * 60 * 1000): Promise<void> => {
-  const activeIntention = await getActiveIntention();
-  if (!activeIntention) {
-    return;
-  }
-  
-  const newExpiresAt = activeIntention.expiresAt + additionalMs;
-  const updatedIntention: ActiveIntention = {
-    ...activeIntention,
-    expiresAt: newExpiresAt
-  };
-  
-  await chrome.storage.local.set({ active_intention: updatedIntention });
-};
 
 // Helper function to normalize URL to domain (re-export from storage)
 export { normalizeUrlToDomain };

@@ -26,14 +26,6 @@ export default function App() {
         <Route path="/overlay-two" element={<OverlayTwo />} />
         {/* Back-compat: keep /overlay pointing to overlay-two (mismatch style) */}
         <Route path="/overlay" element={<OverlayTwo />} />
-        {/* <Route path="subscription-test" element={<SubscriptionTest />} /> */}
-        {/* <Route path="*" element={<Navigate to="/dashboard" replace />} /> */}
-        {/* I don't think these routes are being used, confirming before can be removed */}
-        {/* <Route path="/home" element={<Home />} /> */}
-        {/* <Route path="/auth" element={<Login onAuthSuccess={handleAuthSuccess} />} /> */}
-        {/* <Route path="/website-blocking" element={<WebsiteBlocking onSave={() => {}} />} /> */}
-        {/* <Route path="/main" element={<PopoverDashboard />} /> */}
-        {/* <Route path="/smoke-test" element={<Smoke />} /> */}
       </Routes>
     </>
   )

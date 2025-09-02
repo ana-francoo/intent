@@ -7,11 +7,9 @@ import manifest from './manifest.config.js';
 import { name, version } from './package.json';
 import path from "path";
 import tailwindcss from '@tailwindcss/vite'
-import buildPopupPlugin from './vite-plugin-build-popup'
 
 
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
   
   console.log('Environment mode:', mode);
@@ -29,7 +27,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       crx({ manifest }),
-      buildPopupPlugin(),
       zip({ outDir: 'release', outFileName: `crx-${name}-${version}.zip` }),
       tailwindcss()
     ],
@@ -44,10 +41,7 @@ export default defineConfig(({ mode }) => {
         skipErrorOverlay: true,
       },
     },
-
-    // Define global constants for the extension
     define: {
-      // Make environment variables available to the extension
       'process.env.OPENROUTER_PROXY_URL': JSON.stringify(env.OPENROUTER_PROXY_URL || 'https://useintent.app/api/openrouter'),
       'process.env.OPENROUTER_MODEL': JSON.stringify(env.OPENROUTER_MODEL || 'mistralai/mistral-small-3.2-24b-instruct:free'),
       'process.env.INTENTION_CONFIDENCE_THRESHOLD': JSON.stringify(env.INTENTION_CONFIDENCE_THRESHOLD || '0.7'),

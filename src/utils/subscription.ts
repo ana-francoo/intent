@@ -150,30 +150,6 @@ export const createPolarCheckout = async () => {
 };
 
 /**
- * Redirect to Polar Customer Portal for subscription management
- */
-export const openCustomerPortal = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-
-    const portalUrl = `${CHECKOUT_URL.replace('/checkout', '/portal')}?userId=${user.id}`;
-    
-    console.log('Redirecting to customer portal:', portalUrl);
-    window.open(portalUrl, '_blank');
-    
-    return portalUrl;
-    
-  } catch (error) {
-    console.error('Error opening customer portal:', error);
-    throw error;
-  }
-};
-
-/**
  * Format remaining time for display
  */
 export const formatTimeRemaining = (daysRemaining: number): string => {
@@ -184,13 +160,4 @@ export const formatTimeRemaining = (daysRemaining: number): string => {
   } else {
     return `${daysRemaining} days remaining`;
   }
-};
-
-/**
- * Get trial progress percentage (0-100)
- */
-export const getTrialProgress = (daysRemaining: number): number => {
-  const totalTrialDays = 14;
-  const daysUsed = totalTrialDays - daysRemaining;
-  return Math.min(100, Math.max(0, (daysUsed / totalTrialDays) * 100));
 }; 

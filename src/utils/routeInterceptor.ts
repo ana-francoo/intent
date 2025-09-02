@@ -1,5 +1,4 @@
 import { getIntention, normalizeUrlToDomain, isUrlBlocked } from './storage';
-// import { shouldCheckIntentionForUrl } from './urlHandlers';
 import { hasExtensionAccess } from './subscription';
 import { checkExistingSession } from './auth';
 import { markNewIntentionSet } from './intentionMonitor';
@@ -73,7 +72,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       const isHighlights = path.startsWith('/stories/highlights/');
       if (isInstagram && isStories && !isHighlights) {
         const lastSafeUrl = sessionStorage.getItem('intent_last_safe_url') || '';
-        const overlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}` + (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
+        const overlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-two?intentionMismatch=true&targetUrl=${encodeURIComponent(currentUrl)}` + (lastSafeUrl ? `&lastSafeUrl=${encodeURIComponent(lastSafeUrl)}` : '');
         console.log('📸 RouteInterceptor: Instagram stories detected — redirecting to overlay-two', { overlayUrl, lastSafeUrl: lastSafeUrl || null });
         window.location.href = overlayUrl;
         return;
@@ -105,17 +104,6 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
       }
     } catch {}
 
-    // For blocked sites, always proceed to intention prompt/monitoring
-    // even if custom URL handlers would normally skip checks (e.g., social feeds)
-    // const urlHandlerResult = shouldCheckIntentionForUrl(currentUrl);
-    // console.log('🎯 RouteInterceptor: URL handler result', urlHandlerResult);
-    
-    // if (!urlHandlerResult.shouldCheckIntention) {
-    //   console.log('✅ RouteInterceptor: URL handler says no intention needed', { 
-    //     reason: urlHandlerResult.reason 
-    //   });
-    //   return; // Allow access without intention prompt
-    // }
     // Check if there's an existing intention for this URL
     const intentionData = await getIntention(currentUrl);
     console.log('🧠 RouteInterceptor: intention lookup', {
@@ -153,7 +141,7 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     }
 
     // Redirect to first overlay page for setting/refining intention
-    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/landing.html') + `#/overlay-one?targetUrl=${encodeURIComponent(currentUrl)}`;
+    const extensionOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-one?targetUrl=${encodeURIComponent(currentUrl)}`;
     console.log('🎯 RouteInterceptor: prompting overlay', { extensionOverlayUrl });
     try { sessionStorage.setItem('intent_last_blocked_url', currentUrl); } catch {}
     window.location.href = extensionOverlayUrl;
