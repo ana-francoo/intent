@@ -194,6 +194,8 @@ const Tour = () => {
         
         // Track tour step across handlers (0 initial, 1 after arrow-block, 2 after settings prompt, 3 after settings opened)
         let tourStep = 0;
+        
+        let updateAccountabilityPosition: () => void;
 
         // Listen for settings-opened messages from the iframe to hide prompts immediately
         const onMessage = (evt: MessageEvent) => {
@@ -204,6 +206,7 @@ const Tour = () => {
             if (settingsText) settingsText.style.display = 'none';
             const btn = document.querySelector('.tour-continue-button') as HTMLElement | null;
             if (btn) btn.classList.remove('dimmed');
+            if (updateAccountabilityPosition) updateAccountabilityPosition();
             const accSvg = document.querySelector('.accountability-svg') as HTMLElement | null;
             if (accSvg) accSvg.style.display = 'block';
             const accText = document.querySelector('.text-accountability') as HTMLElement | null;
@@ -340,6 +343,34 @@ const Tour = () => {
               anchor.style.setProperty('--press-top', `${topPct}%`);
             } catch {}
           };
+          
+          updateAccountabilityPosition = () => {
+            try {
+              const iframe = document.querySelector('#floating-popup-container iframe') as HTMLIFrameElement | null;
+              if (!iframe || !iframe.contentDocument) return;
+              const card = iframe.contentDocument.getElementById('tour-accountability-card') as HTMLElement | null;
+              if (!card) return;
+              const cardRect = card.getBoundingClientRect();
+              const iframeRect = iframe.getBoundingClientRect();
+              const anchorRect = anchor.getBoundingClientRect();
+              
+              // Calculate position for arrow to point to the accountability card from the right
+              const cardCenterY = iframeRect.top + cardRect.top + cardRect.height / 2;
+              
+              // Position arrow closer to the right edge of the iframe
+              const leftPx = iframeRect.left + iframeRect.width - anchorRect.left - 150; // Move arrow closer to iframe
+              const topPx = cardCenterY - anchorRect.top - 150; // Center vertically on card
+              
+              anchor.style.setProperty('--accountability-left', `${leftPx}px`);
+              anchor.style.setProperty('--accountability-top', `${topPx}px`);
+              
+              // Position text further to the right with more spacing from arrow
+              const textLeftPx = iframeRect.left + iframeRect.width - anchorRect.left + 50; // More space from arrow
+              const textTopPx = cardCenterY - anchorRect.top - 50;
+              anchor.style.setProperty('--accountability-text-left', `${textLeftPx}px`);
+              anchor.style.setProperty('--accountability-text-top', `${textTopPx}px`);
+            } catch {}
+          };
           syncAnchorToPopup();
           updatePressFromIframe();
           try {
@@ -396,6 +427,8 @@ const Tour = () => {
               return;
             }
             if (tourStep === 3) {
+              // Update accountability positioning before showing
+              updateAccountabilityPosition();
               // Hide accountability visuals and show subscription arrow/text
               const accSvg = document.querySelector('.accountability-svg') as HTMLElement | null;
               if (accSvg) accSvg.style.display = 'none';

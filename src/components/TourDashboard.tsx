@@ -444,6 +444,7 @@ const TourDashboard = () => {
           >
             <CardHeader
               className="rounded-t-xl"
+              id="tour-accountability-card"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(90, 53, 30, 0.6) 0%, rgba(58, 35, 21, 0.7) 30%, rgba(30, 18, 11, 0.8) 60%, rgba(90, 53, 30, 0.5) 100%)",

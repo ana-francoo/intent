@@ -1,7 +1,7 @@
 .accountability-svg {
   position: absolute;
-  top: 280px;
-  left: 230px; /* to the left of the dashboard */
+  top: var(--accountability-top, 280px);
+  left: var(--accountability-left, 230px);
   width: 360px;
   height: 360px;
   transform: scaleY(0.8);
@@ -11,8 +11,8 @@
 
 .text-accountability {
   position: absolute;
-  top: 400px;
-  left: 450px;
+  top: var(--accountability-text-top, 400px);
+  left: var(--accountability-text-left, 450px);
   max-width: 260px;
   color: black;
   padding: 8px 12px;
