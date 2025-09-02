@@ -36,6 +36,19 @@ export default function PopupLauncher() {
           return;
         }
         
+        if (isOnTourPage && !isRestrictedPage) {
+          chrome.tabs.sendMessage(tabs[0].id!, {
+            type: 'CREATE_VISUAL_ELEMENT',
+            elementType: 'floating-popup',
+            position: { x: 100, y: 100 },
+            route: '/tour-dashboard',
+            skipAuth: true
+          }, () => {
+            window.close();
+          });
+          return;
+        }
+        
         if (isRestrictedPage) {
           document.documentElement.classList.add('show-popup');
           navigate(isOnTourPage ? '/tour-dashboard' : '/dashboard');
@@ -44,15 +57,15 @@ export default function PopupLauncher() {
         
         chrome.runtime.sendMessage({
           type: 'CREATE_FLOATING_IFRAME_ON_TAB',
-          route: isOnTourPage ? '/tour-dashboard' : '/dashboard',
-          skipAuth: isOnTourPage
+          route: '/dashboard',
+          skipAuth: false
         }, (response) => {
           if (response?.success) {
             window.close();
           } else {
             console.log('Cannot inject iframe, showing popup instead:', response?.error);
             document.documentElement.classList.add('show-popup');
-            navigate(isOnTourPage ? '/tour-dashboard' : '/dashboard');
+            navigate('/dashboard');
           }
         });
       });
