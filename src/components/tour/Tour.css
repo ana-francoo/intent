@@ -456,18 +456,10 @@
 
 .press-settings {
   position: absolute;
-  bottom: 520px; /* above Continue button area */
-  right: 30px;  /* near Settings icon area */
-  /* Size of the press animation (scales the ripple as well) */
-  width: 50px;
-  height: 50px;
-}
-
-.press-settings::before {
-  content: '';
-  position: absolute;
-  width: 100%;
-  height: 100%;
+  top: calc(var(--press-top, 11%) + var(--press-top-adjust, 0%));
+  left: calc(var(--press-left, 92%) + var(--press-left-adjust, 0%));
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.4);
   border: 2px solid #ff6b35;

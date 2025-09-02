@@ -312,6 +312,45 @@ const Tour = () => {
           pressSettings.style.display = 'none';
           anchor.appendChild(pressSettings);
 
+          const syncAnchorToPopup = () => {
+            try {
+              const rect = (element as HTMLElement).getBoundingClientRect();
+              anchor.style.position = 'fixed';
+              anchor.style.left = `${Math.round(rect.left)}px`;
+              anchor.style.top = `${Math.round(rect.top)}px`;
+              anchor.style.width = `${Math.round(rect.width)}px`;
+              anchor.style.height = `${Math.round(rect.height)}px`;
+              anchor.style.transform = 'none';
+            } catch {}
+          };
+          const updatePressFromIframe = () => {
+            try {
+              const iframe = document.querySelector('#floating-popup-container iframe') as HTMLIFrameElement | null;
+              if (!iframe || !iframe.contentDocument) return;
+              const btn = iframe.contentDocument.getElementById('tour-settings-button') as HTMLElement | null;
+              if (!btn) return;
+              const btnRect = btn.getBoundingClientRect();
+              const iframeRect = iframe.getBoundingClientRect();
+              const anchorRect = anchor.getBoundingClientRect();
+              const cx = iframeRect.left + btnRect.left + btnRect.width / 2;
+              const cy = iframeRect.top + btnRect.top + btnRect.height / 2;
+              const leftPct = ((cx - anchorRect.left) / Math.max(anchorRect.width, 1)) * 100;
+              const topPct = ((cy - anchorRect.top) / Math.max(anchorRect.height, 1)) * 100;
+              anchor.style.setProperty('--press-left', `${leftPct}%`);
+              anchor.style.setProperty('--press-top', `${topPct}%`);
+            } catch {}
+          };
+          syncAnchorToPopup();
+          updatePressFromIframe();
+          try {
+            const ro = new ResizeObserver(() => { syncAnchorToPopup(); updatePressFromIframe(); });
+            ro.observe(element as HTMLElement);
+            (window as any)._tourAnchorRO = ro;
+          } catch {}
+          const onResize = () => { syncAnchorToPopup(); updatePressFromIframe(); };
+          window.addEventListener('resize', onResize);
+          (window as any)._tourSyncAnchor = onResize;
+
           const settingsText = document.createElement('div');
           settingsText.className = 'text-settings';
           settingsText.textContent = '5. Click on Settings to customize your experience';
@@ -353,6 +392,7 @@ const Tour = () => {
               if (iframe && iframe.contentWindow) {
                 iframe.contentWindow.postMessage({ type: 'TOUR_STEP_2_REACHED' }, '*');
               }
+              updatePressFromIframe();
               return;
             }
             if (tourStep === 3) {

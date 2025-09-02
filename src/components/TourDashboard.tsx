@@ -609,6 +609,7 @@ const TourDashboard = () => {
           }}
           className="absolute top-2 right-12 text-[#F5E6D3] hover:bg-[#7A4A1E]/20 rounded-xl p-2"
           disabled={!settingsEnabled}
+          id="tour-settings-button"
           style={{
             opacity: settingsEnabled ? 1 : 0.3,
             cursor: settingsEnabled ? "pointer" : "not-allowed",
