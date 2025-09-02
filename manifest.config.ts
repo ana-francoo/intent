@@ -5,6 +5,7 @@ export default defineManifest({
   manifest_version: 3,
   name: "Intent",
   short_name: "Intent",
+  description: "⭐Turn distraction into follow-through⭐",
   version: pkg.version,
   permissions: ["storage", "activeTab", "tabs", "scripting"],
   host_permissions: [
