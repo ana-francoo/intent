@@ -62,8 +62,8 @@ function EmbeddedSignupCard() {
   
 
   return (
-    <div className="tour-embedded-signup w-full max-w-md z-[2147483647]">
-      <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm">
+    <div className="tour-embedded-signup w-full max-w-md z-[2147483647] flex flex-col mx-auto px-4">
+      <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm flex flex-col">
         <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
           <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
         </div>
@@ -74,7 +74,7 @@ function EmbeddedSignupCard() {
         {info && (
           <div className="w-full rounded-md border border-green-500/25 bg-green-500/50 p-2 text-center text-xs text-green-500 mb-2">{info}</div>
         )}
-        <form onSubmit={handleSignup} className="space-y-2" id="tour-embedded-signup-form">
+        <form onSubmit={handleSignup} className="space-y-2 flex flex-col flex-1" id="tour-embedded-signup-form">
           <div className="grid gap-1.5">
             <label htmlFor="tour-email" className="text-sm text-white/85">Email</label>
             <Input id="tour-email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -419,7 +419,7 @@ const Tour = () => {
               if (!cta) {
                 cta = document.createElement('div');
                 cta.id = 'tour-create-account-cta';
-                cta.className = 'tour-create-account-cta';
+                cta.className = 'tour-create-account-cta tour-cta-initial';
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'get-started-btn';
@@ -525,10 +525,6 @@ const Tour = () => {
                   // Move CTA downward to a fixed top position
                   const ctaWrapper = document.getElementById('tour-create-account-cta') as HTMLElement | null;
                   if (ctaWrapper) {
-                    // Compute current center-top as animation start and animate to final top
-                    const rect = ctaWrapper.getBoundingClientRect();
-                    const currentTop = rect.top;
-                    ctaWrapper.style.setProperty('--cta-top-start', `${Math.round(currentTop)}px`);
                     ctaWrapper.classList.add('tour-cta-move-down');
                   }
                   if (!document.getElementById('tour-embedded-signup-root')) {

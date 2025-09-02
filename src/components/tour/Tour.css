@@ -351,8 +351,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2147483647;
+  z-index: 2147483645;
   pointer-events: none;
+}
+
+@media (max-height: 700px) {
+  .logo-flame-root {
+    display: none;
+  }
 }
 
 /* Move logo+flame wrapper upward to a fixed top position */
@@ -360,7 +366,7 @@
   animation: logo-flame-move-up 0.9s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 @keyframes logo-flame-move-up {
-  to { top: var(--logo-top-final, 300px); }
+  to { top: calc(50% - 250px); transform: translate(-50%, -50%); }
 }
 
 @keyframes continue-enter {
@@ -564,30 +570,86 @@
 .tour-create-account-cta {
   position: fixed;
   left: 50%;
-  bottom: 240px;
+  top: calc(50% + 220px); /* Position relative to center, below signup form with more gap */
   transform: translateX(-50%);
   z-index: 2147483647;
   pointer-events: auto;
   animation: continue-enter 0.5s ease-out both;
+  max-width: min(92vw, 420px);
 }
 
-/* Move CTA downward to a fixed top position */
-.tour-create-account-cta.tour-cta-move-down {
-  bottom: auto; /* switch to top-based positioning for the animation */
-  animation: tour-cta-move-down 0.9s cubic-bezier(0.2, 0, 0, 1) forwards;
+/* Initial higher position for the button before animation */
+.tour-create-account-cta.tour-cta-initial {
+  top: calc(50% + 160px); /* Start 60px higher */
 }
-@keyframes tour-cta-move-down {
-  from { top: var(--cta-top-start, 0px); }
-  to { top: var(--cta-top-final, 800px); }
+
+/* Override initial animation when moving during confetti */
+.tour-create-account-cta.tour-cta-move-down {
+  animation: none; /* Cancel the initial animation */
+}
+
+@media (max-height: 740px) {
+  .tour-create-account-cta {
+    top: calc(50% + 190px);
+  }
+}
+
+@media (max-height: 620px) {
+  .tour-create-account-cta {
+    top: calc(50% + 170px);
+  }
+}
+
+@media (min-height: 900px) {
+  .tour-create-account-cta {
+    top: calc(50% + 240px);
+  }
+}
+
+/* Animate button sliding down from initial higher position */
+.tour-create-account-cta.tour-cta-move-down {
+  top: calc(50% + 220px); /* Final position */
+  animation: cta-slide-down-enhance 0.9s cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes cta-slide-down-enhance {
+  0% { 
+    top: calc(50% + 160px); /* Start from higher position */
+    opacity: 0.7; 
+    transform: translateX(-50%) scale(0.98); 
+  }
+  100% { 
+    top: calc(50% + 220px); /* End at final position */
+    opacity: 1; 
+    transform: translateX(-50%) scale(1); 
+  }
 }
 
 /* ===== Embedded signup positioning (px from top) ===== */
 .tour-embedded-signup {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
-  top: var(--signup-top, 450px);
+  top: 50%;
+  transform: translate(-50%, -45%); /* Shift form down slightly */
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  z-index: 2147483646;
   animation: embedded-signup-enter 0.5s ease-out both;
+}
+
+@media (max-height: 740px) {
+  .tour-embedded-signup {
+    top: 45%;
+    transform: translate(-50%, -45%);
+    max-height: calc(100vh - 180px);
+  }
+}
+
+@media (max-height: 620px) {
+  .tour-embedded-signup {
+    top: 40%;
+    transform: translate(-50%, -40%);
+    max-height: calc(100vh - 160px);
+  }
 }
 
 /* Utility overrides for quick top adjustments */
@@ -597,8 +659,8 @@
 .signup-top-800 { --signup-top: 800px; }
 
 @keyframes embedded-signup-enter {
-  0% { opacity: 0; transform: translate(-50%, -16px); }
-  100% { opacity: 1; transform: translate(-50%, 0); }
+  0% { opacity: 0; transform: translate(-50%, -45%) translateY(-16px); }
+  100% { opacity: 1; transform: translate(-50%, -45%); }
 }
 
 
