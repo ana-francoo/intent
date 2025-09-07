@@ -69,11 +69,11 @@ const customScrapers: ScraperEntry[] = [
     matches: (u) => u.hostname.replace(/^www\./, '').endsWith('youtube.com'),
     scrape: () => extractYouTubeMetadata(),
   },
-  {
-    name: 'Reddit',
-    matches: (u) => u.hostname.replace(/^www\./, '').endsWith('reddit.com'),
-    scrape: () => extractRedditMetadata(),
-  },
+  // {
+  //   name: 'Reddit',
+  //   matches: (u) => u.hostname.replace(/^www\./, '').endsWith('reddit.com'),
+  //   scrape: () => extractRedditMetadata(),
+  // },
   {
     name: 'Pinterest',
     matches: (u) => u.hostname.replace(/^www\./, '').endsWith('pinterest.com'),
@@ -336,26 +336,23 @@ export function extractYouTubeMetadata(): string {
 }
 
 //Reddit specific scraper
-export function extractRedditMetadata(): string {
-  console.log('🧩 extractRedditMetadata: invoked');
-  const title = document.querySelector('h1[id*="post-title"]')?.textContent?.trim() || 'No title found';
+// export function extractRedditMetadata(): string {
+//   console.log('🧩 extractRedditMetadata: invoked');
+//   const title = document.querySelector('h1[id*="post-title"]')?.textContent?.trim() || 'No title found';
 
-  const description = Array.from(
-    document.querySelector('[property="schema:articleBody"]')?.querySelectorAll('p') || []
-  )
-    .map(p => p.textContent?.trim())
-    .filter(Boolean)
-    .join('\n\n') || '';
+//   const description = Array.from(
+//     document.querySelector('[property="schema:articleBody"]')?.querySelectorAll('p') || []
+//   )
+//     .map(p => p.textContent?.trim())
+//     .filter(Boolean)
+//     .join('\n\n') || '';
 
-    if (!title && !description) {
-      return 'blank';
-    }
+//     if (!title && !description) {
+//       return 'blank';
+//     }
 
-  return `title: ${title}\ndescription: ${description}`;
-}
-
-
-//
+//   return `title: ${title}\ndescription: ${description}`;
+// }
 
 export function extractNewsTitle(): string {
   console.log('🧩 extractNewsTitle: invoked');

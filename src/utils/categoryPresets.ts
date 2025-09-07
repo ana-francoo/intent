@@ -16,7 +16,7 @@ export const SOCIAL_SITES: string[] = [
   "x.com",
   'twitter.com',
   'tiktok.com',
-  'reddit.com',
+  // 'reddit.com',
   'pinterest.com',
 ];
 

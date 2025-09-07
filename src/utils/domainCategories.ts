@@ -1961,7 +1961,7 @@ export const DOMAIN_CATEGORIES: Record<string, WebsiteCategory> = {
 'snapchat.com': 'social',
 'linkedin.com': 'social',
 'pinterest.com': 'social',
-'reddit.com': 'social',
+// 'reddit.com': 'social',
 'discord.com': 'social',
 'threads.net': 'social',
 'tumblr.com': 'social',
