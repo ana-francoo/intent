@@ -5,14 +5,16 @@ import logo from '@/assets/logo2.png';
 import Flame from '../home/Flame';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
+import { useEmailConfirmation } from '../../hooks/useEmailConfirmation';
+import '../overlayone/overlay.css';
 
 interface SignupProps {
   onGoBack?: () => void;
 }
 
 const getRedirectUrl = () => {
-  const isDev = import.meta.env.DEV;
-  return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
+  const redirectBase = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin;
+  return `${redirectBase}/auth-callback`;
 };
 
 export default function Signup({ onGoBack }: SignupProps) {
@@ -23,6 +25,9 @@ export default function Signup({ onGoBack }: SignupProps) {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isWaitingForConfirmation, setIsWaitingForConfirmation] = useState(false);
+
+  const { isEmailConfirmed } = useEmailConfirmation(email, isWaitingForConfirmation);
 
   const canSubmit = useMemo(() => {
     if (!email || !password) return false;
@@ -47,6 +52,33 @@ export default function Signup({ onGoBack }: SignupProps) {
     };
   }, [handleAuthSuccess]);
 
+  useEffect(() => {
+    if (isEmailConfirmed && isWaitingForConfirmation) {
+      console.log('✅ Email confirmed in Signup.tsx!');
+      setInfo('Email confirmed! Signing you in...');
+      
+      const signInUser = async () => {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (error) {
+          setError('User already exists! Please sign in manually.');
+          setInfo(null);
+        } else {
+          setInfo('Email confirmed! You can now use the extension');
+        }
+        
+        setIsWaitingForConfirmation(false);
+        setPassword('');
+        setConfirmPassword('');
+      };
+      
+      signInUser();
+    }
+  }, [isEmailConfirmed, isWaitingForConfirmation, email, password]);
+
   const handleSignup = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -63,9 +95,12 @@ export default function Signup({ onGoBack }: SignupProps) {
         },
       });
       if (signUpError) throw signUpError;
+      console.log('📨 Signup.tsx - Signup successful, starting email confirmation polling for:', email);
       setInfo('Check your email for the confirmation link.');
+      setIsWaitingForConfirmation(true); // Start polling for email confirmation
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      setIsWaitingForConfirmation(false);
     } finally {
       setIsLoading(false);
     }
@@ -108,13 +143,19 @@ export default function Signup({ onGoBack }: SignupProps) {
         )}
         
         {info && (
-          <div className="animate-slide-in-up duration-75! mt-2 w-full rounded-md border border-green-500/25 bg-green-500/50 p-2 text-center text-xs text-green-500">
+          <div className={`animate-slide-in-up duration-75! mt-2 w-full rounded-md p-2 text-center text-xs ${
+            isEmailConfirmed 
+              ? 'border border-green-500/25 bg-green-500/50 text-green-500'
+              : isWaitingForConfirmation
+              ? 'border border-green-500/25 bg-green-500/50 text-green-500'
+              : 'border border-green-500/25 bg-green-500/50 text-green-500'
+          }`}>
             {info}
           </div>
         )}
         
         <form onSubmit={handleSignup} className="space-y-1 w-full">
-          <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm">
+          <div className={`relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm ${isWaitingForConfirmation ? 'conic-pending-border' : ''}`}>
             <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
               <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
             </div>
@@ -130,6 +171,7 @@ export default function Signup({ onGoBack }: SignupProps) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isWaitingForConfirmation}
               />
             </div>
 
@@ -142,6 +184,7 @@ export default function Signup({ onGoBack }: SignupProps) {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isWaitingForConfirmation}
               />
             </div>
 
@@ -154,11 +197,12 @@ export default function Signup({ onGoBack }: SignupProps) {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isWaitingForConfirmation}
               />
             </div>
 
-            <Button type="submit" disabled={!canSubmit || isLoading} className="mt-1 w-full">
-              {isLoading ? 'Creating account…' : 'Create account'}
+            <Button type="submit" disabled={!canSubmit || isLoading || isWaitingForConfirmation} className="mt-1 w-full">
+              {isLoading ? 'Creating account…' : isWaitingForConfirmation ? 'Waiting for email confirmation...' : 'Create account'}
             </Button>
           </div>
         </form>

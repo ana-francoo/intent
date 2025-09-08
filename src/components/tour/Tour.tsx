@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './Tour.css';
 import TourText from './TourText';
 import { createFloatingPopup } from '@/utils/floatingPopup';
 import { supabase } from '../../supabaseClient';
 import { Input } from '../ui/input';
+import { useEmailConfirmation } from '../../hooks/useEmailConfirmation';
+import '../overlayone/overlay.css';
 
 import logo from '@/assets/logo2.png';
 import Flame from '@/components/home/Flame';
@@ -16,11 +19,13 @@ function EmbeddedSignupCard() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isWaitingForConfirmation, setIsWaitingForConfirmation] = useState(false);
+  const { isEmailConfirmed } = useEmailConfirmation(email, isWaitingForConfirmation);
 
   const getRedirectUrl = () => {
-    const isDev = import.meta.env.DEV;
-    return isDev ? 'http://localhost:5173/auth-callback' : 'https://useintent.app/auth-callback';
+    const redirectBase = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin;
+    return `${redirectBase}/auth-callback`;
   };
 
   useEffect(() => {
@@ -35,6 +40,40 @@ function EmbeddedSignupCard() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (isEmailConfirmed && isWaitingForConfirmation) {
+      console.log('✅ Email confirmed in Tour.tsx!');
+      setInfo('Email confirmed! Signing you in...');
+      
+      const signInUser = async () => {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        
+        if (error) {
+          setError('User already exists! Please sign in manually.');
+          setInfo(null);
+        } else {
+          setInfo('Email confirmed! Opening Intent...');
+          if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.sendMessage({
+              type: 'OPEN_TAB_WITH_FLOATING_IFRAME',
+              route: '/dashboard',
+              closeCurrentTab: true
+            });
+          }
+        }
+        
+        setIsWaitingForConfirmation(false);
+        setPassword('');
+        setConfirmPassword('');
+      };
+      
+      signInUser();
+    }
+  }, [isEmailConfirmed, isWaitingForConfirmation, email, password]);
 
   const handleSignup = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +90,12 @@ function EmbeddedSignupCard() {
         },
       });
       if (signUpError) throw signUpError;
+      console.log('📨 Tour.tsx - Signup successful, starting email confirmation polling for:', email);
       setInfo('Check your email for the confirmation link.');
+      setIsWaitingForConfirmation(true); // Start polling for email confirmation
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      setIsWaitingForConfirmation(false);
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +105,7 @@ function EmbeddedSignupCard() {
 
   return (
     <div className="tour-embedded-signup w-full max-w-md z-[2147483647] flex flex-col mx-auto px-4">
-      <div className="relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm flex flex-col">
+      <div className={`relative rounded-xl p-5 border border-white/10 bg-white/5 shadow-lg backdrop-blur-sm flex flex-col ${isWaitingForConfirmation ? 'conic-pending-border' : ''}`}>
         <div className='absolute top-0 left-0 right-0 flex justify-center pointer-events-none'>
           <div className='h-[1px] animate-border-width rounded-full bg-gradient-to-r from-transparent via-orange-700 to-transparent transition-all duration-1000' />
         </div>
@@ -72,22 +114,29 @@ function EmbeddedSignupCard() {
           <div className="w-full rounded-md border border-red-500/30 bg-red-500/10 p-2 text-center text-xs text-red-400 mb-2">{error}</div>
         )}
         {info && (
-          <div className="w-full rounded-md border border-green-500/25 bg-green-500/50 p-2 text-center text-xs text-green-500 mb-2">{info}</div>
+          <div className={`animate-slide-in-up duration-75! w-full rounded-md p-2 text-center text-xs mb-2 ${
+            isEmailConfirmed 
+              ? 'border border-green-500/25 bg-green-500/50 text-green-500'
+              : isWaitingForConfirmation
+              ? 'border border-green-500/25 bg-green-500/50 text-green-500'
+              : 'border border-green-500/25 bg-green-500/50 text-green-500'
+          }`}>
+            {info}
+          </div>
         )}
         <form onSubmit={handleSignup} className="space-y-2 flex flex-col flex-1" id="tour-embedded-signup-form">
           <div className="grid gap-1.5">
             <label htmlFor="tour-email" className="text-sm text-white/85">Email</label>
-            <Input id="tour-email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="tour-email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading || isWaitingForConfirmation} />
           </div>
           <div className="grid gap-1.5">
             <label htmlFor="tour-password" className="text-sm text-white/85">Password</label>
-            <Input id="tour-password" type="password" placeholder="Create a password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="tour-password" type="password" placeholder="Create a password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading || isWaitingForConfirmation} />
           </div>
           <div className="grid gap-1.5">
             <label htmlFor="tour-confirm" className="text-sm text-white/85">Confirm password</label>
-            <Input id="tour-confirm" type="password" placeholder="Re-enter your password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+            <Input id="tour-confirm" type="password" placeholder="Re-enter your password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={isLoading || isWaitingForConfirmation} />
           </div>
-          {/* Submit button removed; submission will be triggered by the external CTA */}
         </form>
         
       </div>
@@ -565,7 +614,28 @@ const Tour = () => {
                     signupRoot.id = 'tour-embedded-signup-root';
                     document.body.appendChild(signupRoot);
                     const root = createRoot(signupRoot);
-                    root.render(<EmbeddedSignupCard />);
+                    
+                    // Create a QueryClient instance for the embedded signup
+                    const queryClient = new QueryClient({
+                      defaultOptions: {
+                        queries: {
+                          staleTime: 5 * 60 * 1000, // 5 minutes
+                          gcTime: 10 * 60 * 1000, // 10 minutes
+                          retry: 2,
+                          refetchOnWindowFocus: true,
+                          refetchOnReconnect: false,
+                        },
+                        mutations: {
+                          retry: 1,
+                        },
+                      },
+                    });
+                    
+                    root.render(
+                      <QueryClientProvider client={queryClient}>
+                        <EmbeddedSignupCard />
+                      </QueryClientProvider>
+                    );
                   }
                 }, triggerMs);
                 // Remove border flash class only after second revolution completes

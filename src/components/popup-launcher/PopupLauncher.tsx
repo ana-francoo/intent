@@ -25,7 +25,11 @@ export default function PopupLauncher() {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const activeTabUrl = tabs[0]?.url || '';
         const isOnTourPage = activeTabUrl.includes('#/tour') || activeTabUrl.includes('tour=1');
-        const isRestrictedPage = activeTabUrl.startsWith('chrome://')
+        const isRestrictedPage = activeTabUrl.startsWith('chrome://') ||
+                                activeTabUrl.startsWith('edge://') ||
+                                activeTabUrl.startsWith('brave://') ||
+                                activeTabUrl.includes('chrome.google.com/webstore') ||
+                                activeTabUrl.includes('chromewebstore.google.com');
         
         if (!session && !isOnTourPage) {
           chrome.tabs.create({
@@ -72,6 +76,23 @@ export default function PopupLauncher() {
       return;
     }
     
+    // For regular extension tabs (after signup/login), open Google with floating iframe
+    if (isExtensionUrl && session) {
+      chrome.runtime.sendMessage({
+        type: 'OPEN_TAB_WITH_FLOATING_IFRAME',
+        route: '/dashboard',
+        closeCurrentTab: true
+      }, (response) => {
+        if (!response?.success) {
+          console.error('Failed to open tab with floating iframe:', response?.error);
+          // Fallback to just navigating to dashboard
+          navigate('/dashboard');
+        }
+      });
+      return;
+    }
+    
+    // Default: navigate to dashboard
     navigate('/dashboard');
   }, [navigate, session, isLoading]);
 

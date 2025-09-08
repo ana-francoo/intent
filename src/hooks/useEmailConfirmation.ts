@@ -1,25 +1,68 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/supabaseClient';
 
-export function useEmailConfirmation(email: string, isWaitingForConfirmation: boolean) {
-  const { data: userData } = useQuery({
+interface EmailConfirmationResponse {
+  is_confirmed: boolean;
+  confirmed_at: string | null;
+}
+
+export function useEmailConfirmation(
+  email: string,
+  isWaitingForConfirmation: boolean
+) {
+  const queryClient = useQueryClient();
+  
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['email-confirmation', email],
     queryFn: async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const response = await supabase
+        .rpc('check_email_confirmation', { user_email: email })
+        .maybeSingle();
+      
+      const { data, error } = response;
+      
       if (error) {
-        console.error('Error checking email confirmation:', error);
+        console.log('Error checking confirmation status:', error);
         return null;
       }
-      return user;
+      
+      if (!data) {
+        return null;
+      }
+      
+      const typedData = data as EmailConfirmationResponse;
+      
+      
+      if (!typedData.is_confirmed) {
+        return null;
+      }
+      
+      console.log('✅ Email confirmed! Invalidating auth queries...');
+      queryClient.invalidateQueries({ queryKey: ['auth'] });
+      
+      return {
+        email_confirmed_at: typedData.confirmed_at,
+        confirmed_at: typedData.confirmed_at,
+        is_confirmed: true
+      };
     },
-    enabled: isWaitingForConfirmation,
+    enabled: isWaitingForConfirmation && !!email,
     refetchInterval: (query) => {
-      return query.state.data?.email_confirmed_at ? false : 1000;
+      const data = query.state.data;
+      const isConfirmed = !!(data?.email_confirmed_at || data?.confirmed_at);
+      return isConfirmed ? false : 2000;
     },
     refetchIntervalInBackground: true,
+    retry: false,
+    staleTime: 0,
   });
 
-  const isEmailConfirmed = !!userData?.email_confirmed_at;
+  const isEmailConfirmed = profile?.is_confirmed === true;
   
-  return { userData, isEmailConfirmed };
+  return { 
+    userData: profile, 
+    isEmailConfirmed, 
+    isLoading, 
+    error: error as Error | null 
+  };
 }

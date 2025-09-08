@@ -294,6 +294,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "OPEN_TAB_WITH_FLOATING_IFRAME") {
+    chrome.tabs.create({ url: "https://www.google.com", active: true }, async (tab) => {
+      if (!tab.id) {
+        sendResponse({ success: false });
+        return;
+      }
+      
+      const listener = (tabId: number, info: any) => {
+        if (tabId === tab.id && info.status === 'complete') {
+          chrome.tabs.onUpdated.removeListener(listener);
+          
+          chrome.tabs.sendMessage(tab.id!, {
+            type: "CREATE_VISUAL_ELEMENT",
+            elementType: "floating-popup",
+            position: { x: 100, y: 100 },
+            route: message.route || "/dashboard",
+            skipAuth: false
+          });
+          
+          if (message.closeCurrentTab && sender.tab?.id) {
+            chrome.tabs.remove(sender.tab.id);
+          }
+          
+          sendResponse({ success: true });
+        }
+      };
+      
+      chrome.tabs.onUpdated.addListener(listener);
+    });
+    
+    return true;
+  }
+
   // Handle creating floating iframe on specific tab
   if (message.type === "CREATE_FLOATING_IFRAME_ON_SPECIFIC_TAB") {
     console.log("[Background] Request to create floating iframe on specific tab:", message.tabId);
@@ -316,11 +349,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                        !tab.url.startsWith("brave://") &&
                        !tab.url.startsWith("about:") &&
                        !tab.url.startsWith("file://") &&
-                       !tab.url.includes("chrome.google.com/webstore");
+                       !tab.url.includes("chrome.google.com/webstore") &&
+                       !tab.url.includes("chromewebstore.google.com");
       
       if (!canInject) {
         console.log("[Background] Cannot inject into restricted page:", tab.url);
-        sendResponse({ success: false, error: "Cannot inject into this page" });
+        sendResponse({ success: false, error: "Cannot inject into this page", isRestricted: true });
         return;
       }
       
@@ -393,11 +427,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                        !tab.url.startsWith("brave://") &&
                        !tab.url.startsWith("about:") &&
                        !tab.url.startsWith("file://") &&
-                       !tab.url.includes("chrome.google.com/webstore");
+                       !tab.url.includes("chrome.google.com/webstore") &&
+                       !tab.url.includes("chromewebstore.google.com");
       
       if (!canInject) {
         console.log("[Background] Cannot inject into restricted page:", tab.url);
-        sendResponse({ success: false, error: "Cannot inject into this page" });
+        sendResponse({ success: false, error: "Cannot inject into this page", isRestricted: true });
         return;
       }
       
