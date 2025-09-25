@@ -37,17 +37,39 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     }
 
     // Ensure Supabase session is restored in this page context before access check
+    // try {
+    //   await checkExistingSession();
+    // } catch {}
+
+    // // Check if user has access to extension features (trial/active)
+    // const hasAccess = await hasExtensionAccess();
+    // console.log('🔐 RouteInterceptor: hasExtensionAccess', { hasAccess });
+    // if (!hasAccess) {
+    //   console.log('🚫 RouteInterceptor: No access — skipping interception');
+    //   return;
+    // }
+
+
+    // Ensure Supabase session is restored in this page context before access check
     try {
       await checkExistingSession();
     } catch {}
 
-    // Check if user has access to extension features (trial/active)
-    const hasAccess = await hasExtensionAccess();
-    console.log('🔐 RouteInterceptor: hasExtensionAccess', { hasAccess });
-    if (!hasAccess) {
-      console.log('🚫 RouteInterceptor: No access — skipping interception');
-      return;
-    }
+    // Check subscription status (trial/active get full features; free/expired do not)
+    const { getSubscriptionStatus } = await import('./subscription');
+    const subStatus = await getSubscriptionStatus();
+    const hasAccess = subStatus.hasAccess; // trial or active
+    const isFree = !hasAccess;
+    console.log('🔐 RouteInterceptor: subscription status', { hasAccess, planType: subStatus.planType });
+
+
+
+
+
+
+
+
+
 
     // Allow-list: Instagram DMs should NOT be blocked
     try {
@@ -85,6 +107,13 @@ export const initializeRouteInterceptor = async (): Promise<void> => {
     if (!isBlocked) {
       console.log('✅ RouteInterceptor: URL not blocked — no action');
       try { sessionStorage.setItem('intent_last_safe_url', currentUrl); } catch {}
+      return;
+    }
+
+    if (isFree) {
+      const freeOverlayUrl = chrome.runtime.getURL('src/popup/index.html') + `#/overlay-free?targetUrl=${encodeURIComponent(currentUrl)}`;
+      console.log('🎯 RouteInterceptor: redirecting to overlay-free', { freeOverlayUrl });
+      window.location.href = freeOverlayUrl;
       return;
     }
 

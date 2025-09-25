@@ -5,6 +5,7 @@ import PersonalDashboard from '@/components/PersonalDashboard'
 import TourDashboard from '@/components/TourDashboard'
 import OverlayOne from '@/components/overlayone'
 import OverlayTwo from '@/components/overlaytwo'
+import OverlayFree from '@/components/overlayfree'
 import CarouselApp from '@/components/carousel/App'
 import Tour from '@/components/tour/Tour'
 import Home from '@/components/home/Home'
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/tour-dashboard" element={<TourDashboard />} />
         <Route path="/overlay-one" element={<OverlayOne />} />
         <Route path="/overlay-two" element={<OverlayTwo />} />
+        <Route path="/overlay-free" element={<OverlayFree />} />
         {/* Back-compat: keep /overlay pointing to overlay-two (mismatch style) */}
         <Route path="/overlay" element={<OverlayTwo />} />
       </Routes>

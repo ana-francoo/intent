@@ -1,22 +1,16 @@
 import { useSearchParams } from "react-router-dom";
-import { saveIntention } from "@/utils/storage";
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/logo2.png";
 import Flame from "../home/Flame";
 import './overlay.css';
-import { markNewIntentionSet } from '../../utils/intentionMonitor';
 
 export default function IntentionOverlay() {
   const [searchParams] = useSearchParams();
   const targetUrl = searchParams.get('targetUrl');
 
-  const handleAllowClick = useCallback(async () => {
+  const handleAllowClick = useCallback(() => {
     if (!targetUrl) return;
-    try {
-      await saveIntention(targetUrl, 'allow');
-      markNewIntentionSet();
-    } catch {}
     window.location.href = targetUrl;
   }, [targetUrl]);
 
@@ -28,7 +22,7 @@ export default function IntentionOverlay() {
             <div className="absolute left-1/2 -translate-x-1/2 bottom-10.5">
               <Flame className={cn(
                 "scale-35 scale-x-45",
-                "opacity-0 scale-0"
+                "animate-flame-ignition"
               )}/>
             </div>
             <img src={logo} alt="Logo" className={cn(
@@ -40,7 +34,7 @@ export default function IntentionOverlay() {
             <button
               type="button"
               onClick={handleAllowClick}
-              className="text-muted-foreground hover:text-foreground underline underline-offset-4"
+              className="text-muted-foreground/80 hover:text-foreground underline underline-offset-4"
             >
               I wish to access this site
             </button>
